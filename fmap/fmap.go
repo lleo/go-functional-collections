@@ -333,8 +333,7 @@ func (m *Map) Del(key MapKey) *Map {
 }
 
 func (m *Map) Delete(key MapKey) *Map {
-	m, _, _ = m.Remove(key)
-	return m
+	return m.Del(key)
 }
 
 func (m *Map) Remove(key MapKey) (*Map, interface{}, bool) {
