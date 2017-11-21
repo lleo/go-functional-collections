@@ -24,7 +24,7 @@ import (
 
 type Map struct {
 	numEnts uint
-	root    *Node
+	root    *node
 }
 
 func New() *Map {
@@ -32,18 +32,18 @@ func New() *Map {
 	return m
 }
 
-//MakeNode() is here for testing only.
-func MakeMap(num uint, r *Node) *Map {
+//MakeNode() is public for testing only.
+func MakeMap(num uint, r *node) *Map {
 	return &Map{num, r}
+}
+
+//Root() is public for testing only.
+func (m *Map) Root() *node {
+	return m.root
 }
 
 func (m *Map) NumEntries() uint {
 	return m.numEnts
-}
-
-//Root() is here for testing only.
-func (m *Map) Root() *Node {
-	return m.root
 }
 
 func (m *Map) copy() *Map {
@@ -133,11 +133,11 @@ func (m *Map) Store(k MapKey, v interface{}) (*Map, bool) {
 	return nm, true
 }
 
-// replace() simply replaces the value on a copy of the Node that contains the
+// replace() simply replaces the value on a copy of the node that contains the
 // old value, then calls persist() on the *Map.
 //
 // replace() MUST be called on a new *Map.
-func (m *Map) replace(k MapKey, v interface{}, on *Node, path *nodeStack) {
+func (m *Map) replace(k MapKey, v interface{}, on *node, path *nodeStack) {
 	assert(cmp(on.key, k) == 0, "on.key != nn.key")
 
 	var nn = on.copy()
@@ -155,7 +155,7 @@ func (m *Map) replace(k MapKey, v interface{}, on *Node, path *nodeStack) {
 //
 // insert() MUST be called on a new *Map.
 func (m *Map) insert(k MapKey, v interface{}, path *nodeStack) {
-	var on *Node // = nil
+	var on *node // = nil
 	var nn = newNode(k, v)
 
 	//m.insertBalance(on, nn, path)
@@ -166,23 +166,23 @@ func (m *Map) insert(k MapKey, v interface{}, path *nodeStack) {
 }
 
 // persistAll() calls persit all the way to root
-func (m *Map) persistAll(on, nn *Node, path *nodeStack) {
+func (m *Map) persistAll(on, nn *node, path *nodeStack) {
 	log.Printf("persistAll:\non=%s\nnn=%s\npath=%s", on, nn, path)
 	m.persistTill(on, nn, nil, path) //ignoring return vals
 	return
 }
 
-// persistTill() updates Node pointers down the path to the root creating a
+// persistTill() updates node pointers down the path to the root creating a
 // persistent data structure.
 //
 // persistTill() MUST be called on a new *Map.
-func (m *Map) persistTill(on, nn, term *Node, path *nodeStack) (
-	*Node, *Node, *nodeStack,
+func (m *Map) persistTill(on, nn, term *node, path *nodeStack) (
+	*node, *node, *nodeStack,
 ) {
 	log.Printf("persistTill:\non=%s\nnn=%s\nterm=%s\npath=%s",
 		on, nn, term, path)
-	// on is the old Node
-	// nn is the new Node
+	// on is the old node
+	// nn is the new node
 	if path.len() == 0 {
 		log.Printf("persistTill: SETTING ROOT:\n"+
 			"OLD m.root=%p; m.root=%v\nNEW ROOT nn=%s\n", m.root, m.root, nn)
@@ -222,8 +222,8 @@ func (m *Map) persistTill(on, nn, term *Node, path *nodeStack) (
 	return m.persistTill(oparent, nparent, term, path)
 }
 
-// rotateLeft() takes the target Node(n) and its parent(p). We are rotating on
-// target Node(n) left.
+// rotateLeft() takes the target node(n) and its parent(p). We are rotating on
+// target node(n) left.
 //
 //            p                      p
 //            |                      |
@@ -233,13 +233,13 @@ func (m *Map) persistTill(on, nn, term *Node, path *nodeStack) (
 //              / \             / \
 //             x   y           l   x
 //
-// We are returning the original target Node(n) and its new parent(r), because
+// We are returning the original target node(n) and its new parent(r), because
 // they changed position and swapped their parent-child relationship.
 // Only p, n, and r changed values.
-func (m *Map) rotateLeft(n, p *Node) (*Node, *Node) {
-	//assert(n == p.rn, "new Node is not right child of new parent")
+func (m *Map) rotateLeft(n, p *node) (*node, *node) {
+	//assert(n == p.rn, "new node is not right child of new parent")
 	//assert(p == nil || n == p.ln,
-	//	"Node is not the left child of parent")
+	//	"node is not the left child of parent")
 	var r = n.rn
 	//log.Printf("rotateLeft:\nn = %s\np = %s\nr = %s\n", n, p, r)
 
@@ -253,14 +253,14 @@ func (m *Map) rotateLeft(n, p *Node) (*Node, *Node) {
 		m.root = r
 	}
 
-	n.rn = r.ln //handle anticipated orphaned Node
+	n.rn = r.ln //handle anticipated orphaned node
 	r.ln = n    //now orphan it
 
 	return n, r
 }
 
-// rotateRight() takes the target Node(n) and its parent(p). We are rotating on
-// target Node(n) right.
+// rotateRight() takes the target node(n) and its parent(p). We are rotating on
+// target node(n) right.
 //
 //            p                      p
 //            |                      |
@@ -270,13 +270,13 @@ func (m *Map) rotateLeft(n, p *Node) (*Node, *Node) {
 //       / \                           / \
 //      x   y                         y   r
 //
-// We are returning the original target Node(n) and its new parent(l), because
+// We are returning the original target node(n) and its new parent(l), because
 // they changed position and swapped their parent-child relationship.
 // Only p, n, and l changed values.
-func (m *Map) rotateRight(n, p *Node) (*Node, *Node) {
-	//assert(l == n.ln, "new Node is not left child of new parent")
+func (m *Map) rotateRight(n, p *node) (*node, *node) {
+	//assert(l == n.ln, "new node is not left child of new parent")
 	//assert(p == nil || n == p.rn,
-	//	"Node is not the right child of parent")
+	//	"node is not the right child of parent")
 	var l = n.ln
 	//log.Printf("rotateRight:\nn = %s\np = %s\nl = %s\n", n, p, l)
 
@@ -290,15 +290,15 @@ func (m *Map) rotateRight(n, p *Node) (*Node, *Node) {
 		m.root = l
 	}
 
-	n.ln = l.rn //handle anticipated orphaned Node
+	n.ln = l.rn //handle anticipated orphaned node
 	l.rn = n    //now orphan it
 
 	return n, l
 }
 
 // insertRepair() MUST be called on a new *Map.
-func (m *Map) insertRepair(on, nn *Node, path *nodeStack) {
-	var parent, gp, uncle *Node
+func (m *Map) insertRepair(on, nn *node, path *nodeStack) {
+	var parent, gp, uncle *node
 
 	parent = path.peek()
 
@@ -333,7 +333,7 @@ func (m *Map) insertRepair(on, nn *Node, path *nodeStack) {
 }
 
 // insertCase1() MUST be called on a new *Map.
-func (m *Map) insertCase1(on, nn *Node, path *nodeStack) {
+func (m *Map) insertCase1(on, nn *node, path *nodeStack) {
 	assert(path.len() == 0, "path.peek()==nil BUT path.len() != 0")
 	assert(m.root == on, "path.peek()==nil BUT m.root != on")
 
@@ -343,16 +343,16 @@ func (m *Map) insertCase1(on, nn *Node, path *nodeStack) {
 }
 
 // insertCase2() MUST be called on a new *Map.
-func (m *Map) insertCase2(on, nn *Node, path *nodeStack) {
+func (m *Map) insertCase2(on, nn *node, path *nodeStack) {
 	m.persistAll(on, nn, path)
 	return
 }
 
 // insertCase3() MUST be called on a new *Map.
-func (m *Map) insertCase3(on, nn *Node, path *nodeStack) {
+func (m *Map) insertCase3(on, nn *node, path *nodeStack) {
 	var parent = path.pop()
 	var gp = path.pop() //gp means grandparent
-	var uncle *Node
+	var uncle *node
 	if parent.isLeftChildOf(gp) {
 		uncle = gp.rn
 	} else {
@@ -395,7 +395,7 @@ func (m *Map) insertCase3(on, nn *Node, path *nodeStack) {
 }
 
 // insertCase4() MUST be called on a new *Map.
-func (m *Map) insertCase4(on, nn *Node, path *nodeStack) {
+func (m *Map) insertCase4(on, nn *node, path *nodeStack) {
 	var parent = path.pop()
 	var gp = path.pop() //gp means grandparent
 
@@ -439,11 +439,11 @@ func (m *Map) insertCase4(on, nn *Node, path *nodeStack) {
 // which is annotated with commentary for me to understand the insert-n-balance
 // a reb-Black tree algorithm.
 //
-// insertBalance() rebalances the Red-Black tree from a given Node to
+// insertBalance() rebalances the Red-Black tree from a given node to
 // the root.
 //
 // insertBalance() MUST be called on a new *Map.
-func (m *Map) insertBalance(on, nn *Node, path *nodeStack) {
+func (m *Map) insertBalance(on, nn *node, path *nodeStack) {
 
 	if path.peek() == nil {
 		// INSERT CASE #1
@@ -533,7 +533,7 @@ func (m *Map) insertBalance(on, nn *Node, path *nodeStack) {
 	} else {
 		nparent.rn = nn
 	}
-	//log.Println("insertBalance: created new parent and stitched new Node into it.")
+	//log.Println("insertBalance: created new parent and stitched new node into it.")
 
 	// create new grandparent and stitch nn into ngp
 	var ngp = gp.copy()
@@ -547,11 +547,11 @@ func (m *Map) insertBalance(on, nn *Node, path *nodeStack) {
 	// insert_case4: conditional prep-rotate
 	// We pre-rotate when nn is the inner child of the grandparent.
 	if nn.isRightChildOf(nparent) && nparent.isLeftChildOf(ngp) {
-		//log.Println("insertBalance: New Node is inner child of grandparent.")
+		//log.Println("insertBalance: New node is inner child of grandparent.")
 		//log.Println("insertBalance: Doing prep-rotateLeft on parent.")
 		nn, nparent = m.rotateLeft(nparent, ngp)
 	} else if nn.isLeftChildOf(nparent) && nparent.isRightChildOf(ngp) {
-		//log.Println("insertBalance: New Node is inner child of grandparent.")
+		//log.Println("insertBalance: New node is inner child of grandparent.")
 		//log.Println("insertBalance: Doing prep-rotateLeft on parent.")
 		nn, nparent = m.rotateRight(nparent, ngp)
 	}
@@ -567,7 +567,7 @@ func (m *Map) insertBalance(on, nn *Node, path *nodeStack) {
 
 	// insert_case4: final rotate
 	// This rotate makes nparent the root of this sub-tree. Hence, nparent
-	// is the Node we want persisted.
+	// is the node we want persisted.
 	if nn.isLeftChildOf(nparent) {
 		//log.Println("insertBalance: insert_case #5: Doing rotateRight.")
 		nparent, ngp = m.rotateRight(ngp, path.peek())
@@ -601,7 +601,7 @@ func (m *Map) Delete(k MapKey) *Map {
 	return m.Del(k)
 }
 
-// Remove() eliminates the Node pointed to by the MapKey argument (and
+// Remove() eliminates the node pointed to by the MapKey argument (and
 // rebalances) a persistent version of the given *Map.
 func (m *Map) Remove(k MapKey) (*Map, interface{}, bool) {
 	var on, path = m.root.findNodeWithPath(k)
@@ -610,15 +610,15 @@ func (m *Map) Remove(k MapKey) (*Map, interface{}, bool) {
 	if on == nil {
 		return m, nil, false
 	}
-	//found Node associated with k
+	//found node associated with k
 	var retVal = on.val
 
 	var nm = m.copy()
 
-	var oterm *Node
-	var nterm *Node
+	var oterm *node
+	var nterm *node
 
-	// if Node has two children swap values with previous in-order Node, then
+	// if node has two children swap values with previous in-order node, then
 	// delete that child, which will have at most one child of its' own.
 	if on.ln != nil && on.rn != nil {
 		log.Printf("Remove: on has two childred; on=%s", on)
@@ -632,9 +632,9 @@ func (m *Map) Remove(k MapKey) (*Map, interface{}, bool) {
 			path.push(on)
 			on = on.rn
 		}
-		//on now points to previous Node
+		//on now points to previous node
 
-		//trade oterm.val for previous Node's val
+		//trade oterm.val for previous node's val
 		nterm.val = on.val
 		log.Printf("Remove: setting nterm=%s", nterm)
 	} else {
@@ -642,7 +642,7 @@ func (m *Map) Remove(k MapKey) (*Map, interface{}, bool) {
 		log.Printf("Remove: setting oterm to m.root; oterm=%s", oterm)
 	}
 
-	var ochild, nchild *Node
+	var ochild, nchild *node
 	log.Printf("Remove: calling remove_one_child() on on=%s\noterm=%s\npath=%s",
 		on, oterm, path)
 	//remove_one_child should be remove_node_with_zero_or_one_child but that
@@ -658,7 +658,7 @@ func (m *Map) Remove(k MapKey) (*Map, interface{}, bool) {
 	//if on != oterm {
 	if nterm != nil {
 		//nterm has been allocated. This means oterm has been set to "on" and
-		//"on" has be set to the Node previous the origninal on. Hence we have
+		//"on" has be set to the node previous the origninal on. Hence we have
 		//to set one of the children of the new on to ...
 		// FUCK IT this explination isn't working...
 		log.Println("Remove: on != oterm")
@@ -684,10 +684,10 @@ func (m *Map) Remove(k MapKey) (*Map, interface{}, bool) {
 }
 
 //func (m *Map) replaceNode(on, child, path) (
-//	/* nparent */ *Node, /* path */ *nodeStack,
+//	/* nparent */ *node, /* path */ *nodeStack,
 //) {
-func (m *Map) replaceNode(on, child, oparent *Node) *Node {
-	var nparent *Node
+func (m *Map) replaceNode(on, child, oparent *node) *node {
+	var nparent *node
 	if oparent != nil {
 		nparent = oparent.copy()
 		if on.isLeftChildOf(oparent) {
@@ -702,20 +702,20 @@ func (m *Map) replaceNode(on, child, oparent *Node) *Node {
 	return nparent
 }
 
-//remove_one_child() deletes a Node that has only on child. Basically, we
-//reparent the child to the parent of the deleted Node, then balance the
+//remove_one_child() deletes a node that has only on child. Basically, we
+//reparent the child to the parent of the deleted node, then balance the
 //tree. The deleteCase?() methods are the balancing methods, but the deletion
 //occurs here in remove_one_child().
 //
 //remove_one_child() should be remove_node_with_zero_or_one_child() but that
 //is to long :).
-func (m *Map) remove_one_child(on, term *Node, path *nodeStack) (
-	/*ochild*/ *Node,
-	/*nchild*/ *Node,
+func (m *Map) remove_one_child(on, term *node, path *nodeStack) (
+	/*ochild*/ *node,
+	/*nchild*/ *node,
 	/*path*/ *nodeStack,
 ) {
-	//find the child of the Node to be deleted.
-	var ochild *Node
+	//find the child of the node to be deleted.
+	var ochild *node
 	if on.ln != nil {
 		ochild = on.ln
 	} else {
@@ -723,7 +723,7 @@ func (m *Map) remove_one_child(on, term *Node, path *nodeStack) (
 	}
 	//note: ochild could be nil
 
-	var nn *Node
+	var nn *node
 	var oparent = path.peek() //could be nil
 
 	if on.IsBlack() {
@@ -787,9 +787,9 @@ func (m *Map) remove_one_child(on, term *Node, path *nodeStack) (
 	return m.persistTill(oparent, nparent, term, path)
 }
 
-func (m *Map) deleteCase1(on, nn, term *Node, path *nodeStack) (
-	/*ochild*/ *Node,
-	/*nchild*/ *Node,
+func (m *Map) deleteCase1(on, nn, term *node, path *nodeStack) (
+	/*ochild*/ *node,
+	/*nchild*/ *node,
 	/*path*/ *nodeStack,
 ) {
 	//Fact: on.IsBlack()
@@ -815,9 +815,9 @@ func (m *Map) deleteCase1(on, nn, term *Node, path *nodeStack) (
 // when sibling is Red we rotate away from it. My fuzzy understanding is that
 // the sibling side is longer and we are trying to shorten the target side,
 // hence we need to rotate to the short side.
-func (m *Map) deleteCase23(on, nn, term *Node, path *nodeStack) (
-	/*ochild*/ *Node,
-	/*nchild*/ *Node,
+func (m *Map) deleteCase23(on, nn, term *node, path *nodeStack) (
+	/*ochild*/ *node,
+	/*nchild*/ *node,
 	/*path*/ *nodeStack,
 ) {
 	//Fact: on.IsBlack()
@@ -831,12 +831,12 @@ func (m *Map) deleteCase23(on, nn, term *Node, path *nodeStack) (
 	var ogp = path.peekN(1)
 	var osibling = on.sibling(oparent)
 
-	var nparent *Node
-	var nsibling *Node
+	var nparent *node
+	var nsibling *node
 
 	if osibling.IsRed() {
 		// I need to grok the scenario (if any) where
-		var ngp *Node
+		var ngp *node
 		if ogp != nil {
 			ngp = ogp.copy()
 		}
@@ -888,17 +888,17 @@ func (m *Map) deleteCase23(on, nn, term *Node, path *nodeStack) (
 	return m.deleteCase4(on, term, path)
 }
 
-func (m *Map) deleteCase4(on, term *Node, path *nodeStack) (
-	/*ochild*/ *Node,
-	/*nchild*/ *Node,
+func (m *Map) deleteCase4(on, term *node, path *nodeStack) (
+	/*ochild*/ *node,
+	/*nchild*/ *node,
 	/*path*/ *nodeStack,
 ) {
 	panic("not implemented")
 	return nil, nil, nil
 }
 
-//func (m *Map) deleteCase4(on, term *Node, path *nodeStack) (
-//	*Node, *Node, *nodeStack,
+//func (m *Map) deleteCase4(on, term *node, path *nodeStack) (
+//	*node, *node, *nodeStack,
 //) {
 //	panic("not implemented")
 //	return nil, nil, nil
@@ -918,17 +918,17 @@ func (m *Map) deleteCase4(on, term *Node, path *nodeStack) (
 //	return deleteCase5(on, term, path)
 //}
 
-func (m *Map) deleteCase56(on, term *Node, path *nodeStack) (
-	/*ochild*/ *Node,
-	/*nchild*/ *Node,
+func (m *Map) deleteCase56(on, term *node, path *nodeStack) (
+	/*ochild*/ *node,
+	/*nchild*/ *node,
 	/*path*/ *nodeStack,
 ) {
 	panic("not implemented")
 	return nil, nil, nil
 }
 
-//func (m *Map) deleteCase5(on, term *Node, path *nodeStack) (
-//	*Node, *Node, *nodeStack,
+//func (m *Map) deleteCase5(on, term *node, path *nodeStack) (
+//	*node, *node, *nodeStack,
 //) {
 //	panic("not implemented")
 //	return nil, nil, nil
@@ -956,8 +956,8 @@ func (m *Map) deleteCase56(on, term *Node, path *nodeStack) (
 //	return deleteCase6(on, term, path)
 //}
 
-//func (m *Map) deleteCase6(on, term *Node, path *nodeStack) (
-//	*Node, *Node, *nodeStack,
+//func (m *Map) deleteCase6(on, term *node, path *nodeStack) (
+//	*node, *node, *nodeStack,
 //) {
 //	panic("not implemented")
 //	return nil, nil, nil
@@ -1009,9 +1009,9 @@ func (m *Map) Keys() []MapKey {
 	return keys
 }
 
-//DELtype visitFn func(*Node, *nodeStack) bool
+//DELtype visitFn func(*node, *nodeStack) bool
 
-func (m *Map) walkPreOrder(fn func(*Node, *nodeStack) bool) bool {
+func (m *Map) walkPreOrder(fn func(*node, *nodeStack) bool) bool {
 	if m.root != nil {
 		var path = newNodeStack()
 		return m.root.visitPreOrder(fn, path)
@@ -1019,7 +1019,7 @@ func (m *Map) walkPreOrder(fn func(*Node, *nodeStack) bool) bool {
 	return true
 }
 
-func (m *Map) walkInOrder(fn func(*Node, *nodeStack) bool) bool {
+func (m *Map) walkInOrder(fn func(*node, *nodeStack) bool) bool {
 	if m.root != nil {
 		var path = newNodeStack()
 		return m.root.visitInOrder(fn, path)
@@ -1030,7 +1030,7 @@ func (m *Map) walkInOrder(fn func(*Node, *nodeStack) bool) bool {
 func (m *Map) TreeString() string {
 	var strs = make([]string, m.numEnts)
 	var i int
-	var fn = func(n *Node, path *nodeStack) bool {
+	var fn = func(n *node, path *nodeStack) bool {
 		var pk interface{}
 		var parent = path.peek()
 		if parent == nil {
@@ -1056,7 +1056,7 @@ func (m *Map) String() string {
 	//log.Println("String: m.numEnts =", m.numEnts)
 
 	//var i int
-	//var fn = func(n *Node, path *nodeStack) bool {
+	//var fn = func(n *node, path *nodeStack) bool {
 	//	strs[i] = fmt.Sprintf("%#v: %#v", n.key, n.val)
 	//	i++
 	//	return true

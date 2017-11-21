@@ -4,9 +4,9 @@ import (
 	"fmt"
 )
 
-type Color bool
+type colorType bool
 
-func (c Color) String() string {
+func (c colorType) String() string {
 	if !c {
 		return "RED"
 	}
@@ -15,31 +15,30 @@ func (c Color) String() string {
 
 const (
 	//Black is public for testing only.
-	Black = Color(true)
+	Black = colorType(true)
 	//Red is public for testing only.
-	Red = Color(false)
+	Red = colorType(false)
 )
 
-// color() returns the color of a Node, the reason for its existence is to
-// treat nil *Node values as Black.
-func color(n *Node) Color {
+// color() returns the color of a node, the reason for its existence is to
+// treat nil *node values as Black.
+func color(n *node) colorType {
 	if n == nil {
 		return Black
 	}
 	return n.color
 }
 
-//Node struct is public for testing only.
-type Node struct {
+type node struct {
 	key   MapKey
 	val   interface{}
-	color Color //default Node is RED aka false
-	ln    *Node
-	rn    *Node
+	color colorType //default node is RED aka false
+	ln    *node
+	rn    *node
 }
 
-func newNode(k MapKey, v interface{}) *Node {
-	var n = new(Node)
+func newNode(k MapKey, v interface{}) *node {
+	var n = new(node)
 	n.key = k
 	n.val = v
 	//n.color = Red   //default
@@ -48,83 +47,84 @@ func newNode(k MapKey, v interface{}) *Node {
 	return n
 }
 
-//MakeNode() is here for testing only.
-func MakeNode(k MapKey, v interface{}, c Color, ln, rn *Node) *Node {
-	return &Node{k, v, c, ln, rn}
+//MakeNode() is public for testing only.
+func MakeNode(k MapKey, v interface{}, c colorType, ln, rn *node) *node {
+	return &node{k, v, c, ln, rn}
 }
 
-//Key() is here for testing only.
-func (n *Node) Key() MapKey {
+//Key() is public for testing only.
+func (n *node) Key() MapKey {
 	return n.key
 }
 
-//Val() is here for testing only.
-func (n *Node) Val() interface{} {
+//Val() is public for testing only.
+func (n *node) Val() interface{} {
 	return n.val
 }
 
-//Color() is here for testing only.
-func (n *Node) Color() Color {
+//colorType() is public for testing only.
+func (n *node) Color() colorType {
 	return n.color
 }
 
-//Ln() is here for testing only.
-func (n *Node) Ln() *Node {
+//Ln() is public for testing only.
+func (n *node) Ln() *node {
 	return n.ln
 }
 
-//Rn() is here for testing only.
-func (n *Node) Rn() *Node {
+//Rn() is public for testing only.
+func (n *node) Rn() *node {
 	return n.rn
 }
 
-func (n *Node) copy() *Node {
-	var nn = new(Node)
+func (n *node) copy() *node {
+	var nn = new(node)
 	*nn = *n
 	return nn
 }
 
-// IsRed() returns true if the color is Red.
-func (n *Node) IsRed() bool {
+// IsRed() is public for testing only.
+func (n *node) IsRed() bool {
 	return bool(!color(n)) //given that Red is encoded with a false value
 }
 
-func (n *Node) IsBlack() bool {
+// IsBlack() is public for testing only.
+func (n *node) IsBlack() bool {
 	return bool(color(n)) //given that Black is encoded as true
 }
 
-func (n *Node) setBlack() *Node {
+func (n *node) setBlack() *node {
 	n.color = Black
 	return n
 }
 
-func (n *Node) setRed() *Node {
+func (n *node) setRed() *node {
 	n.color = Red
 	return n
 }
 
-func (n *Node) isLeftChildOf(parent *Node) bool {
+func (n *node) isLeftChildOf(parent *node) bool {
 	if parent.ln == n {
 		return true
 	}
 	return false
 }
 
-func (n *Node) isRightChildOf(parent *Node) bool {
+func (n *node) isRightChildOf(parent *node) bool {
 	if parent.rn == n {
 		return true
 	}
 	return false
 }
 
-func (n *Node) sibling(parent *Node) *Node {
+func (n *node) sibling(parent *node) *node {
 	if parent.ln == n {
 		return parent.rn
 	}
 	return parent.ln
 }
 
-func (n *Node) findNode(k MapKey) *Node {
+func (n *node) findNode(k MapKey) *node {
 	if n == nil {
 		return nil
 	}
@@ -143,7 +143,7 @@ func (n *Node) findNode(k MapKey) *Node {
 	return nil
 }
 
-func (n *Node) findNodeWithPath(k MapKey) (*Node, *nodeStack) {
+func (n *node) findNodeWithPath(k MapKey) (*node, *nodeStack) {
 	var path = newNodeStack()
 	var cur = n
 	//log.Printf("findNodeWithPath: cur=%s\n", cur)
@@ -166,13 +166,13 @@ func (n *Node) findNodeWithPath(k MapKey) (*Node, *nodeStack) {
 	return nil, path
 }
 
-// visitPreOrder() calls the visit function on the current Node, then
+// visitPreOrder() calls the visit function on the current node, then
 // conditionally calls visitPreOrder on its children. The condition is
-// if the Node exists.
+// if the node exists.
 //
 // should never be called when n == nil.
-func (n *Node) visitPreOrder(
-	fn func(*Node, *nodeStack) bool,
+func (n *node) visitPreOrder(
+	fn func(*node, *nodeStack) bool,
 	path *nodeStack,
 ) bool {
 	assert(n != nil, "visitPreOrder() called when n == nil")
@@ -201,13 +201,13 @@ func (n *Node) visitPreOrder(
 }
 
 // visitInOrder() conditionally calls visitInOrder() on its left child, then
-// calls the visit function on the current Node, and finnaly conditionally
-// calls visitInOrder() on its' right child. The condition is if the Node
+// calls the visit function on the current node, and finnaly conditionally
+// calls visitInOrder() on its' right child. The condition is if the node
 // exists.
 //
 // should never be called when n == nil.
-func (n *Node) visitInOrder(
-	fn func(*Node, *nodeStack) bool,
+func (n *node) visitInOrder(
+	fn func(*node, *nodeStack) bool,
 	path *nodeStack,
 ) bool {
 	assert(n != nil, "visitInOrder() called when n == nil")
@@ -235,7 +235,7 @@ func (n *Node) visitInOrder(
 	return true
 }
 
-func (n *Node) String() string {
+func (n *node) String() string {
 	if n == nil {
 		return "<nil>"
 	}
@@ -252,6 +252,6 @@ func (n *Node) String() string {
 	//	rnStr = "!nil"
 	//}
 
-	return fmt.Sprintf("Node{key:%s, val:%#v, color:%s ln:%p, rn:%p}",
+	return fmt.Sprintf("node{key:%s, val:%#v, color:%s ln:%p, rn:%p}",
 		n.key, n.val, n.color, n.ln, n.rn)
 }

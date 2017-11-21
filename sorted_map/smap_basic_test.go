@@ -147,20 +147,14 @@ func Test_Basic_Del_HiLo_TwoNodes(t *testing.T) {
 const Black = sorted_map.Black
 const Red = sorted_map.Red
 
-func mknod(
-	k int,
-	c sorted_map.Color,
-	ln, rn *sorted_map.Node,
-) *sorted_map.Node {
-	return sorted_map.MakeNode(IntKey(k), k, c, ln, rn)
-}
-
+var mknod = sorted_map.MakeNode
 var mkmap = sorted_map.MakeMap
 
 func Test_Del_Case1(t *testing.T) {
 	var m = mkmap(3,
-		mknod(20, Black,
-			mknod(30, Red, nil, nil),
+		mknod(IntKey(20), 20, Black,
+			nil,
+			mknod(IntKey(30), 30, Red, nil, nil),
 		))
 
 	m = m.Del(IntKey(30))
@@ -172,20 +166,20 @@ func Test_Del_Case1(t *testing.T) {
 		t.Fatal("!m.Root().IsBlack()")
 	}
 
-	if !m.Root().Ln().IsRed() {
-		t.Fatal("!m.Root().Ln().IsRed()")
+	if m.Root().Ln() != nil {
+		t.Fatal("m.Root().Rn() != nil")
 	}
 
 	if m.Root().Rn() != nil {
-		t.Fatal("m.Root().Rn() != nil")
+		t.Fatal("m.Root().Ln() != nil")
 	}
 }
 
 func Test_Del_Case3(t *testing.T) {
 	var m = mkmap(3,
-		mknod(20, Black,
-			mknod(10, Black, nil, nil),
-			mknod(30, Black, nil, nil),
+		mknod(IntKey(20), 20, Black,
+			mknod(IntKey(10), 10, Black, nil, nil),
+			mknod(IntKey(30), 30, Black, nil, nil),
 		))
 
 	m = m.Del(IntKey(30))

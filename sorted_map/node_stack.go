@@ -2,19 +2,19 @@ package sorted_map
 
 import "strings"
 
-type nodeStack []*Node
+type nodeStack []*node
 
 func newNodeStack() *nodeStack {
-	var ns nodeStack = make([]*Node, 0)
+	var ns nodeStack = make([]*node, 0)
 	return &ns
 }
 
-func (ns *nodeStack) push(n *Node) *nodeStack {
+func (ns *nodeStack) push(n *node) *nodeStack {
 	(*ns) = append(*ns, n)
 	return ns
 }
 
-func (ns *nodeStack) pop() *Node {
+func (ns *nodeStack) pop() *node {
 	if len(*ns) == 0 {
 		return nil
 	}
@@ -23,7 +23,7 @@ func (ns *nodeStack) pop() *Node {
 	return n
 }
 
-func (ns *nodeStack) peek() *Node {
+func (ns *nodeStack) peek() *node {
 	if len(*ns) == 0 {
 		return nil
 	}
@@ -31,7 +31,7 @@ func (ns *nodeStack) peek() *Node {
 }
 
 // peekN() is index from top. ie peekN(0) = (*ns)[len(*ns)-1]
-func (ns *nodeStack) peekN(n int) *Node {
+func (ns *nodeStack) peekN(n int) *node {
 	if len(*ns) < 1+n {
 		return nil
 	}
