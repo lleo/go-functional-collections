@@ -68,7 +68,7 @@ func Test_Basic_Del_OnlyRoot(t *testing.T) {
 	}
 }
 
-func Test_Basic_Del_TwoNodes0(t *testing.T) {
+func tTest_Basic_Del_TwoNodes0(t *testing.T) {
 	var m = sorted_map.New()
 
 	m = m.Put(IntKey(100), 10)
@@ -106,8 +106,10 @@ func buildMap(n int) (*sorted_map.Map, []sorted_map.MapKey) {
 	return m, keys
 }
 
-func Test_Basic_Del_TwoNodes(t *testing.T) {
+func Test_Basic_Del_LoHi_TwoNodes(t *testing.T) {
 	var m, keys = buildMap(2)
+
+	log.Printf("JUST BUILT: m=\n%s", m.TreeString())
 
 	var expectedNumEntries = uint(len(keys))
 	for i := 0; i < 2; i++ {
@@ -120,5 +122,118 @@ func Test_Basic_Del_TwoNodes(t *testing.T) {
 		}
 	}
 
-	log.Println("m =", m)
+	log.Printf("COMPLETELY DELETED m =\n%s", m.TreeString())
 }
+
+func Test_Basic_Del_HiLo_TwoNodes(t *testing.T) {
+	var m, keys = buildMap(2)
+
+	log.Printf("JUST BUILT: m=\n%s", m.TreeString())
+
+	var expectedNumEntries = uint(len(keys))
+	for i := 1; i >= 0; i-- {
+		var k = keys[i]
+		m = m.Del(k)
+		expectedNumEntries--
+
+		if m.NumEntries() != expectedNumEntries {
+			t.Fatal("m.Del(%s) failed.")
+		}
+	}
+
+	log.Printf("COMPLETELY DELETED m =\n%s", m.TreeString())
+}
+
+const Black = sorted_map.Black
+const Red = sorted_map.Red
+
+func mknod(
+	k int,
+	c sorted_map.Color,
+	ln, rn *sorted_map.Node,
+) *sorted_map.Node {
+	return sorted_map.MakeNode(IntKey(k), k, c, ln, rn)
+}
+
+var mkmap = sorted_map.MakeMap
+
+func Test_Del_Case1(t *testing.T) {
+	var m = mkmap(3,
+		mknod(20, Black,
+			mknod(30, Red, nil, nil),
+		))
+
+	m = m.Del(IntKey(30))
+	if m.NumEntries() != 2 {
+		t.Fatalf("m.NumEntries(),%d != 2", m.NumEntries())
+	}
+
+	if !m.Root().IsBlack() {
+		t.Fatal("!m.Root().IsBlack()")
+	}
+
+	if !m.Root().Ln().IsRed() {
+		t.Fatal("!m.Root().Ln().IsRed()")
+	}
+
+	if m.Root().Rn() != nil {
+		t.Fatal("m.Root().Rn() != nil")
+	}
+}
+
+func Test_Del_Case3(t *testing.T) {
+	var m = mkmap(3,
+		mknod(20, Black,
+			mknod(10, Black, nil, nil),
+			mknod(30, Black, nil, nil),
+		))
+
+	m = m.Del(IntKey(30))
+	if m.NumEntries() != 2 {
+		t.Fatalf("m.NumEntries(),%d != 2", m.NumEntries())
+	}
+
+	if !m.Root().IsBlack() {
+		t.Fatal("!m.Root().IsBlack()")
+	}
+
+	if !m.Root().Ln().IsRed() {
+		t.Fatal("!m.Root().Ln().IsRed()")
+	}
+
+	if m.Root().Rn() != nil {
+		t.Fatal("m.Root().Rn() != nil")
+	}
+}
+
+//func Test_Del_Case1(t *testing.T) {
+//	var m = mkmap(3,
+//		mknod(20, Black
+//			Black,
+//			mknod(10, Black,
+//				mknod(5, Red, nil, nil),
+//				mknod(15, Red, nil, nil)),
+//			mknod(30, Black,
+//				mknod(25, Red, nil, nil),
+//				mknod(35, Red, nil, nil)),
+//		))
+//
+//	m.Del(IntKey(25))
+//	if m.NumEntries() != 6 {
+//		t.Fatal("m.NumEntries() != 2")
+//	}
+//
+//	if m.Root().IsRed() {
+//		t.Fatal("m.Root().IsRed()")
+//	}
+//
+//	if m.Root().Ln().IsRed() {
+//		t.Fatal("m.Root().Ln().IsRed()")
+//	}
+//
+//	//FIXME...
+//
+//	if m.Root().Rn() != nil {
+//		t.Fatal("m.Root().Rn() != nil")
+//	}
+//}

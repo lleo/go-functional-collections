@@ -3,11 +3,11 @@ package sorted_map
 type nodeIter struct {
 	dir    bool // true == lower-to-higher; false == higher-to-lower
 	endKey MapKey
-	cur    *node
+	cur    *Node
 	path   *nodeStack
 }
 
-func newNodeIter(start *node, endKey MapKey, path *nodeStack) *nodeIter {
+func newNodeIter(start *Node, endKey MapKey, path *nodeStack) *nodeIter {
 	//log.Printf("newNodeIter: start = %s\n", start)
 	//log.Printf("newNodeIter: endKey = %s\n", endKey)
 	//log.Printf("newNodeIter: path = \n%s\n", path)
@@ -20,7 +20,7 @@ func newNodeIter(start *node, endKey MapKey, path *nodeStack) *nodeIter {
 	return iter
 }
 
-func (it *nodeIter) next() *node {
+func (it *nodeIter) next() *Node {
 	if it.dir {
 		return it.forw()
 	} else {
@@ -28,7 +28,7 @@ func (it *nodeIter) next() *node {
 	}
 }
 
-func (it *nodeIter) forw() *node {
+func (it *nodeIter) forw() *Node {
 	if it.cur == nil {
 		//the iterator is over
 		return nil
@@ -39,7 +39,7 @@ func (it *nodeIter) forw() *node {
 
 	var ret = it.cur
 
-	// set it.cur to next node
+	// set it.cur to next Node
 	if it.cur.rn != nil {
 		//go right one then left-most
 		it.path.push(it.cur)
@@ -70,7 +70,7 @@ func (it *nodeIter) forw() *node {
 	return ret
 }
 
-func (it *nodeIter) back() *node {
+func (it *nodeIter) back() *Node {
 	if it.cur == nil {
 		//the iterator is over
 		return nil
@@ -80,7 +80,7 @@ func (it *nodeIter) back() *node {
 	}
 	var ret = it.cur
 
-	// set it.cur to previous node
+	// set it.cur to previous Node
 	if it.cur.ln != nil {
 		//go left one then right-most
 		it.path.push(it.cur)
