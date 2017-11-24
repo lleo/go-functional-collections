@@ -7,54 +7,52 @@ import (
 	"github.com/lleo/go-functional-collections/sorted_map"
 )
 
-var gMap *sorted_map.Map
-
-func Test_Basic_BuildSimpleMap(t *testing.T) {
-	var gMap = sorted_map.New()
+func Test_Basic_BuildMap(t *testing.T) {
+	var m = sorted_map.New()
 
 	log.Println("insert #1 100,0")
-	gMap = gMap.Put(IntKey(100), 0)
-	//log.Printf("gMap=\n%s\n", gMap.TreeString())
+	m = m.Put(IntKey(100), 0)
+	//log.Printf("m=\n%s\n", m.TreeString())
 
 	log.Println("insert #2 50,0")
-	gMap = gMap.Put(IntKey(50), 0)
-	//log.Printf("gMap.NumEntries()=%d; nodes=\n%s\n", gMap.NumEntries(), gMap.TreeString())
+	m = m.Put(IntKey(50), 0)
+	//log.Printf("m.NumEntries()=%d; nodes=\n%s\n", m.NumEntries(), m.TreeString())
 
 	log.Println("insert #3 70,0")
-	//gMap = gMap.Put(IntKey(70), 0)
-	gMap = gMap.Put(IntKey(30), 0)
-	//log.Printf("gMap=\n%s\n", gMap.TreeString())
+	//m = m.Put(IntKey(70), 0)
+	m = m.Put(IntKey(30), 0)
+	//log.Printf("m=\n%s\n", m.TreeString())
 
 	log.Println("insert #3 40,0")
-	//gMap = gMap.Put(IntKey(40), 0)
-	gMap = gMap.Put(IntKey(40), 0)
-	//log.Printf("gMap=\n%s\n", gMap.TreeString())
+	//m = m.Put(IntKey(40), 0)
+	m = m.Put(IntKey(40), 0)
+	//log.Printf("m=\n%s\n", m.TreeString())
 
 	log.Println("insert #4 150,0")
-	gMap = gMap.Put(IntKey(150), 0)
-	//log.Printf("gMap=\n%s\n", gMap.TreeString())
+	m = m.Put(IntKey(150), 0)
+	//log.Printf("m=\n%s\n", m.TreeString())
 
 	log.Println("insert #5 200,0")
-	gMap = gMap.Put(IntKey(200), 0)
-	//log.Printf("gMap=\n%s\n", gMap.TreeString())
+	m = m.Put(IntKey(200), 0)
+	//log.Printf("m=\n%s\n", m.TreeString())
 
 	log.Println("insert #6 250,0")
-	gMap = gMap.Put(IntKey(250), 0)
-	//log.Printf("gMap=\n%s\n", gMap.TreeString())
+	m = m.Put(IntKey(250), 0)
+	//log.Printf("m=\n%s\n", m.TreeString())
 
 	log.Println("insert #7 300,0")
-	gMap = gMap.Put(IntKey(300), 0)
-	//log.Printf("gMap=\n%s\n", gMap.TreeString())
+	m = m.Put(IntKey(300), 0)
+	//log.Printf("m=\n%s\n", m.TreeString())
 
 	log.Println("insert #8 350,0")
-	gMap = gMap.Put(IntKey(350), 0)
-	log.Printf("gMap=\n%s\n", gMap.TreeString())
+	m = m.Put(IntKey(350), 0)
+	log.Printf("m=\n%s\n", m.TreeString())
 
 	log.Println("replace #8 350,10")
-	gMap = gMap.Put(IntKey(350), 10)
-	log.Printf("gMap=\n%s\n", gMap.TreeString())
-	log.Printf("keyVals = %q\n", gMap)
-	//gMap.String = "{30: 0, 50: 400, 10: 0, 15: 0, 20: 0, 25: 0, 30: 0, 35: 10}"
+	m = m.Put(IntKey(350), 10)
+	log.Printf("m=\n%s\n", m.TreeString())
+	log.Printf("keyVals = %q\n", m)
+	//m.String = "{30: 0, 50: 400, 10: 0, 15: 0, 20: 0, 25: 0, 30: 0, 35: 10}"
 }
 
 func Test_Basic_Del_OnlyRoot(t *testing.T) {

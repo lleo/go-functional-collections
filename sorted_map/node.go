@@ -83,6 +83,33 @@ func (n *node) copy() *node {
 	return nn
 }
 
+//dup() is for testing only. It is a recursive copy().
+func (n *node) dup() *node {
+	if n == nil {
+		return nil
+	}
+	var nn = &node{
+		key:   n.key,
+		val:   n.val,
+		color: n.color,
+		ln:    n.ln.dup(),
+		rn:    n.rn.dup(),
+	}
+	return nn
+}
+
+//equiv() is for testing only. It is a equal-by-value method.
+func (n *node) equiv(n0 *node) bool {
+	if n == nil {
+		return n0 == nil
+	} else if n0 == nil {
+		return false
+	}
+	//n != nil && n0 != nil
+	return cmp(n.key, n0.key) == 0 && n.val == n0.val &&
+		n.ln.equiv(n0.ln) && n.rn.equiv(n0.rn)
+}
+
 // IsRed() is public for testing only.
 func (n *node) IsRed() bool {
 	return bool(!color(n)) //given that Red is encoded with a false value

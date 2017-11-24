@@ -58,7 +58,7 @@ func (m *Map) iterAll() *nodeIter {
 
 func (m *Map) iterRange(startKey, endKey MapKey) *nodeIter {
 	var cur, path = m.root.findNodeWithPath(startKey)
-	log.Printf("iterRange: cur=%s\npath=%s", cur, path)
+	//log.Printf("iterRange: cur=%s\npath=%s", cur, path)
 	var dir = less(startKey, endKey)
 	if cur == nil {
 		cur = path.pop()
@@ -155,8 +155,8 @@ func (m *Map) replace(k MapKey, v interface{}, on *node, path *nodeStack) {
 //
 // insert() MUST be called on a new *Map.
 func (m *Map) insert(k MapKey, v interface{}, path *nodeStack) {
-	var on *node // = nil
-	var nn = newNode(k, v)
+	var on *node           // = nil
+	var nn = newNode(k, v) //nn.isRed ALWAYS!
 
 	//m.insertBalance(on, nn, path)
 
@@ -186,10 +186,7 @@ func (m *Map) persistTill(on, nn, term *node, path *nodeStack) (
 	if path.len() == 0 {
 		log.Printf("persistTill: SETTING ROOT:\n"+
 			"OLD m.root=%p; m.root=%v\nNEW ROOT nn=%s\n", m.root, m.root, nn)
-		//if nn.IsRed() {
-		//	log.Println("persistAll: ROOT: ************ nn.IsRed ************")
-		//	nn.setBlack()
-		//}
+		assert(nn.IsBlack(), "new root 'nn' is not black")
 		m.root = nn
 		return m.root, nn, path
 	}
@@ -223,7 +220,8 @@ func (m *Map) persistTill(on, nn, term *node, path *nodeStack) (
 }
 
 // rotateLeft() takes the target node(n) and its parent(p). We are rotating on
-// target node(n) left.
+// target node(n) left. We assume that all arguments are mutable. We return
+// the original n and it's new parent.
 //
 //            p                      p
 //            |                      |
@@ -240,7 +238,7 @@ func (m *Map) rotateLeft(n, p *node) (*node, *node) {
 	//assert(n == p.rn, "new node is not right child of new parent")
 	//assert(p == nil || n == p.ln,
 	//	"node is not the left child of parent")
-	var r = n.rn
+	var r = n.rn //assume n.rn is already a copy.
 	//log.Printf("rotateLeft:\nn = %s\np = %s\nr = %s\n", n, p, r)
 
 	if p != nil {
@@ -249,9 +247,9 @@ func (m *Map) rotateLeft(n, p *node) (*node, *node) {
 		} else {
 			p.rn = r
 		}
-	} else {
+	} /* else {
 		m.root = r
-	}
+	} */
 
 	n.rn = r.ln //handle anticipated orphaned node
 	r.ln = n    //now orphan it
@@ -260,7 +258,8 @@ func (m *Map) rotateLeft(n, p *node) (*node, *node) {
 }
 
 // rotateRight() takes the target node(n) and its parent(p). We are rotating on
-// target node(n) right.
+// target node(n) right. We assume that all arguments are mutable. We return
+// the original n and it's new parent.
 //
 //            p                      p
 //            |                      |
@@ -277,7 +276,7 @@ func (m *Map) rotateRight(n, p *node) (*node, *node) {
 	//assert(l == n.ln, "new node is not left child of new parent")
 	//assert(p == nil || n == p.rn,
 	//	"node is not the right child of parent")
-	var l = n.ln
+	var l = n.ln //assume n.ln is already a copy.
 	//log.Printf("rotateRight:\nn = %s\np = %s\nl = %s\n", n, p, l)
 
 	if p != nil {
@@ -286,9 +285,9 @@ func (m *Map) rotateRight(n, p *node) (*node, *node) {
 		} else {
 			p.rn = l
 		}
-	} else {
+	} /* else {
 		m.root = l
-	}
+	} */
 
 	n.ln = l.rn //handle anticipated orphaned node
 	l.rn = n    //now orphan it
@@ -325,9 +324,11 @@ func (m *Map) insertRepair(on, nn *node, path *nodeStack) {
 		// grandparent is Black because parent is Red
 		m.insertCase3(on, nn, path)
 	} else {
-		// we know:
-		// the nn side is longer than the uncle side because
-		// parent.IsRed and nn.IsRed and uncle.IsBlack.
+		//we know:
+		//  grandparent is Black because parent is Red
+		//  parent.IsRed
+		//  uncle.IsBlack
+		//  nn.IsRed and
 		m.insertCase4(on, nn, path)
 	}
 }
@@ -394,197 +395,188 @@ func (m *Map) insertCase3(on, nn *node, path *nodeStack) {
 	return
 }
 
+//// insertCase4() MUST be called on a new *Map.
+//func (m *Map) insertCase4(on, nn *node, path *nodeStack) {
+//	//Facts:
+//	//  grandparent exists because root is never Red
+//	//  grandparent is Black because parent is Red
+//	//  parent.IsRed
+//	//  uncle.IsBlack
+//	//  nn.IsRed and
+//
+//	var oparent = path.pop()
+//	var ogp = path.pop() //ogp means original grandparent
+//
+//	var nparent = oparent.copy()
+//	if less(nn.key, oparent.key) {
+//		nparent.ln = nn
+//	} else {
+//		nparent.rn = nn
+//	}
+//
+//	var ngp = ogp.copy()
+//	if oparent.isLeftChildOf(ogp) {
+//		ngp.ln = nparent
+//	} else {
+//		ngp.rn = nparent
+//	}
+//
+//	// insertCase4.1: conditional prep-rotate
+//	// We pre-rotate when nn is the inner child of the grandparent.
+//	if nn.isRightChildOf(nparent) && nparent.isLeftChildOf(ngp) {
+//		nn, nparent = m.rotateLeft(nparent, ngp)
+//	} else if nn.isLeftChildOf(nparent) && nparent.isRightChildOf(ngp) {
+//		nn, nparent = m.rotateRight(nparent, ngp)
+//	}
+//
+//	//nn's parent is old nn
+//	//nn's grandparent is old nn's grandparent
+//
+//	// insertCase4.2: balancing rotate
+//	nparent.setBlack()
+//	ngp.setRed()
+//
+//	//FIXME!!! the below path.peek() is refering to a non-mutable node!
+//	if nn.isLeftChildOf(nparent) {
+//		//FIXME!!! we don't know if ngp.ln == nparent, hence we don't know
+//		//if ngp.ln is a mutable node (aka a copied node).
+//		log.Printf("insertCase4.2: rotateRight:\n"+
+//			"nn=%s\nnparent=%s\nngp=%s\npath.peek()=%s\npath=%s",
+//			nn, nparent, ngp, path.peek(), path)
+//		nparent, ngp = m.rotateRight(ngp, path.peek())
+//	} else {
+//		//FIXME!!! we don't know if ngp.rn == nparent, hence we don't know
+//		//if ngp.rn is a mutable node (aka a copied node).
+//		log.Printf("insertCase4.2: rotateLeft:\n"+
+//			"nn=%s\nnparent=%s\nngp=%s\npath.peek()=%s\npath=%s",
+//			nn, nparent, ngp, path.peek(), path)
+//		nparent, ngp = m.rotateLeft(ngp, path.peek())
+//	}
+//
+//	m.persistAll(ogp, ngp, path)
+//	return
+//}
+
 // insertCase4() MUST be called on a new *Map.
 func (m *Map) insertCase4(on, nn *node, path *nodeStack) {
-	var parent = path.pop()
-	var gp = path.pop() //gp means grandparent
+	var oparent = path.peek()
+	var ogp = path.peek() //ogp means original grandparent
 
-	var nparent = parent.copy()
-	if less(nn.key, parent.key) {
+	//this could be a wasted op; should put it inside the conditional
+	var nparent = oparent.copy()
+	if less(nn.key, oparent.key) {
 		nparent.ln = nn
 	} else {
 		nparent.rn = nn
 	}
 
-	var ngp = gp.copy()
-	if parent.isLeftChildOf(gp) {
+	//this could be a wasted op; should put it inside the conditional
+	var ngp = ogp.copy()
+	if oparent.isLeftChildOf(ogp) {
 		ngp.ln = nparent
 	} else {
 		ngp.rn = nparent
 	}
 
-	// insert_case4.1: conditional prep-rotate
+	// insertCase4.1: conditional prep-rotate
 	// We pre-rotate when nn is the inner child of the grandparent.
-	if nn.isRightChildOf(nparent) && nparent.isLeftChildOf(ngp) {
-		nn, nparent = m.rotateLeft(nparent, ngp)
-	} else if nn.isLeftChildOf(nparent) && nparent.isRightChildOf(ngp) {
-		nn, nparent = m.rotateRight(nparent, ngp)
+	if nn.isRightChildOf(nparent) && oparent.isLeftChildOf(ogp) {
+		//nn, nparent = m.rotateLeft(nparent, ngp)
+		nparent, nn = m.rotateLeft(nparent, ngp)
+
+		path.pop() //take oparent off path
+		path.pop() //take ogp off path
+		path.push(ngp)
+		path.push(nn)
+
+		nn = nn.ln
+	} else if nn.isLeftChildOf(nparent) && oparent.isRightChildOf(ogp) {
+		//nn, nparent = m.rotateRight(nparent, ngp)
+		nparent, nn = m.rotateRight(nparent, ngp)
+
+		path.pop() //take oparent off path
+		path.pop() //take ogp off path
+		path.push(ngp)
+		path.push(nn)
+
+		nn = nn.rn
 	}
 
-	// insert_case4.2: balancing rotate
-	nparent.setBlack()
-	ngp.setRed()
-
-	if nn.isLeftChildOf(nparent) {
-		nparent, ngp = m.rotateRight(ngp, path.peek())
-	} else {
-		nparent, ngp = m.rotateLeft(ngp, path.peek())
-	}
-
-	m.persistAll(gp, ngp, path)
+	m.insertCase4pt2(on, nn, path)
 	return
 }
 
-// insertBalance() was the what insertRepair() does but in one large function.
-// which is annotated with commentary for me to understand the insert-n-balance
-// a reb-Black tree algorithm.
-//
-// insertBalance() rebalances the Red-Black tree from a given node to
-// the root.
-//
-// insertBalance() MUST be called on a new *Map.
-func (m *Map) insertBalance(on, nn *node, path *nodeStack) {
+func (m *Map) insertCase4pt2(on, nn *node, path *nodeStack) {
+	var oparent = path.pop()
+	var ogp = path.pop()
 
-	if path.peek() == nil {
-		// INSERT CASE #1
-		//log.Println("insertBalance: path.peek() == nil")
-		// path.peek() is the parent and the only way it can be nil is if
-		// path.len()==0 and m.root == nil.
-		assert(path.len() == 0, "path.peek()==nil BUT path.len() != 0")
-		assert(m.root == on, "path.peek()==nil BUT m.root != on")
-
-		nn.setBlack() //to enforce RBT#2
-
-		m.persistAll(on, nn, path)
-		return
-	}
-	//Fact#2: parent (aka path.peek()) != nil
-	//log.Println("insertBalance: path.peek() != nil")
-
-	if path.peek().IsBlack() {
-		// INSERT CASE #2
-		//log.Printf("insertBalance: insert_case #2: path.peek().IsBlack()")
-		m.persistAll(on, nn, path) //persist will stitch nn into parent->child
-		return
-	}
-
-	// INSERT CASE #3
-
-	var parent = path.pop()
-
-	//Fact#3: parent.IsRed() == true
-	// Fact#1 && Fact#3 violate RBT#4,
-	// so we have to fix this with rotations.
-
-	//Fact#4: parent has a parent; aka the grandparent exists
-	// This is because of Fact#3(parent is Red) & RBT#2(root MUST be Black).
-	// Reasoning: If there is no grandparent then parent would be root and
-	// hence Black, but the parent is Red, so parent must have a parent.
-	var gp = path.pop() //gp means grandparent
-	//NOTE: path is now relative to grandparent
-
-	//find uncle
-	var uncle = parent.sibling(gp)
-
-	// insert_case3: parent.IsRed() && uncle.IsRed()
-	if uncle.IsRed() {
-		//log.Println("insertBalance: insert case #3: uncle.IsRed()")
-		//NOTE: IsRed() method works when object is nil (it returns false).
-		//Local Fact: if uncle is Red, then uncle != nil
-
-		var nparent = parent.copy()
-		nparent.setBlack()
-
-		if less(nn.key, parent.key) {
-			nparent.ln = nn
-		} else {
-			nparent.rn = nn
-		}
-
-		var nuncle = uncle.copy() //new uncle, cuz I am mutating it.
-		nuncle.setBlack()
-
-		var ngp = gp.copy() //new grandparent, cuz I am mutating it.
-		ngp.setRed()
-
-		if parent.isLeftChildOf(gp) {
-			ngp.ln = nparent
-			ngp.rn = nuncle
-		} else {
-			ngp.ln = nuncle
-			ngp.rn = nparent
-		}
-
-		//nn = ngp //This is ok, cuz path is relative to gp
-
-		m.insertBalance(gp, ngp, path)
-		return
-	}
-
-	// From here on, we are dealing with nn, parent, and gp where path
-	// is relative to gp.
-
-	// INSERT CASE #4.1
-
-	// create new parent and stitch nn into nparent
-	var nparent = parent.copy()
-	if less(nn.key, parent.key) {
+	var nparent = oparent.copy()
+	if less(nn.key, nparent.key) {
 		nparent.ln = nn
 	} else {
 		nparent.rn = nn
 	}
-	//log.Println("insertBalance: created new parent and stitched new node into it.")
 
-	// create new grandparent and stitch nn into ngp
-	var ngp = gp.copy()
-	if parent.isLeftChildOf(gp) {
+	var ngp = ogp.copy()
+	if oparent.isLeftChildOf(ogp) {
 		ngp.ln = nparent
 	} else {
 		ngp.rn = nparent
 	}
-	//log.Println("insertBalance: create new grand parent and stitched parent into it.")
 
-	// insert_case4: conditional prep-rotate
-	// We pre-rotate when nn is the inner child of the grandparent.
-	if nn.isRightChildOf(nparent) && nparent.isLeftChildOf(ngp) {
-		//log.Println("insertBalance: New node is inner child of grandparent.")
-		//log.Println("insertBalance: Doing prep-rotateLeft on parent.")
-		nn, nparent = m.rotateLeft(nparent, ngp)
-	} else if nn.isLeftChildOf(nparent) && nparent.isRightChildOf(ngp) {
-		//log.Println("insertBalance: New node is inner child of grandparent.")
-		//log.Println("insertBalance: Doing prep-rotateLeft on parent.")
-		nn, nparent = m.rotateRight(nparent, ngp)
-	}
-
-	//nn.IsRed; FYI nn was nparent
-	nparent.setBlack() //FYI nparent was nn
-	ngp.setRed()       //gp was Black cuz parent was Red
-
-	//log.Printf("insertBalance: ngp     = %s\n", ngp)
-	//log.Printf("insertBalance: nparent = %s\n", nparent)
-	//log.Printf("insertBalance: nn      = %s\n", nn)
-	//log.Printf("insertBalance: path = %s\n", path)
-
-	// insert_case4: final rotate
-	// This rotate makes nparent the root of this sub-tree. Hence, nparent
-	// is the node we want persisted.
-	if nn.isLeftChildOf(nparent) {
-		//log.Println("insertBalance: insert_case #5: Doing rotateRight.")
-		nparent, ngp = m.rotateRight(ngp, path.peek())
+	if less(nn.key, nparent.key) {
+		nparent.ln = nn
 	} else {
-		//log.Println("insertBalance: insert_case #5: Doing rotateLeft.")
-		nparent, ngp = m.rotateLeft(ngp, path.peek())
+		nparent.rn = nn
 	}
-	//IMPORTANT: nn is no longer VALID from here on
-	// Only, ngp and nparent are correct.
 
-	//log.Println("insertBalance: After insert case #5:")
-	//log.Printf("insertBalance: ngp     = %s\n", ngp)
-	//log.Printf("insertBalance: nparent = %s\n", nparent)
-	//log.Printf("insertBalance: path = %s\n", path)
+	nparent.setBlack()
+	ngp.setRed()
 
-	m.persistAll(gp, ngp, path)
-	return
+	//if on.isLeftChildOf(oparent)
+	if less(nn.key, oparent.key) {
+		var oggp = path.peek()
+		var nggp *node
+		if oggp != nil {
+			nggp = oggp.copy()
+			path.pop()      //take oggp off path
+			path.push(nggp) //replace oggp with nggp on path
+		}
+
+		//I am not sure that ngp.ln == nparent. Unless there is some deeper
+		//logic, ngp.ln could be nparent's sibling (aka nn's uncle). That
+		//'deeper logic' could be that if the uncle existed it would have been
+		//rotated away? in insertCase4.1
+		if ngp.ln != nil {
+			ngp.ln = ngp.ln.copy()
+		}
+
+		log.Printf("insertCase4.2: rotateRight:\n"+
+			"nn=%s\nnparent=%s\nngp=%s\npath.peek()=%s\npath=%s",
+			nn, nparent, ngp, path.peek(), path)
+
+		var t *node
+		ngp, t = m.rotateRight(ngp, nggp)
+		ngp = t
+	} else {
+		var oggp = path.peek()
+		var nggp *node
+		if oggp != nil {
+			nggp = oggp.copy()
+			path.pop()      //take oggp off path
+			path.push(nggp) //replace oggp with nggp on path
+		}
+
+		if ngp.rn != nil {
+			ngp.rn = ngp.rn.copy()
+		}
+
+		var t *node
+		ngp, t = m.rotateLeft(ngp, nggp)
+		ngp = t
+	}
+
+	m.persistAll(ogp, ngp, path)
 }
 
 // Del() calls Remove() but only returns the modified *Map.
@@ -759,6 +751,8 @@ func (m *Map) remove_one_child(on, term *node, path *nodeStack) (
 		//nn == nil
 	} */
 
+	//recheck oparent = path.peek() cuz path may have change???
+
 	//if oparent == nil {
 	if on == term { //more generalized??
 		//we will let the last persistAll call in remove set m.root
@@ -788,19 +782,20 @@ func (m *Map) remove_one_child(on, term *node, path *nodeStack) (
 }
 
 func (m *Map) deleteCase1(on, nn, term *node, path *nodeStack) (
-	/*ochild*/ *node,
-	/*nchild*/ *node,
-	/*path*/ *nodeStack,
+	*node, *node, *nodeStack,
 ) {
 	//Fact: on.IsBlack()
 	//Fact: on != term; actually term = parent(on)
+
+	log.Printf("deleteCase1: called with: on=%s\nnn=%s\nterm=%s\npath=%s",
+		on, nn, term, path)
 
 	if path.len() > 0 {
 		log.Printf("deleteCase23: path.len() > 0; calling deleteCase23:\n"+
 			"on=%s\nterm=%s\npath=%s\n", on, term, path)
 		//var ton, tnn, tpath = m.deleteCase23(on, term, path)
 		//return ton, tnn, tpath
-		return m.deleteCase23(on, nn, term, path)
+		return m.deleteCase2(on, nn, term, path)
 	}
 
 	//assert(on == term, "deleteCase1: path.len()==0 && on != term")
@@ -815,7 +810,7 @@ func (m *Map) deleteCase1(on, nn, term *node, path *nodeStack) (
 // when sibling is Red we rotate away from it. My fuzzy understanding is that
 // the sibling side is longer and we are trying to shorten the target side,
 // hence we need to rotate to the short side.
-func (m *Map) deleteCase23(on, nn, term *node, path *nodeStack) (
+func (m *Map) deleteCase2(on, nn, term *node, path *nodeStack) (
 	/*ochild*/ *node,
 	/*nchild*/ *node,
 	/*path*/ *nodeStack,
@@ -823,57 +818,78 @@ func (m *Map) deleteCase23(on, nn, term *node, path *nodeStack) (
 	//Fact: on.IsBlack()
 	//Fact: on != term; actually term = parent(on)
 	//Fact: path.len() > 0
-	log.Printf("deleteCase23: called with: on=%s\nterm=%s\npath=%s",
-		on, term, path)
+	log.Printf("deleteCase2: called with: on=%s\nnn=%s\nterm=%s\npath=%s",
+		on, nn, term, path)
 
-	//var nn = on.copy()
-	var oparent = path.peek()
-	var ogp = path.peekN(1)
+	var oparent = path.pop()
 	var osibling = on.sibling(oparent)
+
+	var ogp = path.pop() //could be nil
 
 	var nparent *node
 	var nsibling *node
 
 	if osibling.IsRed() {
-		// I need to grok the scenario (if any) where
 		var ngp *node
 		if ogp != nil {
 			ngp = ogp.copy()
 		}
+
 		nparent = oparent.copy()
 		nsibling = osibling.copy()
+		if on.isLeftChildOf(oparent) {
+			//nparent.ln = on //unnecessary
+			nparent.rn = nsibling
+		} else {
+			nparent.ln = nsibling
+			//nparent.rn = on //unnecessary
+		}
 
 		nparent.setRed()
 		nsibling.setBlack()
 
-		if on.isLeftChildOf(oparent) {
-			nn, nparent = m.rotateLeft(nparent, ngp)
-			//nn==nparent && nparent=nsibling
-		} else {
-			nn, nparent = m.rotateRight(nparent, ngp)
-			//nsibling is parent of nn
+		if ogp != nil {
+			path.push(ngp)
 		}
+
+		if on.isLeftChildOf(oparent) {
+			nparent, nsibling = m.rotateLeft(nparent, ngp)
+			//nparent childOf nsibling childOf ngp
+		} else {
+			nparent, nsibling = m.rotateRight(nparent, ngp)
+			//nparent childOf nsibling childOf ngp
+		}
+
+		path.push(nsibling) //put the new new parent onto the path
+		path.push(nparent)
+	} else {
+		path.push(oparent) //put oparent back, cuz we didn't use it.
 	}
 
-	log.Printf("deleteCase23: moving to persist_case3: "+
-		"on=%s\nnn=%s\nterm=%s\npath=%s\n", on, nn, term, path)
+	return m.deleteCase3(on, nn, term, path)
+}
 
-	//DELETE CASE #3
+func (m *Map) deleteCase3(on, nn, term *node, path *nodeStack) (
+	*node, *node, *nodeStack,
+) {
+	log.Printf("deleteCase3: on=%s\nterm=%s\npath=%s\n", on, term, path)
+
 	//Fact: path.len() > 0
 	//Face: on is Black
+
+	var oparent = path.peek()
+	var osibling = on.sibling(oparent)
 
 	if oparent.IsBlack() &&
 		osibling.IsBlack() &&
 		osibling.ln.IsBlack() &&
 		osibling.rn.IsBlack() {
 
-		log.Printf("deleteCase23: #3: oparent.isBlack && osibling.isBlack:\n"+
+		log.Printf("deleteCase3: oparent.isBlack && osibling.isBlack:\n"+
 			"on=%s\nosibling=%s\noparent=%s\n", on, osibling, oparent)
 
-		nsibling = osibling.copy()
-		nsibling.setRed()
-
-		nparent = oparent.copy()
+		var nsibling = osibling.copy()
+		var nparent = oparent.copy()
 		if osibling.isLeftChildOf(oparent) {
 			nparent.ln = nsibling
 			nparent.rn = nn
@@ -882,101 +898,162 @@ func (m *Map) deleteCase23(on, nn, term *node, path *nodeStack) (
 			nparent.rn = nsibling
 		}
 
+		nsibling.setRed()
+
 		path.pop()
 		return m.deleteCase1(oparent, nparent, term, path)
 	}
-	return m.deleteCase4(on, term, path)
+
+	return m.deleteCase4(on, nn, term, path)
 }
 
-func (m *Map) deleteCase4(on, term *node, path *nodeStack) (
-	/*ochild*/ *node,
-	/*nchild*/ *node,
-	/*path*/ *nodeStack,
+func (m *Map) deleteCase4(on, nn, term *node, path *nodeStack) (
+	*node, *node, *nodeStack,
 ) {
-	panic("not implemented")
-	return nil, nil, nil
+	log.Printf("deleteCase4: on=%s\nterm=%s\npath=%s\n", on, term, path)
+
+	var oparent = path.peek()
+	var osibling = on.sibling(oparent)
+
+	if oparent.IsRed() &&
+		osibling.IsBlack() &&
+		osibling.ln.IsBlack() &&
+		osibling.rn.IsBlack() {
+
+		var nsibling = osibling.copy()
+		var nparent = oparent.copy()
+		if on.isLeftChildOf(oparent) {
+			nparent.ln = nn
+			nparent.rn = nsibling
+		} else {
+			nparent.ln = nsibling
+			nparent.rn = nn
+		}
+
+		nsibling.setRed()
+		nparent.setBlack()
+
+		path.pop() //remove parent from path, becasue we're returning parent
+
+		if oparent == term {
+			return oparent, nparent, path
+		} else {
+			return m.persistTill(oparent, nparent, term, path)
+		}
+	}
+
+	return m.deleteCase5(on, nn, term, path)
 }
 
-//func (m *Map) deleteCase4(on, term *node, path *nodeStack) (
-//	*node, *node, *nodeStack,
-//) {
-//	panic("not implemented")
-//	return nil, nil, nil
-//
-//	//Fact: path.len() > 0
-//	var oparent = path.peek()
-//	var osibling = on.sibling(oparent)
-//
-//	if oparent.IsBlack() &&
-//		osibling.IsBlack() &&
-//		osibling.ln.IsBlack() &&
-//		osibling.rn.IsBlack() {
-//		osibling.setRed()
-//		oparent.setBlack()
-//		return
-//	}
-//	return deleteCase5(on, term, path)
-//}
-
-func (m *Map) deleteCase56(on, term *node, path *nodeStack) (
-	/*ochild*/ *node,
-	/*nchild*/ *node,
-	/*path*/ *nodeStack,
+func (m *Map) deleteCase5(on, nn, term *node, path *nodeStack) (
+	*node, *node, *nodeStack,
 ) {
-	panic("not implemented")
-	return nil, nil, nil
+	//Fact: path.len() > 0
+	var oparent = path.peek()
+	var osibling = on.sibling(oparent)
+
+	//This is a potential pre-rotate phase for deleteCase6
+	if osibling.IsBlack() {
+		if on.isLeftChildOf(oparent) &&
+			osibling.rn.IsBlack() &&
+			osibling.ln.IsRed() {
+
+			var nsibling = osibling.copy()
+			nsibling.ln = osibling.ln.copy()
+			nsibling.setRed()
+			nsibling.ln.setBlack()
+
+			var nparent = oparent.copy()
+			if on.isLeftChildOf(oparent) {
+				nparent.rn = nsibling
+			} else {
+				nparent.ln = nsibling
+			}
+
+			_, _ = m.rotateRight(nsibling, nparent)
+
+			path.pop()         //pop off oparent
+			path.push(nparent) //replace oparent with nparent
+		} else if on.isRightChildOf(oparent) &&
+			osibling.ln.IsBlack() &&
+			osibling.rn.IsRed() {
+
+			var nsibling = osibling.copy()
+			nsibling.rn = osibling.ln.copy()
+			nsibling.setRed()
+			nsibling.rn.setBlack()
+
+			var nparent = oparent.copy()
+			if on.isLeftChildOf(oparent) {
+				nparent.rn = nsibling
+			} else {
+				nparent.ln = nsibling
+			}
+
+			_, _ = m.rotateLeft(nsibling, nparent)
+
+			path.pop()         //pop off oparent
+			path.push(nparent) //replace oparent with nparent
+		}
+	}
+
+	return m.deleteCase6(on, nn, term, path)
 }
 
-//func (m *Map) deleteCase5(on, term *node, path *nodeStack) (
-//	*node, *node, *nodeStack,
-//) {
-//	panic("not implemented")
-//	return nil, nil, nil
-//
-//	//Fact: path.len() > 0
-//	var oparent = path.peek()
-//	var osibling = on.sibling(oparent)
-//
-//	if osibling.IsBlack() {
-//		if on.isLeftChildOf(oparent) &&
-//			osibling.rn.IsBlack() &&
-//			osibling.ln.IsRed() {
-//			osibling.setRed()
-//			osibling.ln.setBlack()
-//		} else if on.isRightChildOf(oparent) &&
-//			osibling.ln.IsBlack() &&
-//			osibling.rn.IsRed() {
-//			osibling.setRed()
-//			osibling.rn.setBlack()
-//		}
-//		return //???
-//	} /* else {
-//		return deleteCase6(on, term, path)
-//	} */
-//	return deleteCase6(on, term, path)
-//}
+func (m *Map) deleteCase6(on, nn, term *node, path *nodeStack) (
+	*node, *node, *nodeStack,
+) {
+	//Fact: path.len() > 0
+	//Fact: sibling.IsRed()
 
-//func (m *Map) deleteCase6(on, term *node, path *nodeStack) (
-//	*node, *node, *nodeStack,
-//) {
-//	panic("not implemented")
-//	return nil, nil, nil
-//
-//	//Fact: path.len() > 0
-//	//Fact: sibling.IsRed()
-//	var oparent = path.peek()
-//	var osibling = on.sibling(oparent)
-//
-//	if on.isLeftChildOf(oparent) {
-//		osibling.rn.setBlack()
-//		m.rotateLeft(oparent)
-//	} else {
-//		osibling.ln.setBlack()
-//		m.rotateRight(oparent)
-//	}
-//
-//	return //???
-//}
+	var oparent = path.pop()
+	var osibling = on.sibling(oparent)
+
+	var nsibling = osibling.copy()
+	var nparent = oparent.copy()
+	if on.isLeftChildOf(oparent) {
+		nparent.rn = nsibling
+	} else {
+		nparent.ln = nsibling
+	}
+
+	nsibling.color = oparent.color
+	nparent.setBlack()
+
+	if on.isLeftChildOf(oparent) {
+		nsibling.rn = osibling.rn.copy()
+		nsibling.rn.setBlack()
+
+		var ogp = path.pop()
+		var ngp *node
+		if ogp != nil {
+			ngp = ogp.copy()
+			path.push(ngp) //replace ogp with ngp
+		}
+
+		nparent, nsibling = m.rotateLeft(nparent, ngp)
+
+		path.push(nsibling)
+		path.push(nparent)
+	} else {
+		nsibling.ln = osibling.ln.copy()
+		nsibling.ln.setBlack()
+
+		var ogp = path.pop()
+		var ngp *node
+		if ogp != nil {
+			ngp = ogp.copy()
+			path.push(ngp) //replace ogp with ngp
+		}
+
+		nparent, nsibling = m.rotateLeft(nparent, ngp)
+
+		path.push(nsibling)
+		path.push(nparent)
+	}
+
+	return on, nn, path
+}
 
 func (m *Map) RangeLimit(start, end MapKey, fn func(MapKey, interface{}) bool) {
 	//get iter
@@ -1025,6 +1102,23 @@ func (m *Map) walkInOrder(fn func(*node, *nodeStack) bool) bool {
 		return m.root.visitInOrder(fn, path)
 	}
 	return true
+}
+
+//Dup() is for testing only. It is a recusive copy().
+//
+func (m *Map) Dup() *Map {
+	var nm = &Map{
+		numEnts: m.numEnts,
+		root:    m.root.dup(),
+	}
+	nm.numEnts = m.numEnts
+	nm.root = m.root.dup()
+	return nm
+}
+
+//Equiv() is for testing only. It is a equal-by-value method.
+func (m *Map) Equiv(m0 *Map) bool {
+	return m.numEnts == m0.numEnts && m.root.equiv(m0.root)
 }
 
 func (m *Map) TreeString() string {

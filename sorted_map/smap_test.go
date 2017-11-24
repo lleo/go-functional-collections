@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+//Set up log file
 func init() {
 	log.SetFlags(log.Lshortfile)
 
@@ -20,7 +21,7 @@ func init() {
 	}
 	log.SetOutput(logFile)
 
-	log.Println("IT HAS STARTED...")
+	log.Println("TESTING HAS STARTED...")
 }
 
 var Inc = stringutil.Lower.Inc
