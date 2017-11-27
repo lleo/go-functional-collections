@@ -136,7 +136,39 @@ func TestBasicDelCase3(t *testing.T) {
 	}
 }
 
-//func TestBasicDelCase1(t *testing.T) {
+func TestBasicDelCase6(t *testing.T) {
+	var m = mkmap(6,
+		mknod(IntKey(20), 20, Black,
+			mknod(IntKey(10), 10, Black, nil, nil),
+			mknod(IntKey(40), 40, Red,
+				mknod(IntKey(30), 30, Black, nil, nil),
+				mknod(IntKey(50), 50, Black,
+					nil,
+					mknod(IntKey(60), 60, Red, nil, nil)))))
+
+	var origM = m
+	var dupOrigM = m.Dup()
+	var origMapStr0 = m.TreeString()
+
+	log.Printf("origMapStr0 =\n%s", origMapStr0)
+
+	m = m.Del(IntKey(30))
+	if m.NumEntries() != 5 {
+		t.Fatal("m.NumEntries() != 5")
+	}
+
+	var origMapStr1 = origM.TreeString()
+	if origMapStr0 != origMapStr1 {
+		log.Printf("origMapStr0 != origMapStr1:\n"+
+			"origMapStr0=\n%s\norigMapStr1=\n%s", origMapStr0, origMapStr1)
+	}
+
+	if !origM.Equiv(dupOrigM) {
+		t.Fatal("TestBasicPutCase4: orig Map and duplicate of orig Map are not identical.")
+	}
+}
+
+//func TestBasicDelCase1Deeper(t *testing.T) {
 //	var m = mkmap(3,
 //		mknod(20, Black
 //			Black,
