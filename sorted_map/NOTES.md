@@ -83,23 +83,6 @@ rotateLeft; no pre-rotate occured:
                      y    20*            x    y
                          /  \
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
               50
             /    \
          25        75
@@ -115,7 +98,8 @@ rotateLeft; no pre-rotate occured:
                            \
                            35r
 
-delete_case1:
+deleteCase1: Remove(k=25), swap(25r 21r), remove
+=============
 
                   15b                          15b
               /         \                  /         \
@@ -127,9 +111,79 @@ delete_case1:
 
 
 delete_case2: where gp of on is nil; target 5b
+==============================================
 
                10b
              /     \
            5b        15b
           /  \      /   \
          5b   7b  12b    20b
+
+insertCase4.2
+               100r                 50b
+              /    \               /   \
+            50b                  30b   100r
+           /
+         30r
+
+insertCase4.1
+
+             7940b                                        7940b
+           /       \                                    /       \
+      4930b         8090b      inserCase4.1        4930b         8090b
+     /     \       /     \         --->           /     \       /     \
+    a      7100r        10050r                   a     5310r         10050r
+           /  \                                        /  \
+        5310r  d               rotateRight(7100)      b   7100r
+        /  \                                              /  \
+       b    c                                            c    d
+
+                                  7940b
+                                /       \
+    insertCase4.2           5310b        8090b
+       --->                 /  \        /     \
+                        4930r   7100r        10050r
+    rotateLeft(4930)    /  \    /  \
+                       a    b  c    d
+
+insertCase4.1
+ogp=4930b     = p
+oparent=7100r = n
+nn=5310r      = l
+
+insertCase4.2
+oggp=7940b    == p
+ogp=4930b     == n
+oparent=5310r == r == ngp
+nn=7100r
+
+
+insert(on=nil, nn=60r, path=[50r, 40b, 20b])
+============================================
+
+               20b                                20b
+             /     \                            /     \
+          10b       40b        insertCase3   10b       40r
+         /  \       /  \          --->      /  \       /  \
+                  30r   50r                          30b   50b
+                        / \                                / \
+                           60r                                60r
+                              insertRepair(ogp=40b, ngp=40b, path=[20b])
+
+nn=60r
+oparent=50r
+ogp=40b
+
+               20b                               20b
+             /     \                           /     \
+          10b       40b       insertCase2   10b       40b
+         /  \       /  \         --->      /  \       /  \
+                  30b   50b   (do nothing)          30b   50b
+                        / \                               / \
+                           60r                               60r
+
+ogp=nil
+oparent=20b
+on=40b
+nn=40b
+
