@@ -7,148 +7,86 @@ import (
 	"github.com/lleo/go-functional-collections/sorted_map"
 )
 
-func Test_Basic_BuildMap(t *testing.T) {
-	var m = sorted_map.New()
-
-	log.Println("insert #1 100,0")
-	m = m.Put(IntKey(100), 0)
-	//log.Printf("m=\n%s\n", m.TreeString())
-
-	log.Println("insert #2 50,0")
-	m = m.Put(IntKey(50), 0)
-	//log.Printf("m.NumEntries()=%d; nodes=\n%s\n", m.NumEntries(), m.TreeString())
-
-	log.Println("insert #3 70,0")
-	//m = m.Put(IntKey(70), 0)
-	m = m.Put(IntKey(30), 0)
-	//log.Printf("m=\n%s\n", m.TreeString())
-
-	log.Println("insert #3 40,0")
-	//m = m.Put(IntKey(40), 0)
-	m = m.Put(IntKey(40), 0)
-	//log.Printf("m=\n%s\n", m.TreeString())
-
-	log.Println("insert #4 150,0")
-	m = m.Put(IntKey(150), 0)
-	//log.Printf("m=\n%s\n", m.TreeString())
-
-	log.Println("insert #5 200,0")
-	m = m.Put(IntKey(200), 0)
-	//log.Printf("m=\n%s\n", m.TreeString())
-
-	log.Println("insert #6 250,0")
-	m = m.Put(IntKey(250), 0)
-	//log.Printf("m=\n%s\n", m.TreeString())
-
-	log.Println("insert #7 300,0")
-	m = m.Put(IntKey(300), 0)
-	//log.Printf("m=\n%s\n", m.TreeString())
-
-	log.Println("insert #8 350,0")
-	m = m.Put(IntKey(350), 0)
-	log.Printf("m=\n%s\n", m.TreeString())
-
-	log.Println("replace #8 350,10")
-	m = m.Put(IntKey(350), 10)
-	log.Printf("m=\n%s\n", m.TreeString())
-	log.Printf("keyVals = %q\n", m)
-	//m.String = "{30: 0, 50: 400, 10: 0, 15: 0, 20: 0, 25: 0, 30: 0, 35: 10}"
-}
-
-func Test_Basic_Del_OnlyRoot(t *testing.T) {
-	var m = sorted_map.New()
-
-	m = m.Put(IntKey(10), 0)
-	m = m.Del(IntKey(10))
-
-	if m.NumEntries() != 0 {
-		t.Fatal("m.NumEntries() != 0")
-	}
-}
-
-func tTest_Basic_Del_TwoNodes0(t *testing.T) {
-	var m = sorted_map.New()
-
-	m = m.Put(IntKey(100), 10)
-	m = m.Put(IntKey(150), 15)
-
-	log.Println("Test_Basic_Del_TwoNodes: *********** calling m.Del(IntKey(100)) ***********")
-	m = m.Del(IntKey(100))
-
-	if m.NumEntries() != 1 {
-		t.Fatal("m.NumEntries() != 1")
-	}
-
-	var val100 = m.Get(IntKey(100))
-	if val100 != nil {
-		t.Fatal("m.Get(IntKey(100)) != nil")
-	}
-
-	var val150 = m.Get(IntKey(150))
-	if val150 != 15 {
-		t.Fatalf("m.Get(IntKey(150)),%d != 15", val150)
-	}
-
-	log.Println("m =", m)
-}
-
-func buildMap(n int) (*sorted_map.Map, []sorted_map.MapKey) {
-	var m = sorted_map.New()
-	var keys = make([]sorted_map.MapKey, n)
-	for i := 0; i < n; i++ {
-		var k = IntKey(i * 100)
-		var v interface{} = k + 1
-		keys[i] = k
-		m = m.Put(k, v)
-	}
-	return m, keys
-}
-
-func Test_Basic_Del_LoHi_TwoNodes(t *testing.T) {
-	var m, keys = buildMap(2)
-
-	log.Printf("JUST BUILT: m=\n%s", m.TreeString())
-
-	var expectedNumEntries = uint(len(keys))
-	for i := 0; i < 2; i++ {
-		var k = keys[i]
-		m = m.Del(k)
-		expectedNumEntries--
-
-		if m.NumEntries() != expectedNumEntries {
-			t.Fatal("m.Del(%s) failed.")
-		}
-	}
-
-	log.Printf("COMPLETELY DELETED m =\n%s", m.TreeString())
-}
-
-func Test_Basic_Del_HiLo_TwoNodes(t *testing.T) {
-	var m, keys = buildMap(2)
-
-	log.Printf("JUST BUILT: m=\n%s", m.TreeString())
-
-	var expectedNumEntries = uint(len(keys))
-	for i := 1; i >= 0; i-- {
-		var k = keys[i]
-		m = m.Del(k)
-		expectedNumEntries--
-
-		if m.NumEntries() != expectedNumEntries {
-			t.Fatal("m.Del(%s) failed.")
-		}
-	}
-
-	log.Printf("COMPLETELY DELETED m =\n%s", m.TreeString())
-}
-
 const Black = sorted_map.Black
 const Red = sorted_map.Red
 
 var mknod = sorted_map.MakeNode
 var mkmap = sorted_map.MakeMap
 
-func Test_Del_Case1(t *testing.T) {
+func TestBasicPutCase1(t *testing.T) {
+	t.Fatal("not implemented")
+}
+
+func TestBasicPutCase2(t *testing.T) {
+	t.Fatal("not implemented")
+}
+
+func TestBasicPutCase3(t *testing.T) {
+	//insert order 10, 20, 50, 40, 30, 60
+	var m = mkmap(5,
+		mknod(IntKey(20), 20, Black,
+			mknod(IntKey(10), 10, Black, nil, nil),
+			mknod(IntKey(40), 40, Black,
+				mknod(IntKey(30), 30, Red, nil, nil),
+				mknod(IntKey(50), 50, Red, nil, nil),
+			),
+		))
+
+	var origM = m
+	var dupM = m.Dup()
+
+	m = m.Put(IntKey(60), 60)
+
+	if m.NumEntries() != 6 {
+		t.Fatal("m.NumEntries() != 6")
+	}
+
+	log.Printf("\n%s", m.TreeString())
+
+	if !origM.Equiv(dupM) {
+		t.Fatal("TestBasicPutCase4: orig Map and duplicate of orig Map are not identical.")
+	}
+}
+
+func TestBasicPutCase4(t *testing.T) {
+	//var m = mkmap(5,
+	//	mknod(IntKey(7940), 7940, Black,
+	//		mknod(IntKey(4930), 4930, Black,
+	//			nil,
+	//			mknod(IntKey(7100), 7100, Red, nil, nil)),
+	//		mknod(IntKey(8090), 8090, Black,
+	//			nil,
+	//			mknod(IntKey(10050), 10050, Red, nil, nil)),
+	//	))
+	//insert order 50, 20, 60, 40, 70 ???
+	var m = mkmap(5,
+		mknod(IntKey(50), 50, Black,
+			mknod(IntKey(20), 20, Black,
+				nil,
+				mknod(IntKey(40), 40, Red, nil, nil)),
+			mknod(IntKey(60), 60, Black,
+				nil,
+				mknod(IntKey(70), 70, Red, nil, nil)),
+		))
+
+	var origM = m      //copy the pointer
+	var dupM = m.Dup() //copy the value
+
+	//m = m.Put(IntKey(5310), 5310)
+	m = m.Put(IntKey(30), 30)
+
+	log.Printf("TestBasicPutCase4: m=\n%s", m.Root().ToString(-1))
+
+	if m.NumEntries() != 6 {
+		t.Fatal("m.NumEntries() != 6")
+	}
+
+	if !origM.Equiv(dupM) {
+		t.Fatal("TestBasicPutCase4: orig Map and duplicate of orig Map are not identical.")
+	}
+}
+
+func TestBasicDelCase1(t *testing.T) {
 	var m = mkmap(3,
 		mknod(IntKey(20), 20, Black,
 			nil,
@@ -173,7 +111,7 @@ func Test_Del_Case1(t *testing.T) {
 	}
 }
 
-func Test_Del_Case3(t *testing.T) {
+func TestBasicDelCase3(t *testing.T) {
 	var m = mkmap(3,
 		mknod(IntKey(20), 20, Black,
 			mknod(IntKey(10), 10, Black, nil, nil),
@@ -198,7 +136,7 @@ func Test_Del_Case3(t *testing.T) {
 	}
 }
 
-//func Test_Del_Case1(t *testing.T) {
+//func TestBasicDelCase1(t *testing.T) {
 //	var m = mkmap(3,
 //		mknod(20, Black
 //			Black,

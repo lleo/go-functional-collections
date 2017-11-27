@@ -37,7 +37,18 @@ type node struct {
 	rn    *node
 }
 
+//NewNode() is public for testing only.
 func newNode(k MapKey, v interface{}) *node {
+	var n = new(node)
+	n.key = k
+	n.val = v
+	//n.color = Red   //default
+	//n.ln = nil      //default
+	//n.rn = nil      //default
+	return n
+}
+
+func NewNode(k MapKey, v interface{}) *node {
 	var n = new(node)
 	n.key = k
 	n.val = v
@@ -106,8 +117,25 @@ func (n *node) equiv(n0 *node) bool {
 		return false
 	}
 	//n != nil && n0 != nil
-	return cmp(n.key, n0.key) == 0 && n.val == n0.val &&
-		n.ln.equiv(n0.ln) && n.rn.equiv(n0.rn)
+
+	if cmp(n.key, n0.key) != 0 {
+		return false
+	}
+	if n.val != n0.val {
+		return false
+	}
+	if n.color != n0.color {
+		return false
+	}
+	//log.Printf("equiv: for k=%s key,val,&color are identical\n", n.key)
+
+	if !n.ln.equiv(n0.ln) {
+		return false
+	}
+	if !n.rn.equiv(n0.rn) {
+		return false
+	}
+	return true
 }
 
 // IsRed() is public for testing only.
@@ -262,23 +290,40 @@ func (n *node) visitInOrder(
 	return true
 }
 
+const toStrFmt0 = "%p,node{key:%s, val: %#v, color:%s\n"
+const toStrFmt1 = "%s  ln: %s,\n"
+const toStrFmt2 = "%s  rn: %s,\n"
+const toStrFmt3 = "%s}\n"
+
+// ToString() prints the node and all children to a depth of d. For example,
+// if d==0 it only prints the given node; if d==1 then it prints the node and
+// it's left and write children. Finnaly, if d < 0 it will print the entire
+// tree starting at the given node.
+func (n *node) ToString(d int) string {
+	return n.toString(d, "")
+}
+
+func (n *node) toString(d int, indent string) string {
+	if n == nil {
+		return "<nil>"
+	}
+	//if d < 0 {
+	//	d = 0
+	//}
+	if d == 0 {
+		return n.String()
+	}
+	return fmt.Sprintf(toStrFmt0, n, n.key, n.val, n.color) +
+		fmt.Sprintf(toStrFmt1, indent, n.ln.toString(d-1, indent+"  ")) +
+		fmt.Sprintf(toStrFmt2, indent, n.rn.toString(d-1, indent+"  ")) +
+		indent + "}"
+}
+
 func (n *node) String() string {
 	if n == nil {
 		return "<nil>"
 	}
 
-	//var lnStr, rnStr string
-	//if n.ln == nil {
-	//	lnStr = "nil"
-	//} else {
-	//	lnStr = "!nil"
-	//}
-	//if n.rn == nil {
-	//	rnStr = "nil"
-	//} else {
-	//	rnStr = "!nil"
-	//}
-
-	return fmt.Sprintf("node{key:%s, val:%#v, color:%s ln:%p, rn:%p}",
-		n.key, n.val, n.color, n.ln, n.rn)
+	return fmt.Sprintf("%p,node{key:%s, val:%#v, color:%s ln:%p, rn:%p}",
+		n, n.key, n.val, n.color, n.ln, n.rn)
 }
