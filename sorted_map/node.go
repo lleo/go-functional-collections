@@ -30,7 +30,7 @@ func color(n *node) colorType {
 }
 
 type node struct {
-	key   MapKey
+	Key   MapKey
 	val   interface{}
 	color colorType //default node is RED aka false
 	ln    *node
@@ -92,6 +92,47 @@ func (n *node) copy() *node {
 	var nn = new(node)
 	*nn = *n
 	return nn
+}
+
+func (n *node) valid() bool {
+	//RBT#3
+	if n.IsRed() {
+		if !n.ln.IsBlack() {
+			return false
+		}
+		if !n.rn.IsBlack() {
+			return false
+		}
+	}
+
+	//RBT#4
+	var count = n.blackCount()
+	if count < 0 {
+		return false
+	}
+	return true
+}
+
+//blackCount() returns the count of black nodes from this node to the left-most
+//side. However if the left count does not equal the right count blackCount()
+//returns -1.
+func (n *node) blackCount() int {
+	//RBT#2?
+	if n == nil {
+		return 1
+	}
+
+	//RBT#4
+	var leftCount = n.ln.blackCount()
+	var rightCount = n.rn.blackCount()
+	if leftCount != rightCount {
+		return -1
+	}
+
+	if n.IsBlack() {
+		return leftCount + 1
+	}
+	return leftCount
 }
 
 //dup() is for testing only. It is a recursive copy().

@@ -52,11 +52,11 @@ func (m *Map) copy() *Map {
 	return nm
 }
 
-func (m *Map) iterAll() *nodeIter {
-	return m.iterRange(ninf, pinf)
+func (m *Map) Iter() *nodeIter {
+	return m.IterRange(ninf, pinf)
 }
 
-func (m *Map) iterRange(startKey, endKey MapKey) *nodeIter {
+func (m *Map) IterRange(startKey, endKey MapKey) *nodeIter {
 	var cur, path = m.root.findNodeWithPath(startKey)
 	//log.Printf("iterRange: cur=%s\npath=%s", cur, path)
 	var dir = less(startKey, endKey)
@@ -753,18 +753,14 @@ func (m *Map) deleteCase1(on, nn, term *node, path *nodeStack) (
 	//Fact: on.IsBlack()
 	//Fact: on != term; actually term = parent(on)
 
-	if path.len() > 0 {
-		log.Printf("deleteCase1: path.len() > 0; calling deleteCase2:\n")
-		return m.deleteCase2(on, nn, term, path)
-		//on, nn, path = m.deleteCase2(on, nn, term, path)
-		//we could return or not return here it would not matter
+	var oparent = path.peek()
+
+	if oparent == nil {
+		log.Printf("deleteCase1: path.len() == 0; returning directly...\n")
+		return on, nn, path
 	}
 
-	//assert(on == term, "deleteCase1: path.len()==0 && on != term")
-	assert(on == m.root, "deleteCase1: path.len()==0 && on != m.root")
-
-	log.Printf("deleteCase1: on==m.root; on==term; returning directly...")
-	return on, nn, path
+	return m.deleteCase2(on, nn, term, path)
 }
 
 // deleteCase2() ...
@@ -1053,7 +1049,7 @@ func (m *Map) deleteCase6(on, nn, term *node, path *nodeStack) (
 
 func (m *Map) RangeLimit(start, end MapKey, fn func(MapKey, interface{}) bool) {
 	//get iter
-	var iter = m.iterRange(start, end)
+	var iter = m.IterRange(start, end)
 
 	//walk iter
 	for n := iter.next(); n != nil; n = iter.next() {
@@ -1154,7 +1150,7 @@ func (m *Map) String() string {
 	//}
 	//m.walkInOrder(fn)
 
-	var iter = m.iterAll()
+	var iter = m.Iter()
 	var i int
 	for n := iter.next(); n != nil; n = iter.next() {
 		//log.Printf("String: i=%d; n=%s\n", i, n)
