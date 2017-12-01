@@ -30,7 +30,7 @@ func color(n *node) colorType {
 }
 
 type node struct {
-	Key   MapKey
+	key   MapKey
 	val   interface{}
 	color colorType //default node is RED aka false
 	ln    *node
@@ -94,45 +94,36 @@ func (n *node) copy() *node {
 	return nn
 }
 
-func (n *node) valid() bool {
+//Ln() is public for testing only. It returns a boolean indicating if the
+//sub-tree represented by this node is valid w/r RED-BLACK-TREE-PROPERTIES.md,
+//and a count of the black nodes of the sub-tree. If the node is not valid, then
+//the black node count will be -1.
+func (n *node) Valid() (bool, int) {
+	//RBT#2
+	if n == nil {
+		return true, 1
+	}
+	var lvalid, lcount = n.ln.Valid()
+	var rvalid, rcount = n.rn.Valid()
+
+	if !lvalid || !rvalid {
+		return false, -1
+	}
+
+	//RBT#4
+	if lcount != rcount || lcount < 0 {
+		return false, -1
+	}
+
 	//RBT#3
 	if n.IsRed() {
-		if !n.ln.IsBlack() {
-			return false
+		if n.ln.IsRed() || n.rn.IsRed() {
+			return false, -1
 		}
-		if !n.rn.IsBlack() {
-			return false
-		}
+	} else {
+		lcount++
 	}
-
-	//RBT#4
-	var count = n.blackCount()
-	if count < 0 {
-		return false
-	}
-	return true
-}
-
-//blackCount() returns the count of black nodes from this node to the left-most
-//side. However if the left count does not equal the right count blackCount()
-//returns -1.
-func (n *node) blackCount() int {
-	//RBT#2?
-	if n == nil {
-		return 1
-	}
-
-	//RBT#4
-	var leftCount = n.ln.blackCount()
-	var rightCount = n.rn.blackCount()
-	if leftCount != rightCount {
-		return -1
-	}
-
-	if n.IsBlack() {
-		return leftCount + 1
-	}
-	return leftCount
+	return true, lcount
 }
 
 //dup() is for testing only. It is a recursive copy().
@@ -331,20 +322,21 @@ func (n *node) visitInOrder(
 	return true
 }
 
-const toStrFmt0 = "%p,node{key:%s, val: %#v, color:%s\n"
+const toStrFmt0 = "%p,node{key:%s, val:%#v, color:%s\n"
 const toStrFmt1 = "%s  ln: %s,\n"
 const toStrFmt2 = "%s  rn: %s,\n"
 const toStrFmt3 = "%s}\n"
 
-// ToString() prints the node and all children to a depth of d. For example,
+// TreeString() prints the node and all children to a depth of d. For example,
 // if d==0 it only prints the given node; if d==1 then it prints the node and
 // it's left and write children. Finnaly, if d < 0 it will print the entire
 // tree starting at the given node.
-func (n *node) ToString(d int) string {
-	return n.toString(d, "")
+//func (n *node) TreeString(d int) string {
+func (n *node) TreeString() string {
+	return n.treeString(-1, "")
 }
 
-func (n *node) toString(d int, indent string) string {
+func (n *node) treeString(d int, indent string) string {
 	if n == nil {
 		return "<nil>"
 	}
@@ -355,8 +347,8 @@ func (n *node) toString(d int, indent string) string {
 		return n.String()
 	}
 	return fmt.Sprintf(toStrFmt0, n, n.key, n.val, n.color) +
-		fmt.Sprintf(toStrFmt1, indent, n.ln.toString(d-1, indent+"  ")) +
-		fmt.Sprintf(toStrFmt2, indent, n.rn.toString(d-1, indent+"  ")) +
+		fmt.Sprintf(toStrFmt1, indent, n.ln.treeString(d-1, indent+"  ")) +
+		fmt.Sprintf(toStrFmt2, indent, n.rn.treeString(d-1, indent+"  ")) +
 		indent + "}"
 }
 

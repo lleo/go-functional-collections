@@ -20,15 +20,15 @@ func newNodeIter(start *node, endKey MapKey, path *nodeStack) *nodeIter {
 	return iter
 }
 
-func (it *nodeIter) next() *node {
+func (it *nodeIter) Next() *node {
 	if it.dir {
-		return it.forw()
+		return it.Forw()
 	} else {
-		return it.back()
+		return it.Back()
 	}
 }
 
-func (it *nodeIter) forw() *node {
+func (it *nodeIter) Forw() *node {
 	if it.cur == nil {
 		//the iterator is over
 		return nil
@@ -42,35 +42,20 @@ func (it *nodeIter) forw() *node {
 	// set it.cur to next node
 	if it.cur.rn != nil {
 		//go right one then left-most
-		it.path.push(it.cur)
 		it.cur = it.cur.rn
 		for it.cur.ln != nil {
+			//only push when going left
 			it.path.push(it.cur)
 			it.cur = it.cur.ln
 		}
-	} else if it.path.len() != 0 {
-		if it.cur.isLeftChildOf(it.path.peek()) {
-			it.cur = it.path.pop()
-		} else { // it.cur is the right child
-			it.cur = it.path.pop() //temporary
-			if it.path.len() != 0 {
-				if it.cur.isLeftChildOf(it.path.peek()) {
-					it.cur = it.path.pop()
-				} else {
-					it.cur = nil
-				}
-			} else {
-				it.cur = nil
-			}
-		}
 	} else {
-		it.cur = nil
+		it.cur = it.path.pop()
 	}
 
 	return ret
 }
 
-func (it *nodeIter) back() *node {
+func (it *nodeIter) Back() *node {
 	if it.cur == nil {
 		//the iterator is over
 		return nil
@@ -83,29 +68,14 @@ func (it *nodeIter) back() *node {
 	// set it.cur to previous node
 	if it.cur.ln != nil {
 		//go left one then right-most
-		it.path.push(it.cur)
 		it.cur = it.cur.ln
 		for it.cur.rn != nil {
+			//only push when going right
 			it.path.push(it.cur)
 			it.cur = it.cur.rn
 		}
-	} else if it.path.len() != 0 {
-		if it.cur.isRightChildOf(it.path.peek()) {
-			it.cur = it.path.pop()
-		} else { // it.cur is the left child
-			it.path.pop() //temporary
-			if it.path.len() != 0 {
-				if it.cur.isRightChildOf(it.path.peek()) {
-					it.cur = it.path.pop()
-				} else {
-					it.cur = nil
-				}
-			} else {
-				it.cur = nil
-			}
-		}
 	} else {
-		it.cur = nil
+		it.cur = it.path.pop()
 	}
 
 	return ret
