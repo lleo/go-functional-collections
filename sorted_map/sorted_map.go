@@ -18,7 +18,6 @@ import (
 //	Range(func(MapKey, interface{}) bool)
 //	NumEntries() uint
 //	String() string
-//	LongString(string) string
 //	Stats() *Stats
 //}
 
@@ -43,9 +42,9 @@ func (m *Map) Root() *node {
 }
 
 //Valid() is public for testing only.
-func (m *Map) Valid() bool {
-	var valid, _ = m.root.Valid()
-	return valid
+func (m *Map) Valid() error {
+	var _, err = m.root.Valid()
+	return err
 }
 
 func (m *Map) NumEntries() uint {
@@ -197,8 +196,6 @@ func (m *Map) persistTill(on, nn, term *node, path *nodeStack) (
 ) {
 	log.Printf("persistTill:\non=%s\nnn=%s\nterm=%s\npath=%s",
 		on, nn, term, path)
-	// on is the old node
-	// nn is the new node
 
 	if on == nil {
 		log.Println("persistTill: **************** on == nil ****************")
@@ -210,13 +207,14 @@ func (m *Map) persistTill(on, nn, term *node, path *nodeStack) (
 		//log.Printf("OLD TREE(on):\n%s", on.TreeString())
 		//log.Printf("OLD TREE(m.root):\n%s", m.root.TreeString())
 		//log.Printf("NEW TREE:\n%s", nn.TreeString())
-		assert(nn.IsBlack(), "new root 'nn' is not black")
-		//if !nn.IsBlack() {
-		//	log.Println("SETTING NEW ROOT BLACK!")
-		//	nn.setBlack()
-		//}
+		//assert(nn.IsBlack(), "new root 'nn' is not black")
+		if !nn.IsBlack() {
+			log.Println("SETTING NEW ROOT BLACK!")
+			nn.setBlack()
+		}
 		m.root = nn
-		return m.root, nn, path //?? maybe this should be nil, nil, nil
+		//return m.root, nn, path //?? maybe this should be nil, nil, nil
+		return nil, nil, nil
 	}
 	//path.peek() != nil
 
@@ -228,6 +226,10 @@ func (m *Map) persistTill(on, nn, term *node, path *nodeStack) (
 		if cmp(oparent.key, term.key) == 0 {
 			return on, nn, path
 		}
+	}
+
+	if on == nil {
+		log.Println("persistTill: !!! on == nil !!!")
 	}
 
 	// This is the heart of persistTill()
@@ -602,7 +604,7 @@ func (m *Map) Delete(k MapKey) *Map {
 // rebalances) a persistent version of the given *Map.
 func (m *Map) Remove(k MapKey) (*Map, interface{}, bool) {
 	var on, path = m.root.findNodeWithPath(k)
-	log.Printf("Remove: k=%s;\non=%s\npaht=%s", k, on, path)
+	log.Printf("Remove: k=%s;\non=%s\npath=%s", k, on, path)
 
 	if on == nil {
 		return m, nil, false
@@ -612,71 +614,74 @@ func (m *Map) Remove(k MapKey) (*Map, interface{}, bool) {
 
 	var nm = m.copy()
 
-	var oterm *node
-	var nterm *node
+	var ochild, nchild *node
+
+	if on.ln == nil || on.rn == nil {
+		ochild, nchild, path = nm.removeNodeWithZeroOrOneChild(on, nil, path)
+		//return is the return equiv of persistAll() (nil, nil, nil)
+		assert(ochild == nil, "Remove: zeroOrOne: ochild != nil")
+		assert(nchild == nil, "Remove: zeroOrOne: nchild != nil")
+		assert(path == nil, "Remove: zeroOrOne: path != nil")
+		//if ochild != nil && nchild != nil && path != nil {
+		//	m.persistAll(ochild, nchild, path)
+		//}
+
+		nm.numEnts--
+
+		return nm, retVal, true
+	}
+	//else has two children
 
 	// if node has two children swap values with previous in-order node, then
 	// delete that child, which will have at most one child of its' own.
-	if on.ln != nil && on.rn != nil {
-		log.Printf("Remove: on has two children; on=%s", on)
-		oterm = on
-		nterm = oterm.copy()
+	log.Printf("Remove: on has two children;\non=%s", on)
+	var oterm = on
+	var nterm = oterm.copy()
 
-		//find victim building path
-		path.push(on) //==path.push(oterm) //path.push(nterm) ??
-		on = on.ln
-		for on.rn != nil {
-			path.push(on)
-			on = on.rn
-		}
-		//on now points to previous node
+	//find victim, building path
+	//path.push(on) //==path.push(oterm) //path.push(nterm) ??
+	path.push(nterm)
+	on = on.ln
+	for on.rn != nil {
+		path.push(on)
+		on = on.rn
+	}
+	//on now points to previous node
 
-		//nterm's position (color, ln, rn) is oterm's
-		//nterm's content is the previous node's (aka 'on').
-		nterm.key = on.key
-		nterm.val = on.val
+	//nterm's position (color, ln, rn) is oterm's
+	//nterm's content (key, val) is the previous node's (aka 'on').
+	nterm.key = on.key
+	nterm.val = on.val
 
-		log.Printf("Remove: has set oterm & nterm;\noterm=%s\nnterm=%s\non=%s",
-			oterm, nterm, on)
-	} /* else {
-		oterm = m.root
-		log.Printf("Remove: setting oterm to m.root; oterm=%s", oterm)
-	} */
-	// else clause is now oterm = nil
-	// when oterm == nil all persistTill calls are persistAll
+	log.Printf("Remove: has set oterm & nterm;\noterm=%s\nnterm=%s\non=%s",
+		oterm, nterm, on)
 
-	var ochild, nchild *node
-	ochild, nchild, path = nm.removeNodeWithZeroOrOneChild(on, oterm, path)
+	log.Printf("Remove: nterm != nil; nterm == path.peek() Tree =\n%s",
+		path.peek().TreeString())
+
+	ochild, nchild, path = nm.removeNodeWithZeroOrOneChild(on, nterm, path)
 	//return values:
 	//  ochild points to the non-persisted child of oterm.
 	//  nchild points to a modified (ie persisted) oterm.
 	//  path points to the path from m.root to ochild (not including ochild).
+
 	log.Printf("Remove: removeNodeWithZeroOrOneChild returned:\n"+
 		"ochild=%s\nnchild=%s\npath=%s", ochild, nchild, path)
 
-	//var oparent = path.peek()
+	nterm = path.pop() //this version of nterm may have been replaced&modified
 
-	//if oparent == oterm {
-	//if cmp(oparent.key, oterm.key) == 0 {
-	if nterm != nil {
-		//nterm has been allocated. This means oterm has been set to "on" and
-		//"on" has be set to the node previous the origninal on. Hence we have
-		//to set one of the children of the new on to ...
-		// FUCK IT this explination isn't working...
-		log.Printf("Remove: nterm != nil;"+
-			"\noterm=%s\nnterm=%s\nnchild=%s\npath=%s", on, oterm, ochild)
-
-		if nchild.key.Less(nterm.key) {
-			nterm.ln = nchild
-		} else {
-			nterm.rn = nchild
-		}
-
-		path.pop() //parent == oterm
-		nm.persistAll(oterm, nterm, path)
+	//if nchild.key.Less(nterm.key) {
+	if ochild.key.Less(oterm.key) {
+		nterm.ln = nchild
 	} else {
-		nm.persistAll(ochild, nchild, path)
+		nterm.rn = nchild
 	}
+
+	//path.pop() //parent == nterm
+
+	log.Printf("Remove: nterm != nil; nterm Tree =\n%s", nterm.TreeString())
+
+	nm.persistAll(oterm, nterm, path)
 
 	nm.numEnts--
 
@@ -728,33 +733,29 @@ func (m *Map) removeNodeWithZeroOrOneChild(on, term *node, path *nodeStack) (
 
 	if on.IsBlack() {
 		if ochild.IsRed() {
-			//only way on can have a non-nil child
+			//only way 'on' can have a non-nil child
 			nn = ochild.copy()
 			nn.setBlack()
+
+			on, nn, path = m.persistTill(on, nn, term, path)
 		} else {
 			//child.IsBlack and on.IsBlack
 			//Fact: this only happens when child == nil
 			//Reason: this child's sibling is nil (hence Black), if this child
 			//is a non-nil Black child it would violate RBT property #4.
-			//This function should be called delete_node_with_zero_or_one_child.
 
-			//This 'if' stmt is cuz I don't want the terminator to be nil.
-			//That would polute the logic of the other deleteCase methods.
-			if oparent == nil {
-				log.Printf("removeNodeWithZeroOrOneChild:"+
-					" calling deleteCase1:\non=%s\nnn=%s\nterm=%s\npath=%s\n",
-					on, nn, term, path)
-				on, nn, path = m.deleteCase1(on, nn, term, path)
-			} else {
-				log.Printf("removeNodeWithZeroOrOneChild:"+
-					" calling deleteCase1:\non=%s\nnn=%s\nterm=%s\npath=%s\n",
-					on, nn, m.root, path)
-				on, nn, path = m.deleteCase1(on, nn, oparent, path)
-			}
+			log.Printf("removeNodeWithZeroOrOneChild: calling deleteCase1")
+			//	" calling deleteCase1:\non=%s\nnn=%s\nterm=%s\npath=%s\n",
+			//	on, nn, term, path)
+
+			on, nn, path = m.deleteCase1(on, nil, term, path)
+
 			log.Printf("removeNodeWithZeroOrOneChild:"+
 				" returned from deleteCase1:\non=%s\nnn=%s\npath=%s\n",
 				on, nn, path)
+
 		}
+		return on, nn, path //??
 	} /* else {
 		//on.IsRed
 		//on has no children. cuz we know it has only zero or one child (in this
@@ -765,32 +766,36 @@ func (m *Map) removeNodeWithZeroOrOneChild(on, term *node, path *nodeStack) (
 	//recheck oparent = path.peek() cuz path may have changed.
 	oparent = path.peek() //could be nil
 
-	//if on == term { //more generalized?? not good enough
+	// if oparent == nil then term must be nil
 	if oparent == nil {
+		assert(term == nil, "oparent == nil && term != nil")
 		//we will let the last persistAll call in remove set m.root
-		log.Println("removeNodeWithZeroOrOneChild:" +
-			" on==term; returning directly...")
-		return on, nn, path
+		log.Printf("removeNodeWithZeroOrOneChild:" +
+			" oparent == nil; nterm == nil; returning directly...")
+		return m.persistTill(on, nn, term, path)
 	}
 
-	var nparent = oparent.copy()
-	if on.isLeftChildOf(oparent) {
-		log.Printf("setting left child: nparent.ln=nn;\noparent=%s\nnn=%s",
-			oparent, nn)
-		nparent.ln = nn
-	} else {
-		log.Printf("setting right child: nparent.rn=nn;\noparent=%s\nnn=%s",
-			oparent, nn)
-		nparent.rn = nn
+	if term != nil {
+		//if oparent == term {
+		if cmp(oparent.key, term.key) == 0 {
+			log.Printf("removeNodeWithZeroOrOneChild:" +
+				" oparent.key == term.key; returning directly...")
+			return on, nn, path
+		}
 	}
 
 	path.pop() //take oparent off stack
 
-	if oparent == term {
-		//no need to persistTill term
-		log.Printf("removeNodeWithZeroOrOneChild:" +
-			" oparent == term; returning directly...")
-		return oparent, nparent, path
+	var nparent = oparent.copy()
+	//if on.isLeftChildOf(oparent) {
+	if on.key.Less(oparent.key) {
+		log.Printf("removeNodeWithZeroOrOneChild: setting left child:"+
+			" nparent.ln=nn;\noparent=%s\nnn=%s", oparent, nn)
+		nparent.ln = nn
+	} else {
+		log.Printf("removeNodeWithZeroOrOneChild: setting right child:"+
+			" nparent.rn=nn;\noparent=%s\nnn=%s", oparent, nn)
+		nparent.rn = nn
 	}
 
 	log.Printf("removeNodeWithZeroOrOneChild: returning persistTill:"+
@@ -806,13 +811,15 @@ func (m *Map) deleteCase1(on, nn, term *node, path *nodeStack) (
 		on, nn, term, path)
 
 	//Fact: on.IsBlack()
-	//Fact: on != term; actually term = parent(on)
+
+	//FIXME: what happens when term == root
+	//Not-So-Fact: on != term; actually term = parent(on)
 
 	var oparent = path.peek()
 
 	if oparent == nil {
 		log.Printf("deleteCase1: path.len() == 0; returning directly...\n")
-		return on, nn, path
+		return m.persistTill(on, nn, term, path)
 	}
 
 	return m.deleteCase2(on, nn, term, path)
@@ -843,13 +850,6 @@ func (m *Map) deleteCase2(on, nn, term *node, path *nodeStack) (
 	var nsibling *node
 
 	if osibling.IsRed() {
-		var ngp *node
-		if ogp != nil {
-			ngp = ogp.copy()
-			path.pop()
-			path.push(ngp) //replace ogp with ngp
-		}
-
 		nparent = oparent.copy()
 		nsibling = osibling.copy()
 		//if on.isLeftChildOf(oparent) {
@@ -860,6 +860,20 @@ func (m *Map) deleteCase2(on, nn, term *node, path *nodeStack) (
 		} else {
 			nparent.rn = nsibling
 			//nparent.ln = on //unnecessary
+		}
+
+		var ngp *node
+		if ogp != nil {
+			ngp = ogp.copy()
+			path.pop()
+			path.push(ngp) //replace ogp with ngp
+
+			//if oparent.isLeftChildOf(ogp) {
+			if less(oparent.key, ogp.key) {
+				ngp.ln = nparent
+			} else {
+				ngp.rn = nparent
+			}
 		}
 
 		nparent.setRed()
@@ -904,7 +918,7 @@ func (m *Map) deleteCase3(on, nn, term *node, path *nodeStack) (
 		osibling.ln.IsBlack() &&
 		osibling.rn.IsBlack() {
 
-		log.Println("deleteCase4: going to call deleteCase1 on oparent")
+		log.Println("deleteCase3: going to call deleteCase1 on oparent")
 
 		log.Printf("deleteCase3: oparent.isBlack && osibling.isBlack:\n"+
 			"on=%s\nosibling=%s\noparent=%s\n", on, osibling, oparent)
@@ -921,7 +935,12 @@ func (m *Map) deleteCase3(on, nn, term *node, path *nodeStack) (
 
 		nsibling.setRed()
 
-		path.pop()
+		if cmp(oparent.key, term.key) == 0 {
+			//FIXME: what happens when term == oparent
+			//START HERE
+		}
+
+		path.pop() //remove oparent
 		return m.deleteCase1(oparent, nparent, term, path)
 	}
 
@@ -948,10 +967,13 @@ func (m *Map) deleteCase4(on, nn, term *node, path *nodeStack) (
 
 		var nsibling = osibling.copy()
 		var nparent = oparent.copy()
+		//if on.key.Less(oparent.key) {
 		if on.isLeftChildOf(oparent) {
+			log.Println("deleteCase4: nparent.ln = nn")
 			nparent.ln = nn
 			nparent.rn = nsibling
 		} else {
+			log.Println("deleteCase4: nparent.rn = nn")
 			nparent.ln = nsibling
 			nparent.rn = nn
 		}
@@ -959,14 +981,21 @@ func (m *Map) deleteCase4(on, nn, term *node, path *nodeStack) (
 		nsibling.setRed()
 		nparent.setBlack()
 
-		path.pop() //remove parent from path, becasue we're returning parent
+		path.pop()         //remove oparent
+		path.push(nparent) //replace with nparent
 
-		if oparent == term {
-			return oparent, nparent, path
-		} else {
-			return m.persistTill(oparent, nparent, term, path)
-		}
-	}
+		//if oparent == term {
+		if cmp(oparent.key, term.key) == 0 {
+			log.Println("deleteCase4: oparent.key == term.key; returning on, nn, path directly...")
+			return on, nn, path
+		} //else {
+		log.Println("deleteCase4: returing m.persistTill(oparent, nparent, path)")
+		path.pop() //remove parent from path, becasue we're returning parent
+		return m.persistTill(oparent, nparent, term, path)
+		//}
+	} /* else {
+		return m.deleteCase5(on, nn, term, path)
+	} */
 
 	return m.deleteCase5(on, nn, term, path)
 }
@@ -995,7 +1024,8 @@ func (m *Map) deleteCase5(on, nn, term *node, path *nodeStack) (
 			nsibling.ln.setBlack()
 
 			var nparent = oparent.copy()
-			if on.isLeftChildOf(oparent) {
+			//if on.isLeftChildOf(oparent) {
+			if on.key.Less(oparent.key) {
 				nparent.rn = nsibling
 			} else {
 				nparent.ln = nsibling
@@ -1012,12 +1042,13 @@ func (m *Map) deleteCase5(on, nn, term *node, path *nodeStack) (
 			log.Println("deleteCase5: pre-rotating tree to the Left")
 
 			var nsibling = osibling.copy()
-			nsibling.rn = osibling.ln.copy()
+			nsibling.rn = osibling.rn.copy()
 			nsibling.setRed()
 			nsibling.rn.setBlack()
 
 			var nparent = oparent.copy()
-			if on.isLeftChildOf(oparent) {
+			//if on.isLeftChildOf(oparent) {
+			if on.key.Less(oparent.key) {
 				nparent.rn = nsibling
 			} else {
 				nparent.ln = nsibling
@@ -1051,64 +1082,108 @@ func (m *Map) deleteCase6(on, nn, term *node, path *nodeStack) (
 	//Fact: sibling.IsRed()
 
 	var oparent = path.pop()
+
+	log.Printf("deleteCase6: oparent Tree:\n%s", oparent.TreeString())
+
+	if term != nil && cmp(oparent.key, term.key) == 0 {
+		log.Println("deleteCase6: !!!!!!!!! oparent.key == term.key !!!!!!!!!")
+	}
+
 	var osibling = on.sibling(oparent)
 
 	var nsibling = osibling.copy()
 	var nparent = oparent.copy()
-	if on.isLeftChildOf(oparent) {
-		nparent.rn = nsibling
-	} else {
-		nparent.ln = nsibling
-	}
+
+	////if on.isLeftChildOf(oparent) {
+	//if oparent.key.Less(on.key) {
+	//	nparent.ln = nn
+	//	nparent.rn = nsibling
+	//} else {
+	//	nparent.ln = nsibling
+	//	nparent.rn = nn
+	//}
 
 	nsibling.color = oparent.color
 	nparent.setBlack()
 
-	if on.isLeftChildOf(oparent) {
+	//if on.isLeftChildOf(oparent) {
+	if on.key.Less(oparent.key) {
 		nsibling.rn = osibling.rn.copy()
 		nsibling.rn.setBlack()
 
 		nparent.ln = nn
+		nparent.rn = nsibling
 
 		var ogp = path.pop()
 		var ngp *node
 		if ogp != nil {
 			ngp = ogp.copy()
 			path.push(ngp) //replace ogp with ngp
+
+			//if oparent.isLeftChildOf(ogp) {
+			if oparent.key.Less(ogp.key) {
+				ngp.ln = nparent
+			} else {
+				ngp.rn = nparent
+			}
+
+			if term != nil && cmp(ogp.key, term.key) == 0 {
+				log.Println("deleteCase6: !!!!!!!!! ogp.key == term.key !!!!!!!!!")
+			}
 		}
 
 		nparent, nsibling = m.rotateLeft(nparent, ngp)
 		//nn, nparent = m.rotateLeft(nparent, ngp)
 		//position-wise sibling replaces parent and parent replaces on
 
+		log.Printf("deleteCase6: after rotateLeft: nsibling Tree:\n%s",
+			nsibling.TreeString())
+
 		path.push(nsibling)
-		//path.push(nparent)
+		path.push(nparent)
 	} else {
 		nsibling.ln = osibling.ln.copy()
 		nsibling.ln.setBlack()
 
-		//nparent.rn = nn
+		nparent.ln = nsibling
+		nparent.rn = nn
 
 		var ogp = path.pop()
 		var ngp *node
 		if ogp != nil {
 			ngp = ogp.copy()
 			path.push(ngp) //replace ogp with ngp
+
+			//if oparent.isLeftChildOf(ogp) {
+			if oparent.key.Less(ogp.key) {
+				ngp.ln = nparent
+			} else {
+				ngp.rn = nparent
+			}
+
+			if term != nil && cmp(ogp.key, term.key) == 0 {
+				log.Println("deleteCase6: !!!!!!!!! ogp.key == term.key !!!!!!!!!")
+			}
 		}
 
-		nparent, nsibling = m.rotateLeft(nparent, ngp)
+		nparent, nsibling = m.rotateRight(nparent, ngp)
 		//nn, nparent = m.rotateLeft(nparent, ngp)
 		//position-wise sibling replaces parent and parent replaces on
 
+		log.Printf("deleteCase6: after rotateLeft: nsibling Tree:\n%s",
+			nsibling.TreeString())
+
 		path.push(nsibling)
-		//path.push(nparent)
+		path.push(nparent)
 	}
 
-	//return on, nn, path
-	//return on, nparent, path
+	if term != nil && cmp(oparent.key, term.key) == 0 {
+		return on, nn, path //??
+	}
 
-	path.pop()
-	return oparent, nsibling, path
+	path.pop() //take nsibling off path
+	path.pop() //take nparent off path
+	return m.persistTill(oparent, nsibling, term, path)
 }
 
 func (m *Map) RangeLimit(start, end MapKey, fn func(MapKey, interface{}) bool) {

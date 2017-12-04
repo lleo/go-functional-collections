@@ -3,20 +3,7 @@ package sorted_map_test
 import (
 	"log"
 	"testing"
-
-	"github.com/lleo/go-functional-collections/sorted_map"
 )
-
-const Black = sorted_map.Black
-const Red = sorted_map.Red
-
-var mkmap = sorted_map.MakeMap
-
-//var mknod = sorted_map.MakeNode
-
-func mknod(i int, ln, rn *sorted_map.Node) *sorted_map.Node {
-	return sorted_map.MakeNode(IntKey(i), i, ln, rn)
-}
 
 func TestBasicPutCase1(t *testing.T) {
 	var m = mkmap(0, nil)
@@ -37,8 +24,8 @@ func TestBasicPutCase1(t *testing.T) {
 
 func TestBasicPutCase2(t *testing.T) {
 	var m = mkmap(2,
-		mknod(IntKey(20), 20, Black,
-			mknod(IntKey(10), 10, Red, nil, nil),
+		mknod(20, Black,
+			mknod(10, Red, nil, nil),
 			nil))
 
 	var origM = m
@@ -58,11 +45,11 @@ func TestBasicPutCase2(t *testing.T) {
 func TestBasicPutCase3(t *testing.T) {
 	//insert order 10, 20, 50, 40, 30, 60
 	var m = mkmap(5,
-		mknod(IntKey(20), 20, Black,
-			mknod(IntKey(10), 10, Black, nil, nil),
-			mknod(IntKey(40), 40, Black,
-				mknod(IntKey(30), 30, Red, nil, nil),
-				mknod(IntKey(50), 50, Red, nil, nil),
+		mknod(20, Black,
+			mknod(10, Black, nil, nil),
+			mknod(40, Black,
+				mknod(30, Red, nil, nil),
+				mknod(50, Red, nil, nil),
 			),
 		))
 
@@ -84,23 +71,23 @@ func TestBasicPutCase3(t *testing.T) {
 
 func TestBasicPutCase4(t *testing.T) {
 	//var m = mkmap(5,
-	//	mknod(IntKey(7940), 7940, Black,
-	//		mknod(IntKey(4930), 4930, Black,
+	//	mknod(7940, Black,
+	//		mknod(4930, Black,
 	//			nil,
-	//			mknod(IntKey(7100), 7100, Red, nil, nil)),
-	//		mknod(IntKey(8090), 8090, Black,
+	//			mknod(7100, Red, nil, nil)),
+	//		mknod(8090, Black,
 	//			nil,
-	//			mknod(IntKey(10050), 10050, Red, nil, nil)),
+	//			mknod(10050, Red, nil, nil)),
 	//	))
 	//insert order 50, 20, 60, 40, 70 ???
 	var m = mkmap(5,
-		mknod(IntKey(50), 50, Black,
-			mknod(IntKey(20), 20, Black,
+		mknod(50, Black,
+			mknod(20, Black,
 				nil,
-				mknod(IntKey(40), 40, Red, nil, nil)),
-			mknod(IntKey(60), 60, Black,
+				mknod(40, Red, nil, nil)),
+			mknod(60, Black,
 				nil,
-				mknod(IntKey(70), 70, Red, nil, nil)),
+				mknod(70, Red, nil, nil)),
 		))
 
 	var origM = m      //copy the pointer
@@ -122,7 +109,7 @@ func TestBasicPutCase4(t *testing.T) {
 
 func TestBasicDelCase1Tree0(t *testing.T) {
 	var m0 = mkmap(1,
-		mknod(IntKey(10), 10, Black, nil, nil))
+		mknod(10, Black, nil, nil))
 
 	var then = m0.TreeString()
 	//var dupM0 = m0.Dup()
@@ -147,7 +134,7 @@ func TestBasicDelCase1Tree0(t *testing.T) {
 
 func TestBasicDelCase1Tree1(t *testing.T) {
 	var m0 = mkmap(1,
-		mknod(IntKey(10), 10, Black, nil, nil))
+		mknod(10, Black, nil, nil))
 
 	var then = m0.TreeString()
 	//var dupM0 = m0.Dup()
@@ -172,9 +159,9 @@ func TestBasicDelCase1Tree1(t *testing.T) {
 
 func TestBasicDelCase1Tree2(t *testing.T) {
 	var m0 = mkmap(2,
-		mknod(IntKey(10), 10, Black,
+		mknod(10, Black,
 			nil,
-			mknod(IntKey(20), 20, Red, nil, nil),
+			mknod(20, Red, nil, nil),
 		))
 
 	var then = m0.TreeString()
@@ -195,8 +182,8 @@ func TestBasicDelCase1Tree2(t *testing.T) {
 
 func TestBasicDelCase1Tree3(t *testing.T) {
 	var m0 = mkmap(2,
-		mknod(IntKey(20), 20, Black,
-			mknod(IntKey(10), 10, Red, nil, nil),
+		mknod(20, Black,
+			mknod(10, Red, nil, nil),
 			nil,
 		))
 
@@ -220,12 +207,16 @@ func TestBasicDelCase1Tree3(t *testing.T) {
 
 func TestBasicDelCase2Tree0(t *testing.T) {
 	var m = mkmap(2,
-		mknod(IntKey(20), 20, Black,
+		mknod(20, Black,
 			nil,
-			mknod(IntKey(30), 30, Red, nil, nil),
+			mknod(30, Red, nil, nil),
 		))
 
+	//log.Printf("BEFORE REMOVE: Map m=\n%s", m.TreeString())
+
 	m = m.Del(IntKey(30))
+
+	//log.Printf("AFTER REMOVE Map m=\n%s", m.TreeString())
 
 	if m.NumEntries() != 1 {
 		t.Fatalf("m.NumEntries(),%d != 1", m.NumEntries())
@@ -246,12 +237,16 @@ func TestBasicDelCase2Tree0(t *testing.T) {
 
 func TestBasicDelCase2Tree1(t *testing.T) {
 	var m = mkmap(2,
-		mknod(IntKey(20), 20, Black,
-			mknod(IntKey(10), 30, Red, nil, nil),
+		mknod(20, Black,
+			mknod(10, Red, nil, nil),
 			nil,
 		))
 
+	log.Printf("BEFORE REMOVE: Map m=\n%s", m.TreeString())
+
 	m = m.Del(IntKey(10))
+
+	log.Printf("AFTER REMOVE Map m=\n%s", m.TreeString())
 
 	if m.NumEntries() != 1 {
 		t.Fatalf("m.NumEntries(),%d != 1", m.NumEntries())
@@ -272,9 +267,9 @@ func TestBasicDelCase2Tree1(t *testing.T) {
 
 func TestBasicDelCase3Tree0(t *testing.T) {
 	var m = mkmap(3,
-		mknod(IntKey(20), 20, Black,
-			mknod(IntKey(10), 10, Black, nil, nil),
-			mknod(IntKey(30), 30, Black, nil, nil),
+		mknod(20, Black,
+			mknod(10, Black, nil, nil),
+			mknod(30, Black, nil, nil),
 		))
 
 	m = m.Del(IntKey(30))
@@ -297,13 +292,13 @@ func TestBasicDelCase3Tree0(t *testing.T) {
 
 func TestBasicDelCase6Tree0(t *testing.T) {
 	var m = mkmap(6,
-		mknod(IntKey(20), 20, Black,
-			mknod(IntKey(10), 10, Black, nil, nil),
-			mknod(IntKey(40), 40, Red,
-				mknod(IntKey(30), 30, Black, nil, nil),
-				mknod(IntKey(50), 50, Black,
+		mknod(20, Black,
+			mknod(10, Black, nil, nil),
+			mknod(40, Red,
+				mknod(30, Black, nil, nil),
+				mknod(50, Black,
 					nil,
-					mknod(IntKey(60), 60, Red, nil, nil)))))
+					mknod(60, Red, nil, nil)))))
 
 	var origM = m
 	var dupOrigM = m.Dup()
@@ -312,6 +307,7 @@ func TestBasicDelCase6Tree0(t *testing.T) {
 	log.Printf("origMapStr0 =\n%s", origMapStr0)
 
 	m = m.Del(IntKey(30))
+
 	if m.NumEntries() != 5 {
 		t.Fatal("m.NumEntries() != 5")
 	}
@@ -327,9 +323,108 @@ func TestBasicDelCase6Tree0(t *testing.T) {
 	}
 }
 
-func TestBasicDelTwoChildrenCase2(t *testing.T) {
+func TestBasicDelTermTree0(t *testing.T) {
 	var m = mkmap(7,
-		mknod(IntKey()))
+		mknod(40, Black,
+			mknod(20, Black,
+				mknod(10, Red, nil, nil),
+				mknod(30, Red, nil, nil)),
+			mknod(70, Red,
+				mknod(50, Black, nil, nil),
+				mknod(80, Black, nil, nil))))
+
+	var origM = m
+	var dupOrigM = m.Dup()
+	var origMapStr0 = m.TreeString()
+
+	log.Printf("BEFORE DEL m = \n%s", m.TreeString())
+
+	m = m.Del(IntKey(20))
+
+	log.Printf("AFTER DEL m = \n%s", m.TreeString())
+
+	var err = m.Valid()
+	if err != nil {
+		t.Fatalf("INVALID TREE AFTER Del(IntKey(20)); err=%s\n", err)
+	}
+
+	if m.NumEntries() != 6 {
+		t.Fatal("m.NumEntries(),%d != 6", m.NumEntries())
+	}
+
+	var origMapStr1 = origM.TreeString()
+	if origMapStr0 != origMapStr1 {
+		log.Printf("origMapStr0 != origMapStr1:\n"+
+			"origMapStr0=\n%s\norigMapStr1=\n%s", origMapStr0, origMapStr1)
+	}
+
+	if !origM.Equiv(dupOrigM) {
+		t.Fatal("TestBasicDelTwoChildrenCase2: " +
+			"orig Map and duplicate of orig Map are not identical.")
+	}
+}
+
+//deleteCase4
+func TestBasicDelTermTree1(t *testing.T) {
+	var m = mkmap(6,
+		mknod(40, Black,
+			mknod(10, Black,
+				nil,
+				mknod(30, Red, nil, nil)),
+			mknod(70, Red,
+				mknod(50, Black, nil, nil),
+				mknod(80, Black, nil, nil))))
+
+	//shouldHave after Del(70)
+	var shouldHaveKvs = []KeyVal{
+		{IntKey(10), 10},
+		{IntKey(30), 30},
+		{IntKey(40), 40},
+		{IntKey(50), 50},
+		{IntKey(80), 80},
+	}
+
+	var origM = m
+	var dupOrigM = m.Dup()
+	var origMapStr0 = m.TreeString()
+
+	log.Printf("BEFORE DEL m = \n%s", m.TreeString())
+
+	m = m.Del(IntKey(70))
+
+	log.Printf("AFTER DEL m = \n%s", m.TreeString())
+
+	var err = m.Valid()
+	if err != nil {
+		t.Fatalf("INVALID TREE AFTER Del(IntKey(20)); err=%s\n", err)
+	}
+
+	if m.NumEntries() != 5 {
+		t.Fatal("m.NumEntries(),%d != 5", m.NumEntries())
+	}
+
+	for _, kv := range shouldHaveKvs {
+		var val, found = m.Load(kv.Key)
+		if !found {
+			log.Printf("failed to find shouldHave key=%s in Tree=\n%s",
+				kv.Key, m.TreeString())
+			t.Fatalf("Failed to find shouldHave kv.Key=%s", kv.Key)
+		}
+		if val != kv.Val {
+			t.Fatalf("found val,%v != expected val,%v", val, kv.Val)
+		}
+	}
+
+	var origMapStr1 = origM.TreeString()
+	if origMapStr0 != origMapStr1 {
+		log.Printf("origMapStr0 != origMapStr1:\n"+
+			"origMapStr0=\n%s\norigMapStr1=\n%s", origMapStr0, origMapStr1)
+	}
+
+	if !origM.Equiv(dupOrigM) {
+		t.Fatal("TestBasicDelTwoChildrenCase2: " +
+			"orig Map and duplicate of orig Map are not identical.")
+	}
 }
 
 //func TestBasicDelCase1Deeper(t *testing.T) {

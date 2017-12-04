@@ -1,7 +1,9 @@
 package sorted_map
 
 import (
+	"errors"
 	"fmt"
+	"log"
 )
 
 type colorType bool
@@ -37,7 +39,6 @@ type node struct {
 	rn    *node
 }
 
-//NewNode() is public for testing only.
 func newNode(k MapKey, v interface{}) *node {
 	var n = new(node)
 	n.key = k
@@ -48,42 +49,42 @@ func newNode(k MapKey, v interface{}) *node {
 	return n
 }
 
-func NewNode(k MapKey, v interface{}) *node {
-	var n = new(node)
-	n.key = k
-	n.val = v
-	//n.color = Red   //default
-	//n.ln = nil      //default
-	//n.rn = nil      //default
-	return n
+//func NewNode(k MapKey, v interface{}) *node {
+//	var n = new(node)
+//	n.key = k
+//	n.val = v
+//	//n.color = Red   //default
+//	//n.ln = nil      //default
+//	//n.rn = nil      //default
+//	return n
+//}
+
+//MakeIntNode() exists for testing only.
+func MakeIntNode(i int, c colorType, ln, rn *node) *node {
+	return &node{IntKey(i), i, c, ln, rn}
 }
 
-//MakeNode() is public for testing only.
-func MakeNode(k MapKey, v interface{}, c colorType, ln, rn *node) *node {
-	return &node{k, v, c, ln, rn}
-}
-
-//Key() is public for testing only.
+//Key() exists for testing only.
 func (n *node) Key() MapKey {
 	return n.key
 }
 
-//Val() is public for testing only.
+//Val() exists for testing only.
 func (n *node) Val() interface{} {
 	return n.val
 }
 
-//colorType() is public for testing only.
+//Color() exists for testing only.
 func (n *node) Color() colorType {
-	return n.color
+	return color(n)
 }
 
-//Ln() is public for testing only.
+//Ln() exists for testing only.
 func (n *node) Ln() *node {
 	return n.ln
 }
 
-//Rn() is public for testing only.
+//Rn() exists for testing only.
 func (n *node) Rn() *node {
 	return n.rn
 }
@@ -98,32 +99,39 @@ func (n *node) copy() *node {
 //sub-tree represented by this node is valid w/r RED-BLACK-TREE-PROPERTIES.md,
 //and a count of the black nodes of the sub-tree. If the node is not valid, then
 //the black node count will be -1.
-func (n *node) Valid() (bool, int) {
+func (n *node) Valid() (int, error) {
 	//RBT#2
 	if n == nil {
-		return true, 1
+		return 1, nil
 	}
-	var lvalid, lcount = n.ln.Valid()
-	var rvalid, rcount = n.rn.Valid()
+	var lcount, lerr = n.ln.Valid()
+	var rcount, rerr = n.rn.Valid()
 
-	if !lvalid || !rvalid {
-		return false, -1
+	if lerr != nil {
+		return -1, lerr
+	}
+	if rerr != nil {
+		return -1, rerr
 	}
 
 	//RBT#4
 	if lcount != rcount || lcount < 0 {
-		return false, -1
+		log.Printf("Valid: left count != right count\n")
+		var errStr = fmt.Sprintf("left count,%d != right count,%d",
+			lcount, rcount)
+		return -1, errors.New(errStr)
 	}
 
 	//RBT#3
 	if n.IsRed() {
 		if n.ln.IsRed() || n.rn.IsRed() {
-			return false, -1
+			return -1, errors.New("Red-Red violation.")
 		}
 	} else {
 		lcount++
 	}
-	return true, lcount
+
+	return lcount, nil
 }
 
 //dup() is for testing only. It is a recursive copy().
@@ -344,6 +352,9 @@ func (n *node) treeString(d int, indent string) string {
 	//	d = 0
 	//}
 	if d == 0 {
+		return n.String()
+	}
+	if n.ln == nil && n.rn == nil {
 		return n.String()
 	}
 	return fmt.Sprintf(toStrFmt0, n, n.key, n.val, n.color) +

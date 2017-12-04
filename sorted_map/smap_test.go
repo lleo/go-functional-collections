@@ -4,10 +4,8 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"strconv"
 
 	"github.com/lleo/go-functional-collections/sorted_map"
-	"github.com/lleo/stringutil"
 	"github.com/pkg/errors"
 )
 
@@ -25,39 +23,17 @@ func init() {
 	log.Println("TESTING HAS STARTED...")
 }
 
-var Inc = stringutil.Lower.Inc
+const Black = sorted_map.Black
+const Red = sorted_map.Red
 
-type StringKey string
+type IntKey = sorted_map.IntKey
 
-func (sk StringKey) Less(o sorted_map.MapKey) bool {
-	var osk, ok = o.(StringKey)
-	if !ok {
-		panic("o is not a StringKey")
-	}
-	return sk < osk
-}
-
-func (sk StringKey) String() string {
-	return string(sk)
-}
-
-type IntKey int
-
-func (ik IntKey) Less(o sorted_map.MapKey) bool {
-	var oik, ok = o.(IntKey)
-	if !ok {
-		panic("o is not a IntKey")
-	}
-	return ik < oik
-}
-
-func (ik IntKey) String() string {
-	return strconv.Itoa(int(ik))
-}
+var mkmap = sorted_map.MakeMap
+var mknod = sorted_map.MakeIntNode
 
 type KeyVal struct {
-	key sorted_map.MapKey
-	val interface{}
+	Key sorted_map.MapKey
+	Val interface{}
 }
 
 func genIntKeyVals(n int) []KeyVal {
@@ -90,7 +66,7 @@ func randomizeKeyVals(kvs []KeyVal) []KeyVal {
 func buildMap(kvs []KeyVal) *sorted_map.Map {
 	var m = sorted_map.New()
 	for _, kv := range kvs {
-		m = m.Put(kv.key, kv.val)
+		m = m.Put(kv.Key, kv.Val)
 	}
 	return m
 }
