@@ -30,8 +30,8 @@ func TestCompBuildMap(t *testing.T) {
 		}
 	}
 
-	//log.Printf("Map m =\n%s", m.TreeString())
-	//log.Printf("Map m =\n%s", m.String())
+	log.Printf("Map m =\n%s", m.TreeString())
+	log.Printf("Map m =\n%s", m.String())
 
 	var i int
 	var fn = func(k0 sorted_map.MapKey, v0 interface{}) bool {
@@ -52,7 +52,7 @@ func TestCompBuildMap(t *testing.T) {
 }
 
 func TestCompDestroyMap(t *testing.T) {
-	var numKeys = 8
+	var numKeys = 40
 	var kvs = genIntKeyVals(numKeys)
 	//var ns = int64(time.Now().Nanosecond())
 	//log.Printf("ns = %d\n", ns)
@@ -122,8 +122,8 @@ func TestCompDestroyMap(t *testing.T) {
 		for _, kv0 := range shouldHaveKvs {
 			var val, found = m.Load(kv0.Key)
 			if !found {
-				t.Fatalf("Remove: for key=%s: "+
-					"failed to find shouldHave key=%s", kv.Key, kv0.Key)
+				t.Fatalf("Remove: i=%d; for key=%s: "+
+					"failed to find shouldHave key=%s", i, kv.Key, kv0.Key)
 			}
 			if val != kv0.Val {
 				t.Fatalf("Remove: found val,%v != expected val,%v",

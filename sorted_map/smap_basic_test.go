@@ -309,7 +309,7 @@ func TestBasicDelCase6Tree0(t *testing.T) {
 	m = m.Del(IntKey(30))
 
 	if m.NumEntries() != 5 {
-		t.Fatal("m.NumEntries() != 5")
+		t.Fatalf("m.NumEntries(),%d != 5", m.NumEntries())
 	}
 
 	var origMapStr1 = origM.TreeString()
@@ -333,6 +333,15 @@ func TestBasicDelTermTree0(t *testing.T) {
 				mknod(50, Black, nil, nil),
 				mknod(80, Black, nil, nil))))
 
+	var shouldHaveKvs = []KeyVal{
+		{IntKey(10), 10},
+		{IntKey(30), 30},
+		{IntKey(40), 40},
+		{IntKey(50), 50},
+		{IntKey(70), 70},
+		{IntKey(80), 80},
+	}
+
 	var origM = m
 	var dupOrigM = m.Dup()
 	var origMapStr0 = m.TreeString()
@@ -349,7 +358,19 @@ func TestBasicDelTermTree0(t *testing.T) {
 	}
 
 	if m.NumEntries() != 6 {
-		t.Fatal("m.NumEntries(),%d != 6", m.NumEntries())
+		t.Fatalf("m.NumEntries(),%d != 6", m.NumEntries())
+	}
+
+	for _, kv := range shouldHaveKvs {
+		var val, found = m.Load(kv.Key)
+		if !found {
+			log.Printf("failed to find shouldHave key=%s in Tree=\n%s",
+				kv.Key, m.TreeString())
+			t.Fatalf("Failed to find shouldHave kv.Key=%s", kv.Key)
+		}
+		if val != kv.Val {
+			t.Fatalf("found val,%v != expected val,%v", val, kv.Val)
+		}
 	}
 
 	var origMapStr1 = origM.TreeString()
@@ -396,7 +417,7 @@ func TestBasicDelTermTree1(t *testing.T) {
 
 	var err = m.Valid()
 	if err != nil {
-		t.Fatalf("INVALID TREE AFTER Del(IntKey(20)); err=%s\n", err)
+		t.Fatalf("INVALID TREE AFTER Del(IntKey(70)); err=%s\n", err)
 	}
 
 	if m.NumEntries() != 5 {
@@ -427,34 +448,194 @@ func TestBasicDelTermTree1(t *testing.T) {
 	}
 }
 
-//func TestBasicDelCase1Deeper(t *testing.T) {
-//	var m = mkmap(3,
-//		mknod(20, Black
-//			Black,
-//			mknod(10, Black,
-//				mknod(5, Red, nil, nil),
-//				mknod(15, Red, nil, nil)),
-//			mknod(30, Black,
-//				mknod(25, Red, nil, nil),
-//				mknod(35, Red, nil, nil)),
-//		))
-//
-//	m.Del(IntKey(25))
-//	if m.NumEntries() != 6 {
-//		t.Fatal("m.NumEntries() != 2")
-//	}
-//
-//	if m.Root().IsRed() {
-//		t.Fatal("m.Root().IsRed()")
-//	}
-//
-//	if m.Root().Ln().IsRed() {
-//		t.Fatal("m.Root().Ln().IsRed()")
-//	}
-//
-//	//FIXME...
-//
-//	if m.Root().Rn() != nil {
-//		t.Fatal("m.Root().Rn() != nil")
-//	}
-//}
+func TestBasicDelTermTree2(t *testing.T) {
+	var m = mkmap(5,
+		mknod(40, Black,
+			mknod(10, Black, nil, nil),
+			mknod(70, Red,
+				mknod(50, Black, nil, nil),
+				mknod(80, Black, nil, nil))))
+
+	//shouldHave after Del(70)
+	var shouldHaveKvs = []KeyVal{
+		{IntKey(10), 10},
+		{IntKey(50), 50},
+		{IntKey(70), 70},
+		{IntKey(80), 80},
+	}
+
+	var origM = m
+	var dupOrigM = m.Dup()
+	var origMapStr0 = m.TreeString()
+
+	log.Printf("BEFORE DEL m = \n%s", m.TreeString())
+
+	m = m.Del(IntKey(40))
+
+	log.Printf("AFTER DEL m = \n%s", m.TreeString())
+
+	var err = m.Valid()
+	if err != nil {
+		t.Fatalf("INVALID TREE AFTER Del(IntKey(40)); err=%s\n", err)
+	}
+
+	if m.NumEntries() != 4 {
+		t.Fatalf("m.NumEntries(),%d != 4", m.NumEntries())
+	}
+
+	for _, kv := range shouldHaveKvs {
+		var val, found = m.Load(kv.Key)
+		if !found {
+			log.Printf("failed to find shouldHave key=%s in Tree=\n%s",
+				kv.Key, m.TreeString())
+			t.Fatalf("Failed to find shouldHave kv.Key=%s", kv.Key)
+		}
+		if val != kv.Val {
+			t.Fatalf("found val,%v != expected val,%v", val, kv.Val)
+		}
+	}
+
+	var origMapStr1 = origM.TreeString()
+	if origMapStr0 != origMapStr1 {
+		log.Printf("origMapStr0 != origMapStr1:\n"+
+			"origMapStr0=\n%s\norigMapStr1=\n%s", origMapStr0, origMapStr1)
+	}
+
+	if !origM.Equiv(dupOrigM) {
+		t.Fatal("TestBasicDelTwoChildrenCase2: " +
+			"orig Map and duplicate of orig Map are not identical.")
+	}
+}
+
+func TestBasicDelTermTree3(t *testing.T) {
+	var m = mkmap(6,
+		mknod(50, Black,
+			mknod(20, Red,
+				mknod(10, Black, nil, nil),
+				mknod(40, Black,
+					mknod(30, Red, nil, nil),
+					nil)),
+			mknod(80, Black, nil, nil)))
+
+	//shouldHave after Del(20)
+	var shouldHaveKvs = []KeyVal{
+		{IntKey(10), 10},
+		{IntKey(30), 30},
+		{IntKey(40), 40},
+		{IntKey(50), 50},
+		{IntKey(80), 80},
+	}
+
+	var origM = m
+	var dupOrigM = m.Dup()
+	var origMapStr0 = m.TreeString()
+
+	log.Printf("BEFORE DEL m = \n%s", m.TreeString())
+
+	m = m.Del(IntKey(20))
+
+	log.Printf("AFTER DEL m = \n%s", m.TreeString())
+
+	var err = m.Valid()
+	if err != nil {
+		t.Fatalf("INVALID TREE AFTER Del(IntKey(20)); err=%s\n", err)
+	}
+
+	if m.NumEntries() != 5 {
+		t.Fatalf("m.NumEntries(),%d != 5", m.NumEntries())
+	}
+
+	for _, kv := range shouldHaveKvs {
+		var val, found = m.Load(kv.Key)
+		if !found {
+			log.Printf("failed to find shouldHave key=%s in Tree=\n%s",
+				kv.Key, m.TreeString())
+			t.Fatalf("Failed to find shouldHave kv.Key=%s", kv.Key)
+		}
+		if val != kv.Val {
+			t.Fatalf("found val,%v != expected val,%v", val, kv.Val)
+		}
+	}
+
+	var origMapStr1 = origM.TreeString()
+	if origMapStr0 != origMapStr1 {
+		log.Printf("origMapStr0 != origMapStr1:\n"+
+			"origMapStr0=\n%s\norigMapStr1=\n%s", origMapStr0, origMapStr1)
+	}
+
+	if !origM.Equiv(dupOrigM) {
+		t.Fatal("TestBasicDelTwoChildrenCase2: " +
+			"orig Map and duplicate of orig Map are not identical.")
+	}
+}
+
+func TestBasicDelTermTree4(t *testing.T) {
+	var m = mkmap(9,
+		mknod(60, Black,
+			mknod(20, Black,
+				mknod(10, Black, nil, nil),
+				mknod(40, Red,
+					mknod(30, Black, nil, nil),
+					mknod(50, Black, nil, nil))),
+			mknod(80, Black,
+				mknod(70, Black, nil, nil),
+				mknod(90, Black, nil, nil))))
+
+	if err := m.Valid(); err != nil {
+		t.Fatalf("!!! INVALID TREE !!!; err=%s\n", err)
+	}
+
+	//shouldHave after Del(80)
+	var shouldHaveKvs = []KeyVal{
+		{IntKey(10), 10},
+		{IntKey(20), 30},
+		{IntKey(30), 30},
+		{IntKey(40), 40},
+		{IntKey(50), 50},
+		{IntKey(60), 50},
+		{IntKey(70), 50},
+		//{IntKey(80), 80},
+		{IntKey(90), 50},
+	}
+
+	var origM = m
+	var dupOrigM = m.Dup()
+	var origMapStr0 = m.TreeString()
+
+	log.Printf("BEFORE DEL m = \n%s", m.TreeString())
+
+	m = m.Del(IntKey(80))
+
+	log.Printf("AFTER DEL m = \n%s", m.TreeString())
+
+	if err := m.Valid(); err != nil {
+		t.Fatalf("INVALID TREE AFTER Del(IntKey(80)); err=%s\n", err)
+	}
+
+	if m.NumEntries() != 8 {
+		t.Fatalf("m.NumEntries(),%d != 8", m.NumEntries())
+	}
+
+	for _, kv := range shouldHaveKvs {
+		var val, found = m.Load(kv.Key)
+		if !found {
+			log.Printf("failed to find shouldHave key=%s in Tree=\n%s",
+				kv.Key, m.TreeString())
+			t.Fatalf("Failed to find shouldHave kv.Key=%s", kv.Key)
+		}
+		if val != kv.Val {
+			t.Fatalf("found val,%v != expected val,%v", val, kv.Val)
+		}
+	}
+
+	var origMapStr1 = origM.TreeString()
+	if origMapStr0 != origMapStr1 {
+		log.Printf("origMapStr0 != origMapStr1:\n"+
+			"origMapStr0=\n%s\norigMapStr1=\n%s", origMapStr0, origMapStr1)
+	}
+
+	if !origM.Equiv(dupOrigM) {
+		t.Fatal("TestBasicDelTwoChildrenCase2: " +
+			"orig Map and duplicate of orig Map are not identical.")
+	}
+}

@@ -176,7 +176,7 @@ ogp=40b
 
                20b                               20b
              /     \                           /     \
-          10b       40b       insertCase2   10b       40b
+          10b       40r       insertCase2   10b       40r
          /  \       /  \         --->      /  \       /  \
                   30b   50b   (do nothing)          30b   50b
                         / \                               / \
@@ -186,4 +186,34 @@ ogp=nil
 oparent=20b
 on=40b
 nn=40b
+
+Remove(k=30), removeNodeWithZeroOrOneChild(on=30, term=20b, path[40b, 20b])
+===========================================================================
+
+Falls thru deleteCase1,2,3,4,&5 to deleteCase4(). In deleteCase6 it hits the
+first 
+
+          20b                                          20b
+        /     \            deleteCase6               /     \
+     10b       40r            --->                10b       50r
+    /  \       /  \       sib.color=parent.color /  \       /  \
+             30b   50b    parent.setBlack                 40b   60b
+                   / \    sib.rn.setBlack                       / \
+                      60r rotateLeft(parent)
+
+12 node tree for iteration
+==========================
+
+                                70b
+                            /         \
+                         40r            90r
+                       /    \          /   \
+                   20b      50b      80b    110b
+                  /   \     / \      / \    /   \
+                10r   30r     60r         100r   120r
+                / \   / \     / \         / \    / \
+
+cur=10r
+path=[20b, 40r, 70b]
+endKey=pinf
 
