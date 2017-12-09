@@ -8,15 +8,14 @@ type nodeIter struct {
 }
 
 func newNodeIter(start *node, endKey MapKey, path *nodeStack) *nodeIter {
-	//log.Printf("newNodeIter: start = %s\n", start)
-	//log.Printf("newNodeIter: endKey = %s\n", endKey)
-	//log.Printf("newNodeIter: path = \n%s\n", path)
 	var iter = new(nodeIter)
 	iter.dir = less(start.key, endKey)
-	//log.Printf("newNodeIter: dir = %v\n", iter.dir)
 	iter.endKey = endKey
 	iter.cur = start
 	iter.path = path
+	//log.Printf("newNodeIter: constructed:"+
+	//	"\niter.dir=%v\niter.endKey=%s\niter.cur=%s\niter.path=%s",
+	//	iter.dir, iter.endKey, iter.cur, iter.path)
 	return iter
 }
 

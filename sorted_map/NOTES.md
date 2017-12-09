@@ -217,3 +217,53 @@ cur=10r
 path=[20b, 40r, 70b]
 endKey=pinf
 
+TestBasicDelTermTree3
+=====================
+
+              50b                            50b
+            /     \     deleteCase5        /     \
+          20r      80b    --->           10r      80b
+        /    \     / \  rotateRight     /  \      / \
+     10b     40b                      10b   30b
+     / \    /  \                            / \
+          30r                                  40b
+on=40b
+oterm=40b
+path=[]
+
+vn=10b
+osib=70r
+path=[40]
+
+           70b    
+         /     \  
+       40r     80b
+      /  \     / \
+    10b  50b      
+
+on=10b
+
+TestBasicDelTermTree4
+=====================
+
+Remove(70)
+
+               60b                                 60b
+            /       \                           /       \       deleteCase1(70)
+         20b         80b    deleteCase3      20b         70b    deleteCase5(70)
+       /    \        /  \      -->         /    \        /  \      --->
+    10b     40r    70b  90b             10b     40r         90r rotateLeft(sib)
+    / \     / \    / \  / \             / \     / \         / \
+          30b 50b                             30b 50b
+          / \ / \                             / \ / \          
+
+
+                 60b                              40b
+              /       \                        /       \
+           40b         70b    deleteCase6    20b        60b
+         /    \        /  \      --->       /   \      /   \
+      20r     50b         90r rotateRight 10b   30b  50b   70b
+      / \     / \         / \             / \   / \  / \   / \
+    10b 30b                                                  90r
+    / \ / \
+

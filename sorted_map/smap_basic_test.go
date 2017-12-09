@@ -5,16 +5,174 @@ import (
 	"testing"
 )
 
+func TestBasicLoadOrStoreTree0(t *testing.T) {
+	var m0 = mkmap(
+		mknod(20, Black,
+			mknod(10, Red, nil, nil),
+			mknod(30, Red, nil, nil)))
+
+	var origM = m0
+	var dupM = m0.Dup()
+
+	//log.Printf("Before LoadOrStore: m0=\n%s", m0.TreeString())
+
+	var m1, val, found = m0.LoadOrStore(IntKey(10), 10)
+
+	//log.Printf("After LoadOrStore: m1=\n%s", m1.TreeString())
+
+	if !found {
+		t.Fatal("key not found; it was expected it to be found.")
+	}
+
+	if val != 10 {
+		t.Fatal("val,%d != expected val,%v,", val, m0.Root().Ln().Val())
+	}
+
+	if m1 != m0 {
+		t.Fatal("current tree not same as orig tree.")
+	}
+
+	if !origM.Equiv(dupM) {
+		t.Fatal("TestBasicPutCase1: orig Map and duplicate of orig Map are not identical.")
+	}
+}
+
+func TestBasicLoadOrStoreTree1(t *testing.T) {
+	var m0 = mkmap(
+		mknod(20, Black,
+			nil,
+			mknod(30, Red, nil, nil)))
+
+	var origM = m0
+	var dupM = m0.Dup()
+
+	//log.Printf("Before LoadOrStore: m0=\n%s", m0.TreeString())
+
+	var m1, val, found = m0.LoadOrStore(IntKey(10), 10)
+
+	//log.Printf("After LoadOrStore: m1=\n%s", m1.TreeString())
+
+	if found {
+		t.Fatal("key was found; it was not expected to be found.")
+	}
+
+	if val != nil {
+		t.Fatal("val,%d != expected val,%v,", val, nil)
+	}
+
+	if m1.NumEntries() != 3 {
+		t.Fatal("m1.NumEntries() != 3")
+	}
+
+	if m1 == m0 {
+		t.Fatal("current tree is the same as orig tree.")
+	}
+
+	if !origM.Equiv(dupM) {
+		t.Fatal("TestBasicPutCase1: orig Map and duplicate of orig Map are not identical.")
+	}
+}
+
+func TestBasicLoadOrStoreTree2(t *testing.T) {
+	var m0 = mkmap(
+		mknod(10, Black,
+			nil,
+			mknod(30, Red, nil, nil)))
+
+	var origM = m0
+	var dupM = m0.Dup()
+
+	//log.Printf("Before LoadOrStore: m0=\n%s", m0.TreeString())
+
+	var m1, val, found = m0.LoadOrStore(IntKey(20), 20)
+
+	//log.Printf("After LoadOrStore: m1=\n%s", m1.TreeString())
+
+	if found {
+		t.Fatal("key was found; it was not expected to be found.")
+	}
+
+	if val != nil {
+		t.Fatal("val,%d != expected val,%v,", val, nil)
+	}
+
+	if m1.NumEntries() != 3 {
+		t.Fatal("m1.NumEntries() != 3")
+	}
+
+	if m1 == m0 {
+		t.Fatal("current tree is the same as orig tree.")
+	}
+
+	if !origM.Equiv(dupM) {
+		t.Fatal("TestBasicPutCase1: orig Map and duplicate of orig Map are not identical.")
+	}
+}
+
+func TestBasicLoadOrStoreTree3(t *testing.T) {
+	var m0 = mkmap(
+		mknod(60, Black,
+			mknod(20, Red,
+				mknod(10, Black, nil, nil),
+				mknod(40, Black,
+					nil,
+					mknod(50, Red, nil, nil))),
+			mknod(80, Black,
+				mknod(70, Red, nil, nil),
+				mknod(90, Red, nil, nil))))
+
+	if err := m0.Valid(); err != nil {
+		t.Fatal("m0 is invalid; err=%s", err)
+	}
+
+	var origM = m0
+	var dupM = m0.Dup()
+
+	//log.Printf("Before LoadOrStore: m0=\n%s", m0.TreeString())
+
+	var m1, val, found = m0.LoadOrStore(IntKey(30), 30)
+
+	//log.Printf("After LoadOrStore: m1=\n%s", m1.TreeString())
+
+	if found {
+		t.Fatal("key was found; it was not expected to be found.")
+	}
+
+	if val != nil {
+		t.Fatal("val,%d != expected val,%v,", val, nil)
+	}
+
+	if m1.NumEntries() != 9 {
+		t.Fatal("m1.NumEntries() != 9")
+	}
+
+	if m1 == m0 {
+		t.Fatal("current tree is the same as orig tree.")
+	}
+
+	if !origM.Equiv(dupM) {
+		t.Fatal("TestBasicPutCase1: orig Map and duplicate of orig Map are not identical.")
+	}
+}
+
 func TestBasicPutCase1(t *testing.T) {
-	var m = mkmap(0, nil)
+	var m = mkmap(nil)
 
 	var origM = m
 	var dupM = m.Dup()
 
+	//log.Printf("BEFORE Put m =\n%s", m.TreeString())
+
 	m = m.Put(IntKey(10), 10)
+
+	//log.Printf("AFTER Put m =\n%s", m.TreeString())
 
 	if m.NumEntries() != 1 {
 		t.Fatal("m.NumEntries() != 1")
+	}
+
+	if err := m.Valid(); err != nil {
+		t.Fatalf("map not valid; err=%s", err)
 	}
 
 	if !origM.Equiv(dupM) {
@@ -23,7 +181,7 @@ func TestBasicPutCase1(t *testing.T) {
 }
 
 func TestBasicPutCase2(t *testing.T) {
-	var m = mkmap(2,
+	var m = mkmap(
 		mknod(20, Black,
 			mknod(10, Red, nil, nil),
 			nil))
@@ -31,10 +189,18 @@ func TestBasicPutCase2(t *testing.T) {
 	var origM = m
 	var dupM = m.Dup()
 
+	//log.Printf("BEFORE Put m =\n%s", m.TreeString())
+
 	m = m.Put(IntKey(30), 30)
+
+	//log.Printf("AFTER Put m =\n%s", m.TreeString())
 
 	if m.NumEntries() != 3 {
 		t.Fatal("m.NumEntries() != 1")
+	}
+
+	if err := m.Valid(); err != nil {
+		t.Fatalf("map not valid; err=%s", err)
 	}
 
 	if !origM.Equiv(dupM) {
@@ -44,7 +210,7 @@ func TestBasicPutCase2(t *testing.T) {
 
 func TestBasicPutCase3(t *testing.T) {
 	//insert order 10, 20, 50, 40, 30, 60
-	var m = mkmap(5,
+	var m = mkmap(
 		mknod(20, Black,
 			mknod(10, Black, nil, nil),
 			mknod(40, Black,
@@ -56,13 +222,19 @@ func TestBasicPutCase3(t *testing.T) {
 	var origM = m
 	var dupM = m.Dup()
 
+	//log.Printf("BEFORE Put m =\n%s", m.TreeString())
+
 	m = m.Put(IntKey(60), 60)
+
+	//log.Printf("AFTER Put m =\n%s", m.TreeString())
 
 	if m.NumEntries() != 6 {
 		t.Fatal("m.NumEntries() != 6")
 	}
 
-	log.Printf("\n%s", m.TreeString())
+	if err := m.Valid(); err != nil {
+		t.Fatalf("map not valid; err=%s", err)
+	}
 
 	if !origM.Equiv(dupM) {
 		t.Fatal("TestBasicPutCase3: orig Map and duplicate of orig Map are not identical.")
@@ -70,7 +242,7 @@ func TestBasicPutCase3(t *testing.T) {
 }
 
 func TestBasicPutCase4(t *testing.T) {
-	//var m = mkmap(5,
+	//var m = mkmap(
 	//	mknod(7940, Black,
 	//		mknod(4930, Black,
 	//			nil,
@@ -80,7 +252,7 @@ func TestBasicPutCase4(t *testing.T) {
 	//			mknod(10050, Red, nil, nil)),
 	//	))
 	//insert order 50, 20, 60, 40, 70 ???
-	var m = mkmap(5,
+	var m = mkmap(
 		mknod(50, Black,
 			mknod(20, Black,
 				nil,
@@ -93,13 +265,19 @@ func TestBasicPutCase4(t *testing.T) {
 	var origM = m      //copy the pointer
 	var dupM = m.Dup() //copy the value
 
+	//log.Printf("BEFORE Put m =\n%s", m.TreeString())
+
 	//m = m.Put(IntKey(5310), 5310)
 	m = m.Put(IntKey(30), 30)
 
-	log.Printf("TestBasicPutCase4: m=\n%s", m.Root().TreeString())
+	//log.Printf("AFTER Put m =\n%s", m.TreeString())
 
 	if m.NumEntries() != 6 {
 		t.Fatal("m.NumEntries() != 6")
+	}
+
+	if err := m.Valid(); err != nil {
+		t.Fatalf("map not valid; err=%s", err)
 	}
 
 	if !origM.Equiv(dupM) {
@@ -108,7 +286,7 @@ func TestBasicPutCase4(t *testing.T) {
 }
 
 func TestBasicDelCase1Tree0(t *testing.T) {
-	var m0 = mkmap(1,
+	var m0 = mkmap(
 		mknod(10, Black, nil, nil))
 
 	var then = m0.TreeString()
@@ -133,32 +311,7 @@ func TestBasicDelCase1Tree0(t *testing.T) {
 }
 
 func TestBasicDelCase1Tree1(t *testing.T) {
-	var m0 = mkmap(1,
-		mknod(10, Black, nil, nil))
-
-	var then = m0.TreeString()
-	//var dupM0 = m0.Dup()
-
-	var m1 = m0.Del(IntKey(10))
-
-	if m1.NumEntries() != 0 {
-		t.Fatal("m.NumEntries() != 0")
-	}
-
-	var now = m0.TreeString()
-	if then != now {
-		log.Printf("origninal tree changeed:\nTHEN: %s\nNOW: %s",
-			then, now)
-		t.Fatal("The original tree changed.")
-	}
-
-	//if !m0.Equiv(dupM0) {
-	//	t.Fatal("The original tree changed.")
-	//}
-}
-
-func TestBasicDelCase1Tree2(t *testing.T) {
-	var m0 = mkmap(2,
+	var m0 = mkmap(
 		mknod(10, Black,
 			nil,
 			mknod(20, Red, nil, nil),
@@ -180,8 +333,8 @@ func TestBasicDelCase1Tree2(t *testing.T) {
 	}
 }
 
-func TestBasicDelCase1Tree3(t *testing.T) {
-	var m0 = mkmap(2,
+func TestBasicDelCase1Tree2(t *testing.T) {
+	var m0 = mkmap(
 		mknod(20, Black,
 			mknod(10, Red, nil, nil),
 			nil,
@@ -206,7 +359,7 @@ func TestBasicDelCase1Tree3(t *testing.T) {
 // DeleteCase1 is exhaustively tested.
 
 func TestBasicDelCase2Tree0(t *testing.T) {
-	var m = mkmap(2,
+	var m = mkmap(
 		mknod(20, Black,
 			nil,
 			mknod(30, Red, nil, nil),
@@ -236,17 +389,17 @@ func TestBasicDelCase2Tree0(t *testing.T) {
 }
 
 func TestBasicDelCase2Tree1(t *testing.T) {
-	var m = mkmap(2,
+	var m = mkmap(
 		mknod(20, Black,
 			mknod(10, Red, nil, nil),
 			nil,
 		))
 
-	log.Printf("BEFORE REMOVE: Map m=\n%s", m.TreeString())
+	//log.Printf("BEFORE REMOVE: Map m=\n%s", m.TreeString())
 
 	m = m.Del(IntKey(10))
 
-	log.Printf("AFTER REMOVE Map m=\n%s", m.TreeString())
+	//log.Printf("AFTER REMOVE Map m=\n%s", m.TreeString())
 
 	if m.NumEntries() != 1 {
 		t.Fatalf("m.NumEntries(),%d != 1", m.NumEntries())
@@ -257,16 +410,16 @@ func TestBasicDelCase2Tree1(t *testing.T) {
 	}
 
 	if m.Root().Ln() != nil {
-		t.Fatal("m.Root().Rn() != nil")
+		t.Fatal("m.Root().Ln() != nil")
 	}
 
 	if m.Root().Rn() != nil {
-		t.Fatal("m.Root().Ln() != nil")
+		t.Fatal("m.Root().Rn() != nil")
 	}
 }
 
 func TestBasicDelCase3Tree0(t *testing.T) {
-	var m = mkmap(3,
+	var m = mkmap(
 		mknod(20, Black,
 			mknod(10, Black, nil, nil),
 			mknod(30, Black, nil, nil),
@@ -291,7 +444,7 @@ func TestBasicDelCase3Tree0(t *testing.T) {
 }
 
 func TestBasicDelCase6Tree0(t *testing.T) {
-	var m = mkmap(6,
+	var m = mkmap(
 		mknod(20, Black,
 			mknod(10, Black, nil, nil),
 			mknod(40, Red,
@@ -304,7 +457,7 @@ func TestBasicDelCase6Tree0(t *testing.T) {
 	var dupOrigM = m.Dup()
 	var origMapStr0 = m.TreeString()
 
-	log.Printf("origMapStr0 =\n%s", origMapStr0)
+	//log.Printf("origMapStr0 =\n%s", origMapStr0)
 
 	m = m.Del(IntKey(30))
 
@@ -323,8 +476,8 @@ func TestBasicDelCase6Tree0(t *testing.T) {
 	}
 }
 
-func TestBasicDelTermTree0(t *testing.T) {
-	var m = mkmap(7,
+func TestBasicDelTwoChildTree0(t *testing.T) {
+	var m = mkmap(
 		mknod(40, Black,
 			mknod(20, Black,
 				mknod(10, Red, nil, nil),
@@ -346,14 +499,13 @@ func TestBasicDelTermTree0(t *testing.T) {
 	var dupOrigM = m.Dup()
 	var origMapStr0 = m.TreeString()
 
-	log.Printf("BEFORE DEL m = \n%s", m.TreeString())
+	//log.Printf("BEFORE DEL m = \n%s", m.TreeString())
 
 	m = m.Del(IntKey(20))
 
-	log.Printf("AFTER DEL m = \n%s", m.TreeString())
+	//log.Printf("AFTER DEL m = \n%s", m.TreeString())
 
-	var err = m.Valid()
-	if err != nil {
+	if err := m.Valid(); err != nil {
 		t.Fatalf("INVALID TREE AFTER Del(IntKey(20)); err=%s\n", err)
 	}
 
@@ -386,8 +538,8 @@ func TestBasicDelTermTree0(t *testing.T) {
 }
 
 //deleteCase4
-func TestBasicDelTermTree1(t *testing.T) {
-	var m = mkmap(6,
+func TestBasicDelTwoChildTree1(t *testing.T) {
+	var m = mkmap(
 		mknod(40, Black,
 			mknod(10, Black,
 				nil,
@@ -409,14 +561,13 @@ func TestBasicDelTermTree1(t *testing.T) {
 	var dupOrigM = m.Dup()
 	var origMapStr0 = m.TreeString()
 
-	log.Printf("BEFORE DEL m = \n%s", m.TreeString())
+	//log.Printf("BEFORE DEL m = \n%s", m.TreeString())
 
 	m = m.Del(IntKey(70))
 
-	log.Printf("AFTER DEL m = \n%s", m.TreeString())
+	//log.Printf("AFTER DEL m = \n%s", m.TreeString())
 
-	var err = m.Valid()
-	if err != nil {
+	if err := m.Valid(); err != nil {
 		t.Fatalf("INVALID TREE AFTER Del(IntKey(70)); err=%s\n", err)
 	}
 
@@ -448,8 +599,8 @@ func TestBasicDelTermTree1(t *testing.T) {
 	}
 }
 
-func TestBasicDelTermTree2(t *testing.T) {
-	var m = mkmap(5,
+func TestBasicDelTwoChildTree2(t *testing.T) {
+	var m = mkmap(
 		mknod(40, Black,
 			mknod(10, Black, nil, nil),
 			mknod(70, Red,
@@ -468,14 +619,13 @@ func TestBasicDelTermTree2(t *testing.T) {
 	var dupOrigM = m.Dup()
 	var origMapStr0 = m.TreeString()
 
-	log.Printf("BEFORE DEL m = \n%s", m.TreeString())
+	//log.Printf("BEFORE DEL m = \n%s", m.TreeString())
 
 	m = m.Del(IntKey(40))
 
-	log.Printf("AFTER DEL m = \n%s", m.TreeString())
+	//log.Printf("AFTER DEL m = \n%s", m.TreeString())
 
-	var err = m.Valid()
-	if err != nil {
+	if err := m.Valid(); err != nil {
 		t.Fatalf("INVALID TREE AFTER Del(IntKey(40)); err=%s\n", err)
 	}
 
@@ -507,8 +657,8 @@ func TestBasicDelTermTree2(t *testing.T) {
 	}
 }
 
-func TestBasicDelTermTree3(t *testing.T) {
-	var m = mkmap(6,
+func TestBasicDelTwoChildTree3(t *testing.T) {
+	var m = mkmap(
 		mknod(50, Black,
 			mknod(20, Red,
 				mknod(10, Black, nil, nil),
@@ -530,14 +680,13 @@ func TestBasicDelTermTree3(t *testing.T) {
 	var dupOrigM = m.Dup()
 	var origMapStr0 = m.TreeString()
 
-	log.Printf("BEFORE DEL m = \n%s", m.TreeString())
+	//log.Printf("BEFORE DEL m = \n%s", m.TreeString())
 
 	m = m.Del(IntKey(20))
 
-	log.Printf("AFTER DEL m = \n%s", m.TreeString())
+	//log.Printf("AFTER DEL m = \n%s", m.TreeString())
 
-	var err = m.Valid()
-	if err != nil {
+	if err := m.Valid(); err != nil {
 		t.Fatalf("INVALID TREE AFTER Del(IntKey(20)); err=%s\n", err)
 	}
 
@@ -569,8 +718,8 @@ func TestBasicDelTermTree3(t *testing.T) {
 	}
 }
 
-func TestBasicDelTermTree4(t *testing.T) {
-	var m = mkmap(9,
+func TestBasicDelTwoChildTree4(t *testing.T) {
+	var m = mkmap(
 		mknod(60, Black,
 			mknod(20, Black,
 				mknod(10, Black, nil, nil),
@@ -582,31 +731,31 @@ func TestBasicDelTermTree4(t *testing.T) {
 				mknod(90, Black, nil, nil))))
 
 	if err := m.Valid(); err != nil {
-		t.Fatalf("!!! INVALID TREE !!!; err=%s\n", err)
+		t.Fatalf("INVALID TREE; err=%s\n", err)
 	}
 
 	//shouldHave after Del(80)
 	var shouldHaveKvs = []KeyVal{
 		{IntKey(10), 10},
-		{IntKey(20), 30},
+		{IntKey(20), 20},
 		{IntKey(30), 30},
 		{IntKey(40), 40},
 		{IntKey(50), 50},
-		{IntKey(60), 50},
-		{IntKey(70), 50},
+		{IntKey(60), 60},
+		{IntKey(70), 70},
 		//{IntKey(80), 80},
-		{IntKey(90), 50},
+		{IntKey(90), 90},
 	}
 
 	var origM = m
 	var dupOrigM = m.Dup()
 	var origMapStr0 = m.TreeString()
 
-	log.Printf("BEFORE DEL m = \n%s", m.TreeString())
+	//log.Printf("BEFORE DEL m = \n%s", m.TreeString())
 
 	m = m.Del(IntKey(80))
 
-	log.Printf("AFTER DEL m = \n%s", m.TreeString())
+	//log.Printf("AFTER DEL m = \n%s", m.TreeString())
 
 	if err := m.Valid(); err != nil {
 		t.Fatalf("INVALID TREE AFTER Del(IntKey(80)); err=%s\n", err)
@@ -639,3 +788,7 @@ func TestBasicDelTermTree4(t *testing.T) {
 			"orig Map and duplicate of orig Map are not identical.")
 	}
 }
+
+//func TestBasicRange(t *testing.T) {
+//	var m = mkmap()
+//}

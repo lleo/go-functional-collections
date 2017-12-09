@@ -1,17 +1,41 @@
 package sorted_map
 
-import "strings"
+import (
+	"strings"
+)
 
 type nodeStack []*node
 
-func newNodeStack() *nodeStack {
-	var ns nodeStack = make([]*node, 0)
+func newNodeStack(n int) *nodeStack {
+	var ns nodeStack = make([]*node, n)
 	return &ns
+}
+
+func (ns *nodeStack) dup() *nodeStack {
+	var nns = newNodeStack(ns.len())
+	(*nns)[0] = (*ns)[0].copy()
+	for i, n := range (*ns)[1:] {
+		//i is relative to (*ns)[1:] not (*ns)[] so it is -1 what I was
+		//expecting.
+		var nn = n.copy()
+		//log.Printf("nodeStack.dup: i=%d; ns.len()=%d;", i, ns.len())
+		if n.isLeftChildOf((*ns)[i]) {
+			(*nns)[i].ln = nn
+		} else {
+			(*nns)[i].rn = nn
+		}
+		(*nns)[i+1] = nn
+	}
+	return nns
 }
 
 func (ns *nodeStack) push(n *node) *nodeStack {
 	(*ns) = append(*ns, n)
 	return ns
+}
+
+func (ns *nodeStack) head() *node {
+	return (*ns)[0]
 }
 
 func (ns *nodeStack) pop() *node {

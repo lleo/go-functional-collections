@@ -3,7 +3,6 @@ package sorted_map
 import (
 	"errors"
 	"fmt"
-	"log"
 )
 
 type colorType bool
@@ -95,10 +94,19 @@ func (n *node) copy() *node {
 	return nn
 }
 
+//count() sums up the number of sub-nodes plus this node.
+func (n *node) count() int {
+	if n == nil {
+		return 0
+	}
+	return n.ln.count() + n.rn.count() + 1
+}
+
 //Ln() is public for testing only. It returns a boolean indicating if the
 //sub-tree represented by this node is valid w/r RED-BLACK-TREE-PROPERTIES.md,
-//and a count of the black nodes of the sub-tree. If the node is not valid, then
-//the black node count will be -1.
+//and the count of the black nodes in the left sub-tree path plus one for this
+//node (if it is black). If the node is not valid, then the black node count
+//will be -1.
 func (n *node) Valid() (int, error) {
 	//RBT#2
 	if n == nil {
@@ -116,7 +124,6 @@ func (n *node) Valid() (int, error) {
 
 	//RBT#4
 	if lcount != rcount || lcount < 0 {
-		log.Printf("Valid: left count != right count\n")
 		var errStr = fmt.Sprintf("left count,%d != right count,%d",
 			lcount, rcount)
 		return -1, errors.New(errStr)
@@ -167,7 +174,6 @@ func (n *node) equiv(n0 *node) bool {
 	if n.color != n0.color {
 		return false
 	}
-	//log.Printf("equiv: for k=%s key,val,&color are identical\n", n.key)
 
 	if !n.ln.equiv(n0.ln) {
 		return false
@@ -239,25 +245,115 @@ func (n *node) findNode(k MapKey) *node {
 }
 
 func (n *node) findNodeWithPath(k MapKey) (*node, *nodeStack) {
-	var path = newNodeStack()
+	var path = newNodeStack(0)
 	var cur = n
-	//log.Printf("findNodeWithPath: cur=%s\n", cur)
+	for cur != nil {
+		var ocur = cur
+		switch {
+		case less(k, cur.key):
+			cur = cur.ln
+		case less(cur.key, k):
+			cur = cur.rn
+		default:
+			return cur, path
+		}
+		path.push(ocur)
+	}
+	return nil, path
+}
+
+func (n *node) findNodeDupPath(k MapKey) (*node, *nodeStack) {
+	var path = newNodeStack(0)
+	if n == nil {
+		return nil, path
+	}
+
+	var cur = n
+	var ocur = cur
+	switch {
+	case less(k, cur.key):
+		cur = cur.ln
+	case less(cur.key, k):
+		cur = cur.rn
+	default: //cur.key == k
+		return cur, path
+	}
+	var parent = ocur.copy()
+	path.push(parent)
+
+	for cur != nil {
+		ocur = cur
+		switch {
+		case less(k, cur.key):
+			cur = cur.ln
+		case less(cur.key, k):
+			cur = cur.rn
+		default: //cur.key == k
+			return cur, path
+		}
+
+		var ncur = ocur.copy()
+		if ocur.isLeftChildOf(parent) {
+			parent.ln = ncur
+		} else {
+			parent.rn = ncur
+		}
+		parent = ncur
+		path.push(parent)
+	}
+
+	return nil, path
+}
+
+//	var parent *node
+//	for cur != nil {
+//		//var ocur = cur
+//		ocur = cur
+//		switch {
+//		case less(k, cur.key):
+//			cur = cur.ln
+//		case less(cur.key, k):
+//			cur = cur.rn
+//		default: //cur.key == k
+//			return cur, path
+//		}
+//
+//		//var parent = path.peek()
+//		var ncur = ocur.copy()
+//		if parent != nil {
+//			//if less(ncur.key, parent.key) {
+//			if ocur.isLeftChildOf(parent) {
+//				parent.ln = ncur
+//			} else {
+//				parent.rn = ncur
+//			}
+//		}
+//
+//		path.push(ncur)
+//		parent = ncur
+//	}
+//	return nil, path
+//}
+
+func (n *node) findNodeIterPath(k MapKey, dir bool) (*node, *nodeStack) {
+	var path = newNodeStack(0)
+	var cur = n
 	for cur != nil {
 		switch {
 		case less(k, cur.key):
-			//log.Printf("findNodeWithPath: k,%s < cur.key,%s\n", k, cur.key)
-			path.push(cur)
+			if dir { //if dir==forw(true) then path.push(cur)
+				path.push(cur)
+			}
 			cur = cur.ln
 		case less(cur.key, k):
-			//log.Printf("findNodeWithPath: cur.key,%s < k,%s\n", cur.key, k)
-			path.push(cur)
+			if !dir { //if dir=back(false) then path.push(cur)
+				path.push(cur)
+			}
 			cur = cur.rn
-		default:
-			//log.Printf("findNodeWithPath: returning cur=%s\n%s", cur, path)
+		default: //cur.key == k
 			return cur, path
 		}
 	}
-	//log.Printf("findNodeWithPath: returning cur=nil\n%s", path)
 	return nil, path
 }
 

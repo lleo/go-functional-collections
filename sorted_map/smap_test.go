@@ -20,7 +20,7 @@ func init() {
 	}
 	log.SetOutput(logFile)
 
-	log.Println("TESTING HAS STARTED...")
+	//log.Println("TESTING HAS STARTED...")
 }
 
 const Black = sorted_map.Black
@@ -69,4 +69,14 @@ func buildMap(kvs []KeyVal) *sorted_map.Map {
 		m = m.Put(kv.Key, kv.Val)
 	}
 	return m
+}
+
+func cmp(k0, k1 sorted_map.MapKey) int {
+	if k0.Less(k1) {
+		return -1
+	}
+	if k1.Less(k0) {
+		return 1
+	}
+	return 0
 }
