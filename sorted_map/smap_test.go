@@ -1,11 +1,10 @@
-package sorted_map_test
+package sorted_map
 
 import (
 	"log"
 	"math/rand"
 	"os"
 
-	"github.com/lleo/go-functional-collections/sorted_map"
 	"github.com/pkg/errors"
 )
 
@@ -23,16 +22,17 @@ func init() {
 	//log.Println("TESTING HAS STARTED...")
 }
 
-const Black = sorted_map.Black
-const Red = sorted_map.Red
+func mkmap(r *node) *Map {
+	var num = uint(r.count())
+	return &Map{num, r}
+}
 
-type IntKey = sorted_map.IntKey
-
-var mkmap = sorted_map.MakeMap
-var mknod = sorted_map.MakeIntNode
+func mknod(i int, c colorType, ln, rn *node) *node {
+	return &node{IntKey(i), i, c, ln, rn}
+}
 
 type KeyVal struct {
-	Key sorted_map.MapKey
+	Key MapKey
 	Val interface{}
 }
 
@@ -63,20 +63,10 @@ func randomizeKeyVals(kvs []KeyVal) []KeyVal {
 	return randKvs
 }
 
-func buildMap(kvs []KeyVal) *sorted_map.Map {
-	var m = sorted_map.New()
+func buildMap(kvs []KeyVal) *Map {
+	var m = New()
 	for _, kv := range kvs {
 		m = m.Put(kv.Key, kv.Val)
 	}
 	return m
-}
-
-func cmp(k0, k1 sorted_map.MapKey) int {
-	if k0.Less(k1) {
-		return -1
-	}
-	if k1.Less(k0) {
-		return 1
-	}
-	return 0
 }

@@ -48,46 +48,6 @@ func newNode(k MapKey, v interface{}) *node {
 	return n
 }
 
-//func NewNode(k MapKey, v interface{}) *node {
-//	var n = new(node)
-//	n.key = k
-//	n.val = v
-//	//n.color = Red   //default
-//	//n.ln = nil      //default
-//	//n.rn = nil      //default
-//	return n
-//}
-
-//MakeIntNode() exists for testing only.
-func MakeIntNode(i int, c colorType, ln, rn *node) *node {
-	return &node{IntKey(i), i, c, ln, rn}
-}
-
-//Key() exists for testing only.
-func (n *node) Key() MapKey {
-	return n.key
-}
-
-//Val() exists for testing only.
-func (n *node) Val() interface{} {
-	return n.val
-}
-
-//Color() exists for testing only.
-func (n *node) Color() colorType {
-	return color(n)
-}
-
-//Ln() exists for testing only.
-func (n *node) Ln() *node {
-	return n.ln
-}
-
-//Rn() exists for testing only.
-func (n *node) Rn() *node {
-	return n.rn
-}
-
 func (n *node) copy() *node {
 	var nn = new(node)
 	*nn = *n
@@ -107,13 +67,13 @@ func (n *node) count() int {
 //and the count of the black nodes in the left sub-tree path plus one for this
 //node (if it is black). If the node is not valid, then the black node count
 //will be -1.
-func (n *node) Valid() (int, error) {
+func (n *node) valid() (int, error) {
 	//RBT#2
 	if n == nil {
 		return 1, nil
 	}
-	var lcount, lerr = n.ln.Valid()
-	var rcount, rerr = n.rn.Valid()
+	var lcount, lerr = n.ln.valid()
+	var rcount, rerr = n.rn.valid()
 
 	if lerr != nil {
 		return -1, lerr
@@ -130,8 +90,8 @@ func (n *node) Valid() (int, error) {
 	}
 
 	//RBT#3
-	if n.IsRed() {
-		if n.ln.IsRed() || n.rn.IsRed() {
+	if n.isRed() {
+		if n.ln.isRed() || n.rn.isRed() {
 			return -1, errors.New("Red-Red violation.")
 		}
 	} else {
@@ -184,13 +144,11 @@ func (n *node) equiv(n0 *node) bool {
 	return true
 }
 
-// IsRed() is public for testing only.
-func (n *node) IsRed() bool {
+func (n *node) isRed() bool {
 	return bool(!color(n)) //given that Red is encoded with a false value
 }
 
-// IsBlack() is public for testing only.
-func (n *node) IsBlack() bool {
+func (n *node) isBlack() bool {
 	return bool(color(n)) //given that Black is encoded as true
 }
 
@@ -431,16 +389,15 @@ const toStrFmt1 = "%s  ln: %s,\n"
 const toStrFmt2 = "%s  rn: %s,\n"
 const toStrFmt3 = "%s}\n"
 
-// TreeString() prints the node and all children to a depth of d. For example,
+// treeString() prints the node and all children to a depth of d. For example,
 // if d==0 it only prints the given node; if d==1 then it prints the node and
 // it's left and write children. Finnaly, if d < 0 it will print the entire
 // tree starting at the given node.
-//func (n *node) TreeString(d int) string {
-func (n *node) TreeString() string {
-	return n.treeString(-1, "")
+func (n *node) treeString() string {
+	return n.treeString_(-1, "")
 }
 
-func (n *node) treeString(d int, indent string) string {
+func (n *node) treeString_(d int, indent string) string {
 	if n == nil {
 		return "<nil>"
 	}
@@ -454,8 +411,8 @@ func (n *node) treeString(d int, indent string) string {
 		return n.String()
 	}
 	return fmt.Sprintf(toStrFmt0, n, n.key, n.val, n.color) +
-		fmt.Sprintf(toStrFmt1, indent, n.ln.treeString(d-1, indent+"  ")) +
-		fmt.Sprintf(toStrFmt2, indent, n.rn.treeString(d-1, indent+"  ")) +
+		fmt.Sprintf(toStrFmt1, indent, n.ln.treeString_(d-1, indent+"  ")) +
+		fmt.Sprintf(toStrFmt2, indent, n.rn.treeString_(d-1, indent+"  ")) +
 		indent + "}"
 }
 

@@ -3,24 +3,8 @@ package sorted_map
 import (
 	"errors"
 	"fmt"
-	"log"
 	"strings"
 )
-
-//type Map interface {
-//	Get(MapKey) interface{}
-//	Load(MapKey) (interface{}, bool)
-//	LoadOrStore(MapKey, interface{}) (Map, interface{}, bool)
-//	Put(MapKey, interface{}) Map
-//	Store(MapKey, interface{}) (Map, bool)
-//	Del(MapKey) Map
-//	Delete(MapKey) Map
-//	Remove(MapKey) (Map, interface{}, bool)
-//	Range(func(MapKey, interface{}) bool)
-//	NumEntries() uint
-//	String() string
-//	Stats() *Stats
-//}
 
 type Map struct {
 	numEnts uint
@@ -32,20 +16,8 @@ func New() *Map {
 	return m
 }
 
-//MakeNode() is public for testing only.
-func MakeMap(r *node) *Map {
-	var num = uint(r.count())
-	return &Map{num, r}
-}
-
-//Root() is public for testing only.
-func (m *Map) Root() *node {
-	return m.root
-}
-
-//Valid() is public for testing only.
-func (m *Map) Valid() error {
-	var _, err = m.root.Valid()
+func (m *Map) valid() error {
+	var _, err = m.root.valid()
 	if err != nil {
 		return err
 	}
@@ -66,19 +38,17 @@ func (m *Map) copy() *Map {
 	return nm
 }
 
-//Iter() is public for testing only.
-func (m *Map) Iter() *nodeIter {
-	return m.IterRange(ninf, pinf)
+func (m *Map) iter() *nodeIter {
+	return m.iterRange(ninf, pinf)
 }
 
-//IterRange() is public for testing only.
-func (m *Map) IterRange(startKey, endKey MapKey) *nodeIter {
-	log.Printf("IterRange: called with: startKey=%s; endKey=%s;",
-		startKey, endKey)
+func (m *Map) iterRange(startKey, endKey MapKey) *nodeIter {
+	//log.Printf("iterRange: called with: startKey=%s; endKey=%s;",
+	//	startKey, endKey)
 	var dir = less(startKey, endKey)
 	var cur, path = m.root.findNodeIterPath(startKey, dir)
-	log.Printf("IterRange: findNodeIterPath returned:\ncur=%s\npath=%s",
-		cur, path)
+	//log.Printf("iterRange: findNodeIterPath returned:\ncur=%s\npath=%s",
+	//	cur, path)
 	//log.Printf("iterRange: cur=%s\npath=%s", cur, path)
 	if cur == nil {
 		cur = path.pop()
@@ -88,8 +58,8 @@ func (m *Map) IterRange(startKey, endKey MapKey) *nodeIter {
 				cur = path.pop()
 			}
 		} else { //Back
-			log.Printf("IterRange: init Back: less(%s, %s) => %v",
-				endKey, cur.key, less(startKey, cur.key))
+			//log.Printf("iterRange: init Back: less(%s, %s) => %v",
+			//	endKey, cur.key, less(startKey, cur.key))
 			if less(startKey, cur.key) {
 				cur = path.pop()
 			}
@@ -328,22 +298,22 @@ func (m *Map) insertRepair(on, nn *node, path *nodeStack) {
 
 	if parent == nil {
 		m.insertCase1(on, nn, path)
-	} else if parent.IsBlack() {
+	} else if parent.isBlack() {
 		// we know:
 		// parent exists and is Black
 		m.insertCase2(on, nn, path)
-	} else if uncle.IsRed() {
+	} else if uncle.isRed() {
 		// we know:
-		// parent.IsRed becuase of the previous condition
+		// parent.isRed becuase of the previous condition
 		// grandparent exists because root is never Red
 		// grandparent is Black because parent is Red
 		m.insertCase3(on, nn, path)
 	} else {
 		//we know:
 		//  grandparent is Black because parent is Red
-		//  parent.IsRed
-		//  uncle.IsBlack
-		//  nn.IsRed and
+		//  parent.isRed
+		//  uncle.isBlack
+		//  nn.isRed and
 		m.insertCase4(on, nn, path)
 	}
 }
@@ -465,7 +435,7 @@ func (m *Map) insertCase4pt2(on, nn *node, path *nodeStack) {
 
 	var ggp = path.peek()
 
-	//log.Printf("ggp Tree =\n%s", ggp.TreeString())
+	//log.Printf("ggp Tree =\n%s", ggp.treeString())
 
 	//if less(nn.key, parent.key) {
 	if nn.isLeftChildOf(parent) {
@@ -573,7 +543,7 @@ func (m *Map) Remove(k MapKey) (*Map, interface{}, bool) {
 	//	otcn, ntcn, on)
 
 	//log.Printf("Remove: ntcn != nil; path.peek() Tree =\n%s",
-	//	path.peek().TreeString())
+	//	path.peek().treeString())
 
 	nm.removeNodeWithZeroOrOneChild(on, path)
 	nm.numEnts--
@@ -601,15 +571,15 @@ func (m *Map) removeNodeWithZeroOrOneChild(on *node, path *nodeStack) {
 
 	var nn *node
 
-	if on.IsBlack() {
-		if ochild.IsRed() {
+	if on.isBlack() {
+		if ochild.isRed() {
 			//only way 'on' can have a non-nil child
 			nn = ochild.copy()
 			nn.setBlack()
 
 			m.persist(on, nn, path)
 		} else {
-			//child.IsBlack and on.IsBlack
+			//child.isBlack and on.isBlack
 			//Fact: this only happens when child == nil
 			//Reason: this child's sibling is nil (hence Black), if this child
 			//is a non-nil Black child it would violate RBT property #4.
@@ -620,7 +590,7 @@ func (m *Map) removeNodeWithZeroOrOneChild(on *node, path *nodeStack) {
 		}
 		return
 	} /* else {
-		//on.IsRed
+		//on.isRed
 		//on has no children. cuz we know it has only zero or one child (in this
 		//case zero) cuz of RBT#4 (the count of Black nodes on both sides).
 		//nn == nil
@@ -635,7 +605,7 @@ func (m *Map) deleteCase1(on, nn *node, path *nodeStack) {
 	//log.Printf("deleteCase1: called with:\non=%s\nnn=%s\npath=%s",
 	//	on, nn, path)
 
-	//Fact: on.IsBlack()
+	//Fact: on.isBlack()
 
 	var oparent = path.peek()
 
@@ -658,7 +628,7 @@ func (m *Map) deleteCase2(on, nn *node, path *nodeStack) {
 	//log.Printf("deleteCase2: called with:\non=%s\nnn=%s\npath=%s",
 	//	on, nn, path)
 
-	//Fact: on.IsBlack()
+	//Fact: on.isBlack()
 	//Fact: path.len() > 0
 
 	var parent = path.pop()
@@ -669,7 +639,7 @@ func (m *Map) deleteCase2(on, nn *node, path *nodeStack) {
 
 	var nsibling *node
 
-	if osibling.IsRed() {
+	if osibling.isRed() {
 		nsibling = osibling.copy()
 		//if on.isLeftChildOf(oparent) {
 		//if on.key.Less(oparent.key) {
@@ -698,7 +668,7 @@ func (m *Map) deleteCase2(on, nn *node, path *nodeStack) {
 		path.push(nsibling) //new grandparent of nn
 		path.push(parent)   //new parent or nn
 		//log.Printf("deleteCase2: osibling.isRed condition: nsibling Tree =\n%s",
-		//	nsibling.TreeString())
+		//	nsibling.treeString())
 	} else {
 		//log.Println("deleteCase2: passing thru to deleteCase3")
 		path.push(parent) //put oparent back, cuz we didn't use it.
@@ -718,12 +688,12 @@ func (m *Map) deleteCase3(on, nn *node, path *nodeStack) {
 	var parent = path.peek()
 	var osibling = on.sibling(parent)
 
-	//log.Printf("deleteCase3: parent Tree =\n%s", parent.TreeString())
+	//log.Printf("deleteCase3: parent Tree =\n%s", parent.treeString())
 
-	if parent.IsBlack() &&
-		osibling.IsBlack() &&
-		osibling.ln.IsBlack() &&
-		osibling.rn.IsBlack() {
+	if parent.isBlack() &&
+		osibling.isBlack() &&
+		osibling.ln.isBlack() &&
+		osibling.rn.isBlack() {
 
 		//log.Printf("deleteCase3: parent.isBlack && osibling.isBlack:\n"+
 		//	"on=%s\nosibling=%s\nparent=%s\n", on, osibling, parent)
@@ -758,12 +728,12 @@ func (m *Map) deleteCase4(on, nn *node, path *nodeStack) {
 	var parent = path.peek()
 	var osibling = on.sibling(parent)
 
-	//log.Printf("deleteCase4: parent Tree =\n%s", parent.TreeString())
+	//log.Printf("deleteCase4: parent Tree =\n%s", parent.treeString())
 
-	if parent.IsRed() &&
-		osibling.IsBlack() &&
-		osibling.ln.IsBlack() &&
-		osibling.rn.IsBlack() {
+	if parent.isRed() &&
+		osibling.isBlack() &&
+		osibling.ln.isBlack() &&
+		osibling.rn.isBlack() {
 
 		//log.Println("deleteCase4: is completing the deleteCase line")
 
@@ -804,10 +774,10 @@ func (m *Map) deleteCase5(on, nn *node, path *nodeStack) {
 	var osibling = on.sibling(parent)
 
 	//This is a potential pre-rotate phase for deleteCase6
-	if osibling.IsBlack() {
+	if osibling.isBlack() {
 		if on.isLeftChildOf(parent) &&
-			osibling.rn.IsBlack() &&
-			osibling.ln.IsRed() {
+			osibling.rn.isBlack() &&
+			osibling.ln.isRed() {
 
 			//log.Println("deleteCase5: pre-rotating tree to the Right")
 
@@ -824,15 +794,15 @@ func (m *Map) deleteCase5(on, nn *node, path *nodeStack) {
 			}
 
 			//log.Printf("before rotateRight: parent Tree =\n%s",
-			//	parent.TreeString())
+			//	parent.treeString())
 
 			_, _ = m.rotateRight(nsibling, parent)
 
 			//log.Printf("after rotateRight: parent Tree =\n%s",
-			//	parent.TreeString())
+			//	parent.treeString())
 		} else if on.isRightChildOf(parent) &&
-			osibling.ln.IsBlack() &&
-			osibling.rn.IsRed() {
+			osibling.ln.isBlack() &&
+			osibling.rn.isRed() {
 
 			//log.Println("deleteCase5: pre-rotating tree to the Left")
 
@@ -850,7 +820,7 @@ func (m *Map) deleteCase5(on, nn *node, path *nodeStack) {
 
 			_, _ = m.rotateLeft(nsibling, parent)
 
-			//log.Printf("parent Tree =\n%s", parent.TreeString())
+			//log.Printf("parent Tree =\n%s", parent.treeString())
 		} /* else {
 			log.Println("deleteCase5: secondary conditions failed: " +
 				"passing thru to deleteCase6")
@@ -876,11 +846,11 @@ func (m *Map) deleteCase6(on, nn *node, path *nodeStack) {
 	//	on, nn, path)
 
 	//Fact: path.len() > 0
-	//Fact: sibling.IsRed()
+	//Fact: sibling.isRed()
 
 	var parent = path.pop()
 
-	//log.Printf("deleteCase6: parent Tree:\n%s", parent.TreeString())
+	//log.Printf("deleteCase6: parent Tree:\n%s", parent.treeString())
 
 	var osibling = on.sibling(parent)
 
@@ -902,13 +872,13 @@ func (m *Map) deleteCase6(on, nn *node, path *nodeStack) {
 		//parent.ln = nn
 		parent.rn = nsibling
 
-		//log.Printf("before rotateLeft: parent Tree:\n%s", parent.TreeString())
+		//log.Printf("before rotateLeft: parent Tree:\n%s", parent.treeString())
 
 		parent, nsibling = m.rotateLeft(parent, gp)
 		//position-wise sibling replaces parent and parent replaces on
 
 		//log.Printf("after rotateLeft: nsibling Tree:\n%s",
-		//	nsibling.TreeString())
+		//	nsibling.treeString())
 
 		path.push(nsibling)
 		path.push(parent)
@@ -923,13 +893,13 @@ func (m *Map) deleteCase6(on, nn *node, path *nodeStack) {
 		//parent.rn = nn
 
 		//log.Printf("before rotateRight: parent Tree:\n%s",
-		//	parent.TreeString())
+		//	parent.treeString())
 
 		parent, nsibling = m.rotateRight(parent, gp)
 		//position-wise sibling replaces parent and parent replaces on
 
 		//log.Printf("after rotateRight: nsibling Tree:\n%s",
-		//	nsibling.TreeString())
+		//	nsibling.treeString())
 
 		path.push(nsibling)
 		path.push(parent)
@@ -956,7 +926,7 @@ func (m *Map) deleteCase6(on, nn *node, path *nodeStack) {
 //greater than any other key. A call to sorted_map.InfKey(-1) returns a key less
 //than any other key.
 func (m *Map) RangeLimit(start, end MapKey, fn func(MapKey, interface{}) bool) {
-	var iter = m.IterRange(start, end)
+	var iter = m.iterRange(start, end)
 
 	//walk iter
 	for n := iter.Next(); n != nil; n = iter.Next() {
@@ -1005,9 +975,8 @@ func (m *Map) walkInOrder(fn func(*node, *nodeStack) bool) bool {
 	return true
 }
 
-//Dup() is for testing only. It is a recusive copy().
-//
-func (m *Map) Dup() *Map {
+//dup() is for testing only. It is a recusive copy.
+func (m *Map) dup() *Map {
 	var nm = &Map{
 		numEnts: m.numEnts,
 		root:    m.root.dup(),
@@ -1017,12 +986,12 @@ func (m *Map) Dup() *Map {
 	return nm
 }
 
-//Equiv() is for testing only. It is a equal-by-value method.
-func (m *Map) Equiv(m0 *Map) bool {
+//equiv() is for testing only. It is a equal-by-value method.
+func (m *Map) equiv(m0 *Map) bool {
 	return m.numEnts == m0.numEnts && m.root.equiv(m0.root)
 }
 
-func (m *Map) TreeString() string {
+func (m *Map) treeString() string {
 	//var strs = make([]string, m.numEnts)
 	//var i int
 	//var fn = func(n *node, path *nodeStack) bool {
@@ -1044,7 +1013,7 @@ func (m *Map) TreeString() string {
 	//m.walkPreOrder(fn)
 	//
 	//return strings.Join(strs, "\n")
-	return m.root.TreeString()
+	return m.root.treeString()
 }
 
 func (m *Map) String() string {
@@ -1059,7 +1028,7 @@ func (m *Map) String() string {
 	//}
 	//m.walkInOrder(fn)
 
-	var iter = m.Iter()
+	var iter = m.iter()
 	var i int
 	for n := iter.Next(); n != nil; n = iter.Next() {
 		//log.Printf("String: i=%d; n=%s\n", i, n)

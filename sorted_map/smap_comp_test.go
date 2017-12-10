@@ -1,10 +1,8 @@
-package sorted_map_test
+package sorted_map
 
 import (
 	"log"
 	"testing"
-
-	"github.com/lleo/go-functional-collections/sorted_map"
 )
 
 func TestCompBuildMap(t *testing.T) {
@@ -14,7 +12,7 @@ func TestCompBuildMap(t *testing.T) {
 	var kvs = randomizeKeyVals(inOrderKvs)
 
 	//log.Println("kvs[:10] =", kvs[:10])
-	var m = sorted_map.New()
+	var m = New()
 
 	for _, kv := range kvs {
 		var k = kv.Key
@@ -22,17 +20,17 @@ func TestCompBuildMap(t *testing.T) {
 
 		m = m.Put(k, v)
 
-		var err = m.Valid()
+		var err = m.valid()
 		if err != nil {
 			t.Fatalf("Invalid Tree. err=%s\n", err)
 		}
 	}
 
-	//log.Printf("Map m =\n%s", m.TreeString())
+	//log.Printf("Map m =\n%s", m.treeString())
 	//log.Printf("Map m =\n%s", m.String())
 
 	var i int
-	var fn = func(k0 sorted_map.MapKey, v0 interface{}) bool {
+	var fn = func(k0 MapKey, v0 interface{}) bool {
 		var k1 = inOrderKvs[i].Key
 		var v1 = inOrderKvs[i].Val
 		if k0.Less(k1) || k1.Less(k0) { //k0 != k1
@@ -58,18 +56,18 @@ func TestCompDestroyMap(t *testing.T) {
 
 	//log.Printf("buildKvs = %v\n", buildKvs)
 
-	var m = sorted_map.New()
+	var m = New()
 	for i, kv := range buildKvs {
 		m = m.Put(kv.Key, kv.Val)
-		var err = m.Valid()
+		var err = m.valid()
 		if err != nil {
 			t.Fatalf("INVALID TREE Store: i=%d; kv.Key=%s; err=%s\n",
 				i, kv.Key, err)
 		}
-		//log.Printf("Map m =\n%s", m.TreeString())
+		//log.Printf("Map m =\n%s", m.treeString())
 	}
 
-	//log.Printf("AFTER ALL MAP BUILDING: Map m=\n%s", m.TreeString())
+	//log.Printf("AFTER ALL MAP BUILDING: Map m=\n%s", m.treeString())
 	//log.Printf("m = %s\n", m.String())
 
 	//log.Printf("destroyKvs = %v\n", destroyKvs)
@@ -79,17 +77,17 @@ func TestCompDestroyMap(t *testing.T) {
 
 	for i, kv := range destroyKvs {
 		//var origM = m
-		//var dupOrigM = m.Dup()
+		//var dupOrigM = m.dup()
 
 		//log.Printf("*******Removing kv.Key=%s; i=%d \n", kv.Key, i)
 
-		//log.Printf("BEFORE REMOVE: Map m=\n%s", m.TreeString())
+		//log.Printf("BEFORE REMOVE: Map m=\n%s", m.treeString())
 
 		var val interface{}
 		var found bool
 		m, val, found = m.Remove(kv.Key)
 
-		//log.Printf("AFTER REMOVE Map m=\n%s", m.TreeString())
+		//log.Printf("AFTER REMOVE Map m=\n%s", m.treeString())
 
 		if !found {
 			t.Fatalf("Remove: i=%d; kv.Key=%s not found!\n", i, kv.Key)
@@ -100,9 +98,9 @@ func TestCompDestroyMap(t *testing.T) {
 				i, kv.Key, val, kv.Val)
 		}
 
-		var err = m.Valid()
+		var err = m.valid()
 		if err != nil {
-			log.Printf("Map m=\n%s", m.TreeString())
+			log.Printf("Map m=\n%s", m.treeString())
 			t.Fatalf("INVALID TREE Remove: i=%d; kv.Key=%s; err=%s\n",
 				i, kv.Key, err)
 		}
@@ -119,7 +117,7 @@ func TestCompDestroyMap(t *testing.T) {
 					val, kv0.Val)
 			}
 		}
-		//if !origM.Equiv(dupOrigM) {
+		//if !origM.equiv(dupOrigM) {
 		//	t.Fatal("the original map was modified during Remove(%s).", kv.Key)
 		//}
 	}
@@ -135,19 +133,19 @@ func TestCompRangeForwAll(t *testing.T) {
 	//rand.Seed(int64(time.Now().Nanosecond()))
 	var buildKvs = randomizeKeyVals(inOrderKvs)
 
-	var m = sorted_map.New()
+	var m = New()
 	for i, kv := range buildKvs {
 		m = m.Put(kv.Key, kv.Val)
-		var err = m.Valid()
+		var err = m.valid()
 		if err != nil {
-			log.Printf("INVALID TREE Map m =\n%s", m.TreeString())
+			log.Printf("INVALID TREE Map m =\n%s", m.treeString())
 			t.Fatalf("INVALID TREE Store: i=%d; kv.Key=%s; err=%s\n",
 				i, kv.Key, err)
 		}
 	}
 
 	var i int
-	var fn = func(k0 sorted_map.MapKey, v0 interface{}) bool {
+	var fn = func(k0 MapKey, v0 interface{}) bool {
 		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0, v0)
 		var k1 = inOrderKvs[i].Key
 		var v1 = inOrderKvs[i].Val
@@ -164,7 +162,6 @@ func TestCompRangeForwAll(t *testing.T) {
 		return true
 	}
 	m.Range(fn)
-	//m.RangeLimit(sorted_map.InfKey(-1), sorted_map.InfKey(1), fn)
 }
 
 func TestCompRangeForwBeg(t *testing.T) {
@@ -175,12 +172,12 @@ func TestCompRangeForwBeg(t *testing.T) {
 
 	//log.Printf("buildKvs = %v\n", buildKvs)
 
-	var m = sorted_map.New()
+	var m = New()
 	for i, kv := range buildKvs {
 		m = m.Put(kv.Key, kv.Val)
-		var err = m.Valid()
+		var err = m.valid()
 		if err != nil {
-			log.Printf("INVALID TREE Map m =\n%s", m.TreeString())
+			log.Printf("INVALID TREE Map m =\n%s", m.treeString())
 			t.Fatalf("INVALID TREE Store: i=%d; kv.Key=%s; err=%s\n",
 				i, kv.Key, err)
 		}
@@ -189,7 +186,7 @@ func TestCompRangeForwBeg(t *testing.T) {
 	var eltOffset = 13
 	var startElt = eltOffset
 	var i = startElt - 1 //index starts at zero
-	var fn = func(k0 sorted_map.MapKey, v0 interface{}) bool {
+	var fn = func(k0 MapKey, v0 interface{}) bool {
 		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0, v0)
 		var k1 = inOrderKvs[i].Key
 		var v1 = inOrderKvs[i].Val
@@ -205,8 +202,7 @@ func TestCompRangeForwBeg(t *testing.T) {
 		i++
 		return true
 	}
-	m.RangeLimit(IntKey(eltOffset*10), sorted_map.InfKey(1), fn)
-	//m.RangeLimit(IntKey(130), sorted_map.InfKey(1), fn)
+	m.RangeLimit(IntKey(eltOffset*10), InfKey(1), fn)
 }
 
 func TestCompRangeForwEnd(t *testing.T) {
@@ -214,25 +210,24 @@ func TestCompRangeForwEnd(t *testing.T) {
 	var inOrderKvs = genIntKeyVals(numKeys)
 	//rand.Seed(int64(time.Now().Nanosecond()))
 	var buildKvs = randomizeKeyVals(inOrderKvs)
-	//var destroyKvs = randomizeKeyVals(kvs)
 
 	//log.Printf("buildKvs = %v\n", buildKvs)
 
-	var m = sorted_map.New()
+	var m = New()
 	for i, kv := range buildKvs {
 		m = m.Put(kv.Key, kv.Val)
-		var err = m.Valid()
+		var err = m.valid()
 		if err != nil {
 			t.Fatalf("INVALID TREE Store: i=%d; kv.Key=%s; err=%s\n",
 				i, kv.Key, err)
 		}
-		//log.Printf("Map m =\n%s", m.TreeString())
+		//log.Printf("Map m =\n%s", m.treeString())
 	}
 
 	var eltOffset = 13
 	var startElt = 1
 	var i = startElt - 1 //index starts at zero
-	var fn = func(k0 sorted_map.MapKey, v0 interface{}) bool {
+	var fn = func(k0 MapKey, v0 interface{}) bool {
 		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0, v0)
 		var k1 = inOrderKvs[i].Key
 		var v1 = inOrderKvs[i].Val
@@ -248,8 +243,7 @@ func TestCompRangeForwEnd(t *testing.T) {
 		i++
 		return true
 	}
-	m.RangeLimit(sorted_map.InfKey(-1), IntKey((numKeys-eltOffset)*10), fn)
-	//m.RangeLimit(sorted_map.InfKey(-1), IntKey(10110), fn)
+	m.RangeLimit(InfKey(-1), IntKey((numKeys-eltOffset)*10), fn)
 }
 
 func TestCompRangeForwBoth(t *testing.T) {
@@ -257,25 +251,24 @@ func TestCompRangeForwBoth(t *testing.T) {
 	var inOrderKvs = genIntKeyVals(numKeys)
 	//rand.Seed(int64(time.Now().Nanosecond()))
 	var buildKvs = randomizeKeyVals(inOrderKvs)
-	//var destroyKvs = randomizeKeyVals(kvs)
 
 	//log.Printf("buildKvs = %v\n", buildKvs)
 
-	var m = sorted_map.New()
+	var m = New()
 	for i, kv := range buildKvs {
 		m = m.Put(kv.Key, kv.Val)
-		var err = m.Valid()
+		var err = m.valid()
 		if err != nil {
 			t.Fatalf("INVALID TREE Store: i=%d; kv.Key=%s; err=%s\n",
 				i, kv.Key, err)
 		}
-		//log.Printf("Map m =\n%s", m.TreeString())
+		//log.Printf("Map m =\n%s", m.treeString())
 	}
 
 	var eltOffset = 13
 	var startElt = eltOffset
 	var i = startElt - 1 //index starts at zero
-	var fn = func(k0 sorted_map.MapKey, v0 interface{}) bool {
+	var fn = func(k0 MapKey, v0 interface{}) bool {
 		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0, v0)
 		var k1 = inOrderKvs[i].Key
 		var v1 = inOrderKvs[i].Val
@@ -300,27 +293,26 @@ func TestCompRangeRevAll(t *testing.T) {
 	var inOrderKvs = genIntKeyVals(numKeys)
 	//rand.Seed(int64(time.Now().Nanosecond()))
 	var buildKvs = randomizeKeyVals(inOrderKvs)
-	//var destroyKvs = randomizeKeyVals(kvs)
 
 	//log.Printf("buildKvs = %v\n", buildKvs)
 
-	var m = sorted_map.New()
+	var m = New()
 	for i, kv := range buildKvs {
 		m = m.Put(kv.Key, kv.Val)
-		var err = m.Valid()
+		var err = m.valid()
 		if err != nil {
 			t.Fatalf("INVALID TREE Store: i=%d; kv.Key=%s; err=%s\n",
 				i, kv.Key, err)
 		}
-		//log.Printf("Map m =\n%s", m.TreeString())
+		//log.Printf("Map m =\n%s", m.treeString())
 	}
 
 	var i = numKeys - 1 //index starts at zero
-	var fn = func(k0 sorted_map.MapKey, v0 interface{}) bool {
-		log.Printf("i=%d; k0=%s; v0=%d;", i, k0, v0)
+	var fn = func(k0 MapKey, v0 interface{}) bool {
 		var k1 = inOrderKvs[i].Key
 		var v1 = inOrderKvs[i].Val
-		log.Printf("i=%d; k1=%s; v1=%d;", i, k1, v1)
+		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0, v0)
+		//log.Printf("i=%d; k1=%s; v1=%d;", i, k1, v1)
 		if k0.Less(k1) || k1.Less(k0) {
 			t.Fatalf("InOrder keys: i=%d; found k0=%s not the expected k1=%s",
 				i, k0, k1)
@@ -332,8 +324,7 @@ func TestCompRangeRevAll(t *testing.T) {
 		i--
 		return true
 	}
-	m.RangeLimit(sorted_map.InfKey(1), sorted_map.InfKey(-1), fn)
-	//m.RangeLimit(IntKey(130), IntKey(10110), fn)
+	m.RangeLimit(InfKey(1), InfKey(-1), fn)
 }
 
 func TestCompRangeRevBeg(t *testing.T) {
@@ -344,12 +335,12 @@ func TestCompRangeRevBeg(t *testing.T) {
 
 	//log.Printf("buildKvs = %v\n", buildKvs)
 
-	var m = sorted_map.New()
+	var m = New()
 	for i, kv := range buildKvs {
 		m = m.Put(kv.Key, kv.Val)
-		var err = m.Valid()
+		var err = m.valid()
 		if err != nil {
-			log.Printf("INVALID TREE Map m =\n%s", m.TreeString())
+			log.Printf("INVALID TREE Map m =\n%s", m.treeString())
 			t.Fatalf("INVALID TREE Store: i=%d; kv.Key=%s; err=%s\n",
 				i, kv.Key, err)
 		}
@@ -358,10 +349,10 @@ func TestCompRangeRevBeg(t *testing.T) {
 	var eltOffset = 13
 	var startElt = numKeys - eltOffset
 	var i = startElt - 1 //index starts at zero
-	var fn = func(k0 sorted_map.MapKey, v0 interface{}) bool {
-		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0, v0)
+	var fn = func(k0 MapKey, v0 interface{}) bool {
 		var k1 = inOrderKvs[i].Key
 		var v1 = inOrderKvs[i].Val
+		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0, v0)
 		//log.Printf("i=%d; k1=%s; v1=%d;", i, k1, v1)
 		if k0.Less(k1) || k1.Less(k0) {
 			t.Fatalf("InOrder keys: i=%d; found k0=%s not the expected k1=%s",
@@ -374,7 +365,7 @@ func TestCompRangeRevBeg(t *testing.T) {
 		i--
 		return true
 	}
-	m.RangeLimit(IntKey((numKeys-eltOffset)*10), sorted_map.InfKey(-1), fn)
+	m.RangeLimit(IntKey((numKeys-eltOffset)*10), InfKey(-1), fn)
 }
 
 func TestCompRangeRevEnd(t *testing.T) {
@@ -382,28 +373,27 @@ func TestCompRangeRevEnd(t *testing.T) {
 	var inOrderKvs = genIntKeyVals(numKeys)
 	//rand.Seed(int64(time.Now().Nanosecond()))
 	var buildKvs = randomizeKeyVals(inOrderKvs)
-	//var destroyKvs = randomizeKeyVals(kvs)
 
 	//log.Printf("buildKvs = %v\n", buildKvs)
 
-	var m = sorted_map.New()
+	var m = New()
 	for i, kv := range buildKvs {
 		m = m.Put(kv.Key, kv.Val)
-		var err = m.Valid()
+		var err = m.valid()
 		if err != nil {
 			t.Fatalf("INVALID TREE Store: i=%d; kv.Key=%s; err=%s\n",
 				i, kv.Key, err)
 		}
-		//log.Printf("Map m =\n%s", m.TreeString())
+		//log.Printf("Map m =\n%s", m.treeString())
 	}
 
 	var eltOffset = 13
 	var startElt = numKeys //- eltOffset
 	var i = startElt - 1   //index starts at zero
-	var fn = func(k0 sorted_map.MapKey, v0 interface{}) bool {
-		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0, v0)
+	var fn = func(k0 MapKey, v0 interface{}) bool {
 		var k1 = inOrderKvs[i].Key
 		var v1 = inOrderKvs[i].Val
+		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0, v0)
 		//log.Printf("i=%d; k1=%s; v1=%d;", i, k1, v1)
 		if k0.Less(k1) || k1.Less(k0) {
 			t.Fatalf("InOrder keys: i=%d; found k0=%s not the expected k1=%s",
@@ -416,7 +406,7 @@ func TestCompRangeRevEnd(t *testing.T) {
 		i--
 		return true
 	}
-	m.RangeLimit(sorted_map.InfKey(1), IntKey(eltOffset*10), fn)
+	m.RangeLimit(InfKey(1), IntKey(eltOffset*10), fn)
 }
 
 func TestCompRangeRevBoth(t *testing.T) {
@@ -424,28 +414,27 @@ func TestCompRangeRevBoth(t *testing.T) {
 	var inOrderKvs = genIntKeyVals(numKeys)
 	//rand.Seed(int64(time.Now().Nanosecond()))
 	var buildKvs = randomizeKeyVals(inOrderKvs)
-	//var destroyKvs = randomizeKeyVals(kvs)
 
 	//log.Printf("buildKvs = %v\n", buildKvs)
 
-	var m = sorted_map.New()
+	var m = New()
 	for i, kv := range buildKvs {
 		m = m.Put(kv.Key, kv.Val)
-		var err = m.Valid()
+		var err = m.valid()
 		if err != nil {
 			t.Fatalf("INVALID TREE Store: i=%d; kv.Key=%s; err=%s\n",
 				i, kv.Key, err)
 		}
-		//log.Printf("Map m =\n%s", m.TreeString())
+		//log.Printf("Map m =\n%s", m.treeString())
 	}
 
 	var eltOffset = 13
 	var startElt = numKeys - eltOffset
 	var i = startElt - 1 //index starts at zero
-	var fn = func(k0 sorted_map.MapKey, v0 interface{}) bool {
-		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0, v0)
+	var fn = func(k0 MapKey, v0 interface{}) bool {
 		var k1 = inOrderKvs[i].Key
 		var v1 = inOrderKvs[i].Val
+		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0, v0)
 		//log.Printf("i=%d; k1=%s; v1=%d;", i, k1, v1)
 		if k0.Less(k1) || k1.Less(k0) {
 			t.Fatalf("InOrder keys: i=%d; found k0=%s not the expected k1=%s",
