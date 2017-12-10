@@ -3,6 +3,8 @@ package sorted_map_test
 import (
 	"log"
 	"testing"
+
+	"github.com/lleo/go-functional-collections/sorted_map"
 )
 
 func TestBasicLoadOrStoreTree0(t *testing.T) {
@@ -789,6 +791,186 @@ func TestBasicDelTwoChildTree4(t *testing.T) {
 	}
 }
 
-//func TestBasicRange(t *testing.T) {
-//	var m = mkmap()
-//}
+func TestBasicRange(t *testing.T) {
+	var m = mkmap(
+		mknod(60, Black,
+			mknod(20, Black,
+				mknod(10, Black, nil, nil),
+				mknod(40, Black,
+					mknod(30, Red, nil, nil),
+					mknod(50, Red, nil, nil))),
+			mknod(100, Black,
+				mknod(80, Black,
+					mknod(70, Red, nil, nil),
+					mknod(90, Red, nil, nil)),
+				mknod(120, Black,
+					mknod(110, Red, nil, nil),
+					mknod(130, Red, nil, nil)))))
+
+	if err := m.Valid(); err != nil {
+		t.Fatalf("INVALID TREE; err=%s\n", err)
+	}
+
+	var shouldHaveKvs = []KeyVal{
+		{IntKey(10), 10},
+		{IntKey(20), 20},
+		{IntKey(30), 30},
+		{IntKey(40), 40},
+		{IntKey(50), 50},
+		{IntKey(60), 60},
+		{IntKey(70), 70},
+		{IntKey(80), 80},
+		{IntKey(90), 90},
+		{IntKey(100), 100},
+		{IntKey(110), 110},
+		{IntKey(120), 120},
+		{IntKey(130), 130},
+	}
+
+	var i int
+	var fn = func(k0 sorted_map.MapKey, v0 interface{}) bool {
+		var k1 = shouldHaveKvs[i].Key
+		var v1 = shouldHaveKvs[i].Val
+		log.Printf("k0=%s; v0=%v;", k0, v0)
+		log.Printf("k1=%s; v0=%v;", k1, v1)
+		if k0.Less(k1) || k1.Less(k0) {
+			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
+		}
+		if v0 != v1 {
+			t.Fatalf("i=%d; v0,%d != v1,%d", i, v0, v1)
+		}
+		i++
+		return true
+	}
+	m.Range(fn)
+}
+
+func TestBasicRangeForwBeg(t *testing.T) {
+	var m = mkmap(
+		mknod(60, Black,
+			mknod(20, Black,
+				mknod(10, Black, nil, nil),
+				mknod(40, Black,
+					mknod(30, Red, nil, nil),
+					mknod(50, Red, nil, nil))),
+			mknod(100, Black,
+				mknod(80, Black,
+					mknod(70, Red, nil, nil),
+					mknod(90, Red, nil, nil)),
+				mknod(120, Black,
+					mknod(110, Red, nil, nil),
+					mknod(130, Red, nil, nil)))))
+
+	if err := m.Valid(); err != nil {
+		t.Fatalf("INVALID TREE; err=%s\n", err)
+	}
+
+	var shouldHaveKvs = []KeyVal{
+		{IntKey(10), 10},
+		{IntKey(20), 20},
+		{IntKey(30), 30},
+		{IntKey(40), 40},
+		{IntKey(50), 50},
+		{IntKey(60), 60},
+		{IntKey(70), 70},
+		{IntKey(80), 80},
+		{IntKey(90), 90},
+		{IntKey(100), 100},
+		{IntKey(110), 110},
+		{IntKey(120), 120},
+		{IntKey(130), 130},
+	}
+
+	//var numKeys = len(shouldHaveKvs)
+	var eltOffset = 3
+	var startKey = IntKey(eltOffset * 10)
+	var endKey = sorted_map.InfKey(1) //positive infinity
+	var keyRange = shouldHaveKvs[eltOffset-1:]
+	var i = 0
+	var fn = func(k0 sorted_map.MapKey, v0 interface{}) bool {
+		if i >= len(keyRange) {
+			t.Fatalf("i,%d >= len(keyRange),%d", i, len(keyRange))
+		}
+		var k1 = keyRange[i].Key
+		var v1 = keyRange[i].Val
+		log.Printf("k0=%s; v0=%v;", k0, v0)
+		log.Printf("k1=%s; v0=%v;", k1, v1)
+		if k0.Less(k1) || k1.Less(k0) {
+			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
+		}
+		if v0 != v1 {
+			t.Fatalf("i=%d; v0,%d != v1,%d", i, v0, v1)
+		}
+		i++
+		return true
+	}
+	m.RangeLimit(startKey, endKey, fn)
+	if i != len(keyRange) {
+		t.Fatalf("after RangeLimit: i,%d != len(keyRange),%d", i, len(keyRange))
+	}
+}
+
+func TestBasicRangeForwEnd(t *testing.T) {
+	var m = mkmap(
+		mknod(60, Black,
+			mknod(20, Black,
+				mknod(10, Black, nil, nil),
+				mknod(40, Black,
+					mknod(30, Red, nil, nil),
+					mknod(50, Red, nil, nil))),
+			mknod(100, Black,
+				mknod(80, Black,
+					mknod(70, Red, nil, nil),
+					mknod(90, Red, nil, nil)),
+				mknod(120, Black,
+					mknod(110, Red, nil, nil),
+					mknod(130, Red, nil, nil)))))
+
+	if err := m.Valid(); err != nil {
+		t.Fatalf("INVALID TREE; err=%s\n", err)
+	}
+
+	var shouldHaveKvs = []KeyVal{
+		{IntKey(10), 10},
+		{IntKey(20), 20},
+		{IntKey(30), 30},
+		{IntKey(40), 40},
+		{IntKey(50), 50},
+		{IntKey(60), 60},
+		{IntKey(70), 70},
+		{IntKey(80), 80},
+		{IntKey(90), 90},
+		{IntKey(100), 100},
+		{IntKey(110), 110},
+		{IntKey(120), 120},
+		{IntKey(130), 130},
+	}
+
+	var numKeys = len(shouldHaveKvs)
+	var eltOffset = 3
+	var startKey = sorted_map.InfKey(-1)                //negative infinity
+	var endKey = IntKey((numKeys - eltOffset) * 10)     //IntKey(100)
+	var keyRange = shouldHaveKvs[:len(shouldHaveKvs)-3] //??
+	var i = 0
+	var fn = func(k0 sorted_map.MapKey, v0 interface{}) bool {
+		if i >= len(keyRange) {
+			t.Fatalf("i,%d >= len(keyRange),%d", i, len(keyRange))
+		}
+		var k1 = keyRange[i].Key
+		var v1 = keyRange[i].Val
+		log.Printf("k0=%s; v0=%v;", k0, v0)
+		log.Printf("k1=%s; v0=%v;", k1, v1)
+		if k0.Less(k1) || k1.Less(k0) {
+			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
+		}
+		if v0 != v1 {
+			t.Fatalf("i=%d; v0,%d != v1,%d", i, v0, v1)
+		}
+		i++
+		return true
+	}
+	m.RangeLimit(startKey, endKey, fn)
+	if i != len(keyRange) {
+		t.Fatalf("after RangeLimit: i,%d != len(keyRange),%d", i, len(keyRange))
+	}
+}

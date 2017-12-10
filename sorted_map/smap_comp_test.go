@@ -164,7 +164,7 @@ func TestCompRangeForwAll(t *testing.T) {
 		return true
 	}
 	m.Range(fn)
-	//m.RangeLimit(sorted_map.Inf(-1), sorted_map.Inf(1), fn)
+	//m.RangeLimit(sorted_map.InfKey(-1), sorted_map.InfKey(1), fn)
 }
 
 func TestCompRangeForwBeg(t *testing.T) {
@@ -205,8 +205,8 @@ func TestCompRangeForwBeg(t *testing.T) {
 		i++
 		return true
 	}
-	m.RangeLimit(IntKey(eltOffset*10), sorted_map.Inf(1), fn)
-	//m.RangeLimit(IntKey(130), sorted_map.Inf(1), fn)
+	m.RangeLimit(IntKey(eltOffset*10), sorted_map.InfKey(1), fn)
+	//m.RangeLimit(IntKey(130), sorted_map.InfKey(1), fn)
 }
 
 func TestCompRangeForwEnd(t *testing.T) {
@@ -248,8 +248,8 @@ func TestCompRangeForwEnd(t *testing.T) {
 		i++
 		return true
 	}
-	m.RangeLimit(sorted_map.Inf(-1), IntKey((numKeys-eltOffset)*10), fn)
-	//m.RangeLimit(sorted_map.Inf(-1), IntKey(10110), fn)
+	m.RangeLimit(sorted_map.InfKey(-1), IntKey((numKeys-eltOffset)*10), fn)
+	//m.RangeLimit(sorted_map.InfKey(-1), IntKey(10110), fn)
 }
 
 func TestCompRangeForwBoth(t *testing.T) {
@@ -332,7 +332,7 @@ func TestCompRangeRevAll(t *testing.T) {
 		i--
 		return true
 	}
-	m.RangeLimit(sorted_map.Inf(1), sorted_map.Inf(-1), fn)
+	m.RangeLimit(sorted_map.InfKey(1), sorted_map.InfKey(-1), fn)
 	//m.RangeLimit(IntKey(130), IntKey(10110), fn)
 }
 
@@ -374,7 +374,7 @@ func TestCompRangeRevBeg(t *testing.T) {
 		i--
 		return true
 	}
-	m.RangeLimit(IntKey((numKeys-eltOffset)*10), sorted_map.Inf(-1), fn)
+	m.RangeLimit(IntKey((numKeys-eltOffset)*10), sorted_map.InfKey(-1), fn)
 }
 
 func TestCompRangeRevEnd(t *testing.T) {
@@ -416,7 +416,7 @@ func TestCompRangeRevEnd(t *testing.T) {
 		i--
 		return true
 	}
-	m.RangeLimit(sorted_map.Inf(1), IntKey(eltOffset*10), fn)
+	m.RangeLimit(sorted_map.InfKey(1), IntKey(eltOffset*10), fn)
 }
 
 func TestCompRangeRevBoth(t *testing.T) {

@@ -32,14 +32,14 @@ var (
 	pinf = pInf{}
 )
 
-func Inf(sign int) MapKey {
-	if sign == 0 {
-		panic("sign")
+//InfKey() if passed a non-negative iteger it will return a key that is greater
+//than any oter key, other wise (for a negetive integer) it will return a key
+//that is less than any other key.
+func InfKey(sign int) MapKey {
+	if sign < 0 {
+		return ninf
 	}
-	if sign > 0 {
-		return pinf
-	}
-	return ninf
+	return pinf
 }
 
 func less(x, y MapKey) bool {

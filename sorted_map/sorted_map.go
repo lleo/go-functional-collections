@@ -73,6 +73,8 @@ func (m *Map) Iter() *nodeIter {
 
 //IterRange() is public for testing only.
 func (m *Map) IterRange(startKey, endKey MapKey) *nodeIter {
+	log.Printf("IterRange: called with: startKey=%s; endKey=%s;",
+		startKey, endKey)
 	var dir = less(startKey, endKey)
 	var cur, path = m.root.findNodeIterPath(startKey, dir)
 	log.Printf("IterRange: findNodeIterPath returned:\ncur=%s\npath=%s",
@@ -940,6 +942,19 @@ func (m *Map) deleteCase6(on, nn *node, path *nodeStack) {
 	return
 }
 
+//RangeLimit() executes the given function starting with the start key (if
+//it exists), or the first key after the start key. It then stops at the end key
+//(if it exists), or the last key before the end key. The traversal will stop
+//immediately if the function returns false.
+//
+//If the start key is greater than the end key, then the traversal will be in
+//reverse order.
+//
+//If you want to indicate a "key greater than any key" or a "key less than any
+//other key", you can use the infinitely positive or negetive key, by calling
+//sorted_map.InfKey(sign int). A call to sorted_map.InfKey(1) returns a key
+//greater than any other key. A call to sorted_map.InfKey(-1) returns a key less
+//than any other key.
 func (m *Map) RangeLimit(start, end MapKey, fn func(MapKey, interface{}) bool) {
 	var iter = m.IterRange(start, end)
 
@@ -953,6 +968,8 @@ func (m *Map) RangeLimit(start, end MapKey, fn func(MapKey, interface{}) bool) {
 	return
 }
 
+//Range() executes the given function on every key, value pair in order. If the
+//function returns false the traversal of key, value pairs will stop.
 func (m *Map) Range(fn func(MapKey, interface{}) bool) {
 	m.RangeLimit(ninf, pinf, fn)
 	return
