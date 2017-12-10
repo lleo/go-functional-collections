@@ -7,9 +7,9 @@ import (
 
 func TestBasicLoadOrStoreTree0(t *testing.T) {
 	var m0 = mkmap(
-		mknod(20, Black,
-			mknod(10, Red, nil, nil),
-			mknod(30, Red, nil, nil)))
+		mknod(20, black,
+			mknod(10, red, nil, nil),
+			mknod(30, red, nil, nil)))
 
 	var origM = m0
 	var dupM = m0.dup()
@@ -39,9 +39,9 @@ func TestBasicLoadOrStoreTree0(t *testing.T) {
 
 func TestBasicLoadOrStoreTree1(t *testing.T) {
 	var m0 = mkmap(
-		mknod(20, Black,
+		mknod(20, black,
 			nil,
-			mknod(30, Red, nil, nil)))
+			mknod(30, red, nil, nil)))
 
 	var origM = m0
 	var dupM = m0.dup()
@@ -75,9 +75,9 @@ func TestBasicLoadOrStoreTree1(t *testing.T) {
 
 func TestBasicLoadOrStoreTree2(t *testing.T) {
 	var m0 = mkmap(
-		mknod(10, Black,
+		mknod(10, black,
 			nil,
-			mknod(30, Red, nil, nil)))
+			mknod(30, red, nil, nil)))
 
 	var origM = m0
 	var dupM = m0.dup()
@@ -111,15 +111,15 @@ func TestBasicLoadOrStoreTree2(t *testing.T) {
 
 func TestBasicLoadOrStoreTree3(t *testing.T) {
 	var m0 = mkmap(
-		mknod(60, Black,
-			mknod(20, Red,
-				mknod(10, Black, nil, nil),
-				mknod(40, Black,
+		mknod(60, black,
+			mknod(20, red,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
 					nil,
-					mknod(50, Red, nil, nil))),
-			mknod(80, Black,
-				mknod(70, Red, nil, nil),
-				mknod(90, Red, nil, nil))))
+					mknod(50, red, nil, nil))),
+			mknod(80, black,
+				mknod(70, red, nil, nil),
+				mknod(90, red, nil, nil))))
 
 	if err := m0.valid(); err != nil {
 		t.Fatal("m0 is invalid; err=%s", err)
@@ -182,8 +182,8 @@ func TestBasicPutCase1(t *testing.T) {
 
 func TestBasicPutCase2(t *testing.T) {
 	var m = mkmap(
-		mknod(20, Black,
-			mknod(10, Red, nil, nil),
+		mknod(20, black,
+			mknod(10, red, nil, nil),
 			nil))
 
 	var origM = m
@@ -211,11 +211,11 @@ func TestBasicPutCase2(t *testing.T) {
 func TestBasicPutCase3(t *testing.T) {
 	//insert order 10, 20, 50, 40, 30, 60
 	var m = mkmap(
-		mknod(20, Black,
-			mknod(10, Black, nil, nil),
-			mknod(40, Black,
-				mknod(30, Red, nil, nil),
-				mknod(50, Red, nil, nil),
+		mknod(20, black,
+			mknod(10, black, nil, nil),
+			mknod(40, black,
+				mknod(30, red, nil, nil),
+				mknod(50, red, nil, nil),
 			),
 		))
 
@@ -243,23 +243,23 @@ func TestBasicPutCase3(t *testing.T) {
 
 func TestBasicPutCase4(t *testing.T) {
 	//var m = mkmap(
-	//	mknod(7940, Black,
-	//		mknod(4930, Black,
+	//	mknod(7940, black,
+	//		mknod(4930, black,
 	//			nil,
-	//			mknod(7100, Red, nil, nil)),
-	//		mknod(8090, Black,
+	//			mknod(7100, red, nil, nil)),
+	//		mknod(8090, black,
 	//			nil,
-	//			mknod(10050, Red, nil, nil)),
+	//			mknod(10050, red, nil, nil)),
 	//	))
 	//insert order 50, 20, 60, 40, 70 ???
 	var m = mkmap(
-		mknod(50, Black,
-			mknod(20, Black,
+		mknod(50, black,
+			mknod(20, black,
 				nil,
-				mknod(40, Red, nil, nil)),
-			mknod(60, Black,
+				mknod(40, red, nil, nil)),
+			mknod(60, black,
 				nil,
-				mknod(70, Red, nil, nil)),
+				mknod(70, red, nil, nil)),
 		))
 
 	var origM = m      //copy the pointer
@@ -287,7 +287,7 @@ func TestBasicPutCase4(t *testing.T) {
 
 func TestBasicDelCase1Tree0(t *testing.T) {
 	var m0 = mkmap(
-		mknod(10, Black, nil, nil))
+		mknod(10, black, nil, nil))
 
 	var then = m0.treeString()
 	//var dupM0 = m0.dup()
@@ -312,9 +312,9 @@ func TestBasicDelCase1Tree0(t *testing.T) {
 
 func TestBasicDelCase1Tree1(t *testing.T) {
 	var m0 = mkmap(
-		mknod(10, Black,
+		mknod(10, black,
 			nil,
-			mknod(20, Red, nil, nil),
+			mknod(20, red, nil, nil),
 		))
 
 	var then = m0.treeString()
@@ -335,8 +335,8 @@ func TestBasicDelCase1Tree1(t *testing.T) {
 
 func TestBasicDelCase1Tree2(t *testing.T) {
 	var m0 = mkmap(
-		mknod(20, Black,
-			mknod(10, Red, nil, nil),
+		mknod(20, black,
+			mknod(10, red, nil, nil),
 			nil,
 		))
 
@@ -360,9 +360,9 @@ func TestBasicDelCase1Tree2(t *testing.T) {
 
 func TestBasicDelCase2Tree0(t *testing.T) {
 	var m = mkmap(
-		mknod(20, Black,
+		mknod(20, black,
 			nil,
-			mknod(30, Red, nil, nil),
+			mknod(30, red, nil, nil),
 		))
 
 	//log.Printf("BEFORE REMOVE: Map m=\n%s", m.treeString())
@@ -390,8 +390,8 @@ func TestBasicDelCase2Tree0(t *testing.T) {
 
 func TestBasicDelCase2Tree1(t *testing.T) {
 	var m = mkmap(
-		mknod(20, Black,
-			mknod(10, Red, nil, nil),
+		mknod(20, black,
+			mknod(10, red, nil, nil),
 			nil,
 		))
 
@@ -420,9 +420,9 @@ func TestBasicDelCase2Tree1(t *testing.T) {
 
 func TestBasicDelCase3Tree0(t *testing.T) {
 	var m = mkmap(
-		mknod(20, Black,
-			mknod(10, Black, nil, nil),
-			mknod(30, Black, nil, nil),
+		mknod(20, black,
+			mknod(10, black, nil, nil),
+			mknod(30, black, nil, nil),
 		))
 
 	m = m.Del(IntKey(30))
@@ -445,13 +445,13 @@ func TestBasicDelCase3Tree0(t *testing.T) {
 
 func TestBasicDelCase6Tree0(t *testing.T) {
 	var m = mkmap(
-		mknod(20, Black,
-			mknod(10, Black, nil, nil),
-			mknod(40, Red,
-				mknod(30, Black, nil, nil),
-				mknod(50, Black,
+		mknod(20, black,
+			mknod(10, black, nil, nil),
+			mknod(40, red,
+				mknod(30, black, nil, nil),
+				mknod(50, black,
 					nil,
-					mknod(60, Red, nil, nil)))))
+					mknod(60, red, nil, nil)))))
 
 	var origM = m
 	var dupOrigM = m.dup()
@@ -478,13 +478,13 @@ func TestBasicDelCase6Tree0(t *testing.T) {
 
 func TestBasicDelTwoChildTree0(t *testing.T) {
 	var m = mkmap(
-		mknod(40, Black,
-			mknod(20, Black,
-				mknod(10, Red, nil, nil),
-				mknod(30, Red, nil, nil)),
-			mknod(70, Red,
-				mknod(50, Black, nil, nil),
-				mknod(80, Black, nil, nil))))
+		mknod(40, black,
+			mknod(20, black,
+				mknod(10, red, nil, nil),
+				mknod(30, red, nil, nil)),
+			mknod(70, red,
+				mknod(50, black, nil, nil),
+				mknod(80, black, nil, nil))))
 
 	var shouldHaveKvs = []KeyVal{
 		{IntKey(10), 10},
@@ -540,13 +540,13 @@ func TestBasicDelTwoChildTree0(t *testing.T) {
 //deleteCase4
 func TestBasicDelTwoChildTree1(t *testing.T) {
 	var m = mkmap(
-		mknod(40, Black,
-			mknod(10, Black,
+		mknod(40, black,
+			mknod(10, black,
 				nil,
-				mknod(30, Red, nil, nil)),
-			mknod(70, Red,
-				mknod(50, Black, nil, nil),
-				mknod(80, Black, nil, nil))))
+				mknod(30, red, nil, nil)),
+			mknod(70, red,
+				mknod(50, black, nil, nil),
+				mknod(80, black, nil, nil))))
 
 	//shouldHave after Del(70)
 	var shouldHaveKvs = []KeyVal{
@@ -601,11 +601,11 @@ func TestBasicDelTwoChildTree1(t *testing.T) {
 
 func TestBasicDelTwoChildTree2(t *testing.T) {
 	var m = mkmap(
-		mknod(40, Black,
-			mknod(10, Black, nil, nil),
-			mknod(70, Red,
-				mknod(50, Black, nil, nil),
-				mknod(80, Black, nil, nil))))
+		mknod(40, black,
+			mknod(10, black, nil, nil),
+			mknod(70, red,
+				mknod(50, black, nil, nil),
+				mknod(80, black, nil, nil))))
 
 	//shouldHave after Del(70)
 	var shouldHaveKvs = []KeyVal{
@@ -659,13 +659,13 @@ func TestBasicDelTwoChildTree2(t *testing.T) {
 
 func TestBasicDelTwoChildTree3(t *testing.T) {
 	var m = mkmap(
-		mknod(50, Black,
-			mknod(20, Red,
-				mknod(10, Black, nil, nil),
-				mknod(40, Black,
-					mknod(30, Red, nil, nil),
+		mknod(50, black,
+			mknod(20, red,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
 					nil)),
-			mknod(80, Black, nil, nil)))
+			mknod(80, black, nil, nil)))
 
 	//shouldHave after Del(20)
 	var shouldHaveKvs = []KeyVal{
@@ -720,15 +720,15 @@ func TestBasicDelTwoChildTree3(t *testing.T) {
 
 func TestBasicDelTwoChildTree4(t *testing.T) {
 	var m = mkmap(
-		mknod(60, Black,
-			mknod(20, Black,
-				mknod(10, Black, nil, nil),
-				mknod(40, Red,
-					mknod(30, Black, nil, nil),
-					mknod(50, Black, nil, nil))),
-			mknod(80, Black,
-				mknod(70, Black, nil, nil),
-				mknod(90, Black, nil, nil))))
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, red,
+					mknod(30, black, nil, nil),
+					mknod(50, black, nil, nil))),
+			mknod(80, black,
+				mknod(70, black, nil, nil),
+				mknod(90, black, nil, nil))))
 
 	if err := m.valid(); err != nil {
 		t.Fatalf("INVALID TREE; err=%s\n", err)
@@ -791,19 +791,19 @@ func TestBasicDelTwoChildTree4(t *testing.T) {
 
 func TestBasicRange(t *testing.T) {
 	var m = mkmap(
-		mknod(60, Black,
-			mknod(20, Black,
-				mknod(10, Black, nil, nil),
-				mknod(40, Black,
-					mknod(30, Red, nil, nil),
-					mknod(50, Red, nil, nil))),
-			mknod(100, Black,
-				mknod(80, Black,
-					mknod(70, Red, nil, nil),
-					mknod(90, Red, nil, nil)),
-				mknod(120, Black,
-					mknod(110, Red, nil, nil),
-					mknod(130, Red, nil, nil)))))
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
 
 	if err := m.valid(); err != nil {
 		t.Fatalf("INVALID TREE; err=%s\n", err)
@@ -845,19 +845,19 @@ func TestBasicRange(t *testing.T) {
 
 func TestBasicRangeForwBeg(t *testing.T) {
 	var m = mkmap(
-		mknod(60, Black,
-			mknod(20, Black,
-				mknod(10, Black, nil, nil),
-				mknod(40, Black,
-					mknod(30, Red, nil, nil),
-					mknod(50, Red, nil, nil))),
-			mknod(100, Black,
-				mknod(80, Black,
-					mknod(70, Red, nil, nil),
-					mknod(90, Red, nil, nil)),
-				mknod(120, Black,
-					mknod(110, Red, nil, nil),
-					mknod(130, Red, nil, nil)))))
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
 
 	if err := m.valid(); err != nil {
 		t.Fatalf("INVALID TREE; err=%s\n", err)
@@ -910,19 +910,19 @@ func TestBasicRangeForwBeg(t *testing.T) {
 
 func TestBasicRangeForwEnd(t *testing.T) {
 	var m = mkmap(
-		mknod(60, Black,
-			mknod(20, Black,
-				mknod(10, Black, nil, nil),
-				mknod(40, Black,
-					mknod(30, Red, nil, nil),
-					mknod(50, Red, nil, nil))),
-			mknod(100, Black,
-				mknod(80, Black,
-					mknod(70, Red, nil, nil),
-					mknod(90, Red, nil, nil)),
-				mknod(120, Black,
-					mknod(110, Red, nil, nil),
-					mknod(130, Red, nil, nil)))))
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
 
 	if err := m.valid(); err != nil {
 		t.Fatalf("INVALID TREE; err=%s\n", err)

@@ -15,17 +15,15 @@ func (c colorType) String() string {
 }
 
 const (
-	//Black is public for testing only.
-	Black = colorType(true)
-	//Red is public for testing only.
-	Red = colorType(false)
+	black = colorType(true)
+	red   = colorType(false)
 )
 
 // color() returns the color of a node, the reason for its existence is to
-// treat nil *node values as Black.
+// treat nil *node values as black.
 func color(n *node) colorType {
 	if n == nil {
-		return Black
+		return black
 	}
 	return n.color
 }
@@ -42,7 +40,7 @@ func newNode(k MapKey, v interface{}) *node {
 	var n = new(node)
 	n.key = k
 	n.val = v
-	//n.color = Red   //default
+	//n.color = red   //default
 	//n.ln = nil      //default
 	//n.rn = nil      //default
 	return n
@@ -92,7 +90,7 @@ func (n *node) valid() (int, error) {
 	//RBT#3
 	if n.isRed() {
 		if n.ln.isRed() || n.rn.isRed() {
-			return -1, errors.New("Red-Red violation.")
+			return -1, errors.New("red-red violation.")
 		}
 	} else {
 		lcount++
@@ -145,20 +143,20 @@ func (n *node) equiv(n0 *node) bool {
 }
 
 func (n *node) isRed() bool {
-	return bool(!color(n)) //given that Red is encoded with a false value
+	return bool(!color(n)) //given that red is encoded with a false value
 }
 
 func (n *node) isBlack() bool {
-	return bool(color(n)) //given that Black is encoded as true
+	return bool(color(n)) //given that black is encoded as true
 }
 
 func (n *node) setBlack() *node {
-	n.color = Black
+	n.color = black
 	return n
 }
 
 func (n *node) setRed() *node {
-	n.color = Red
+	n.color = red
 	return n
 }
 

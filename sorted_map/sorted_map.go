@@ -300,17 +300,17 @@ func (m *Map) insertRepair(on, nn *node, path *nodeStack) {
 		m.insertCase1(on, nn, path)
 	} else if parent.isBlack() {
 		// we know:
-		// parent exists and is Black
+		// parent exists and is black
 		m.insertCase2(on, nn, path)
 	} else if uncle.isRed() {
 		// we know:
 		// parent.isRed becuase of the previous condition
 		// grandparent exists because root is never Red
-		// grandparent is Black because parent is Red
+		// grandparent is black because parent is Red
 		m.insertCase3(on, nn, path)
 	} else {
 		//we know:
-		//  grandparent is Black because parent is Red
+		//  grandparent is black because parent is Red
 		//  parent.isRed
 		//  uncle.isBlack
 		//  nn.isRed and
@@ -581,8 +581,8 @@ func (m *Map) removeNodeWithZeroOrOneChild(on *node, path *nodeStack) {
 		} else {
 			//child.isBlack and on.isBlack
 			//Fact: this only happens when child == nil
-			//Reason: this child's sibling is nil (hence Black), if this child
-			//is a non-nil Black child it would violate RBT property #4.
+			//Reason: this child's sibling is nil (hence black), if this child
+			//is a non-nil black child it would violate RBT property #4.
 
 			//log.Printf("removeNodeWithZeroOrOneChild: calling deleteCase1")
 
@@ -592,7 +592,7 @@ func (m *Map) removeNodeWithZeroOrOneChild(on *node, path *nodeStack) {
 	} /* else {
 		//on.isRed
 		//on has no children. cuz we know it has only zero or one child (in this
-		//case zero) cuz of RBT#4 (the count of Black nodes on both sides).
+		//case zero) cuz of RBT#4 (the count of black nodes on both sides).
 		//nn == nil
 	} */
 
@@ -683,7 +683,7 @@ func (m *Map) deleteCase3(on, nn *node, path *nodeStack) {
 	//	on, nn, path)
 
 	//Fact: path.len() > 0
-	//Face: on is Black
+	//Face: on is black
 
 	var parent = path.peek()
 	var osibling = on.sibling(parent)
