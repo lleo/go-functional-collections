@@ -399,9 +399,6 @@ func (n *node) treeString_(d int, indent string) string {
 	if n == nil {
 		return "<nil>"
 	}
-	//if d < 0 {
-	//	d = 0
-	//}
 	if d == 0 {
 		return n.String()
 	}
