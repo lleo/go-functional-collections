@@ -47,18 +47,8 @@ func (m *Map) iterRange(startKey, endKey MapKey) *nodeIter {
 	var cur, path = m.root.findNodeIterPath(startKey, dir)
 	if cur == nil {
 		cur = path.pop()
-		if dir { //Forw
-			//is cur to far?
-			if less(cur.key, startKey) {
-				cur = path.pop()
-			}
-		} else { //Back
-			if less(startKey, cur.key) {
-				cur = path.pop()
-			}
-		}
 	}
-	return newNodeIter(cur, endKey, path)
+	return newNodeIter(dir, cur, endKey, path)
 }
 
 func (m *Map) Get(k MapKey) interface{} {

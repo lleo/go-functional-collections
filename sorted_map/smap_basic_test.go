@@ -980,6 +980,71 @@ func TestBasicRangeForwBeg(t *testing.T) {
 	}
 }
 
+func TestBasicRangeForwBegInexact(t *testing.T) {
+	var m = mkmap(
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
+
+	if err := m.valid(); err != nil {
+		t.Fatalf("INVALID TREE; err=%s\n", err)
+	}
+
+	var shouldHaveKvs = []KeyVal{
+		{IntKey(10), 10},
+		{IntKey(20), 20},
+		{IntKey(30), 30},
+		{IntKey(40), 40},
+		{IntKey(50), 50},
+		{IntKey(60), 60},
+		{IntKey(70), 70},
+		{IntKey(80), 80},
+		{IntKey(90), 90},
+		{IntKey(100), 100},
+		{IntKey(110), 110},
+		{IntKey(120), 120},
+		{IntKey(130), 130},
+	}
+
+	//var numKeys = len(shouldHaveKvs)
+	var eltOffset = 2
+	var startKey = IntKey((eltOffset * 10) - 5) //IntKey(15)
+	var endKey = InfKey(1)                      //positive infinity
+	var keyRange = shouldHaveKvs[eltOffset-1:]
+	var i = 0
+	var fn = func(k0 MapKey, v0 interface{}) bool {
+		if i >= len(keyRange) {
+			t.Fatalf("i,%d >= len(keyRange),%d", i, len(keyRange))
+		}
+		var k1 = keyRange[i].Key
+		var v1 = keyRange[i].Val
+		//log.Printf("k0=%s; v0=%v;", k0, v0)
+		//log.Printf("k1=%s; v0=%v;", k1, v1)
+		if k0.Less(k1) || k1.Less(k0) {
+			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
+		}
+		if v0 != v1 {
+			t.Fatalf("i=%d; v0,%d != v1,%d", i, v0, v1)
+		}
+		i++
+		return true
+	}
+	m.RangeLimit(startKey, endKey, fn)
+	if i != len(keyRange) {
+		t.Fatalf("after RangeLimit: i,%d != len(keyRange),%d", i, len(keyRange))
+	}
+}
+
 func TestBasicRangeForwEnd(t *testing.T) {
 	var m = mkmap(
 		mknod(60, black,
@@ -1043,6 +1108,385 @@ func TestBasicRangeForwEnd(t *testing.T) {
 	if i != len(keyRange) {
 		t.Fatalf("after RangeLimit: i,%d != len(keyRange),%d", i, len(keyRange))
 	}
+}
+
+func TestBasicRangeForwEndInexact(t *testing.T) {
+	var m = mkmap(
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
+
+	if err := m.valid(); err != nil {
+		t.Fatalf("INVALID TREE; err=%s\n", err)
+	}
+
+	var shouldHaveKvs = []KeyVal{
+		{IntKey(10), 10},
+		{IntKey(20), 20},
+		{IntKey(30), 30},
+		{IntKey(40), 40},
+		{IntKey(50), 50},
+		{IntKey(60), 60},
+		{IntKey(70), 70},
+		{IntKey(80), 80},
+		{IntKey(90), 90},
+		{IntKey(100), 100},
+		{IntKey(110), 110},
+		{IntKey(120), 120},
+		{IntKey(130), 130},
+	}
+
+	var numKeys = len(shouldHaveKvs)
+	var eltOffset = 3
+	var startKey = InfKey(-1)                           //negative infinity
+	var endKey = IntKey((numKeys-eltOffset)*10 + 5)     //IntKey(105)
+	var keyRange = shouldHaveKvs[:len(shouldHaveKvs)-3] //??
+	var i = 0
+	var fn = func(k0 MapKey, v0 interface{}) bool {
+		if i >= len(keyRange) {
+			t.Fatalf("i,%d >= len(keyRange),%d", i, len(keyRange))
+		}
+		var k1 = keyRange[i].Key
+		var v1 = keyRange[i].Val
+		//log.Printf("k0=%s; v0=%v;", k0, v0)
+		//log.Printf("k1=%s; v0=%v;", k1, v1)
+		if k0.Less(k1) || k1.Less(k0) {
+			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
+		}
+		if v0 != v1 {
+			t.Fatalf("i=%d; v0,%d != v1,%d", i, v0, v1)
+		}
+		i++
+		return true
+	}
+	m.RangeLimit(startKey, endKey, fn)
+	if i != len(keyRange) {
+		t.Fatalf("after RangeLimit: i,%d != len(keyRange),%d", i, len(keyRange))
+	}
+}
+
+func TestBasicRangeRevBeg(t *testing.T) {
+	var m = mkmap(
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
+
+	if err := m.valid(); err != nil {
+		t.Fatalf("INVALID TREE; err=%s\n", err)
+	}
+
+	var shouldHaveKvs = []KeyVal{
+		{IntKey(10), 10},
+		{IntKey(20), 20},
+		{IntKey(30), 30},
+		{IntKey(40), 40},
+		{IntKey(50), 50},
+		{IntKey(60), 60},
+		{IntKey(70), 70},
+		{IntKey(80), 80},
+		{IntKey(90), 90},
+		{IntKey(100), 100},
+		{IntKey(110), 110},
+		{IntKey(120), 120},
+		{IntKey(130), 130},
+	}
+
+	var numKeys = len(shouldHaveKvs)
+	var eltOffset = 3
+	var keyRange = shouldHaveKvs[:numKeys-eltOffset]
+	var startKey = IntKey((numKeys - eltOffset) * 10) //IntKey(100)
+	var endKey = InfKey(-1)                           //negative infinity
+	var i = len(keyRange) - 1
+	var fn = func(k0 MapKey, v0 interface{}) bool {
+		if i < 0 {
+			t.Fatalf("i,%d < 0", i)
+		}
+		var k1 = keyRange[i].Key
+		var v1 = keyRange[i].Val
+		log.Printf("k0=%s; v0=%v;", k0, v0)
+		log.Printf("k1=%s; v0=%v;", k1, v1)
+		if k0.Less(k1) || k1.Less(k0) {
+			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
+		}
+		if v0 != v1 {
+			t.Fatalf("i=%d; v0,%d != v1,%d", i, v0, v1)
+		}
+		i--
+		return true
+	}
+	log.Printf("m.RangeLimit(startKey,%s, endKey,%s, fn)", startKey, endKey)
+	m.RangeLimit(startKey, endKey, fn)
+	if i != -1 {
+		t.Fatalf("after RangeLimit: i,%d != -1", i)
+	}
+}
+
+func TestBasicRangeRevBegInexact(t *testing.T) {
+	var m = mkmap(
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
+
+	if err := m.valid(); err != nil {
+		t.Fatalf("INVALID TREE; err=%s\n", err)
+	}
+
+	var shouldHaveKvs = []KeyVal{
+		{IntKey(10), 10},
+		{IntKey(20), 20},
+		{IntKey(30), 30},
+		{IntKey(40), 40},
+		{IntKey(50), 50},
+		{IntKey(60), 60},
+		{IntKey(70), 70},
+		{IntKey(80), 80},
+		{IntKey(90), 90},
+		{IntKey(100), 100},
+		{IntKey(110), 110},
+		{IntKey(120), 120},
+		{IntKey(130), 130},
+	}
+
+	var numKeys = len(shouldHaveKvs)
+	var eltOffset = 3
+	var keyRange = shouldHaveKvs[:numKeys-eltOffset]
+	var startKey = IntKey((numKeys-eltOffset)*10 + 5) //IntKey(105)
+	var endKey = InfKey(-1)                           //negative infinity
+	var i = len(keyRange) - 1
+	var fn = func(k0 MapKey, v0 interface{}) bool {
+		if i < 0 {
+			t.Fatalf("i,%d < 0", i)
+		}
+		var k1 = keyRange[i].Key
+		var v1 = keyRange[i].Val
+		log.Printf("k0=%s; v0=%v;", k0, v0)
+		log.Printf("k1=%s; v0=%v;", k1, v1)
+		if k0.Less(k1) || k1.Less(k0) {
+			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
+		}
+		if v0 != v1 {
+			t.Fatalf("i=%d; v0,%d != v1,%d", i, v0, v1)
+		}
+		i--
+		return true
+	}
+	log.Printf("m.RangeLimit(startKey,%s, endKey,%s, fn)", startKey, endKey)
+	m.RangeLimit(startKey, endKey, fn)
+	if i != -1 {
+		t.Fatalf("after RangeLimit: i,%d != -1", i)
+	}
+}
+
+func TestBasicRangeRevEnd(t *testing.T) {
+	var m = mkmap(
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
+
+	if err := m.valid(); err != nil {
+		t.Fatalf("INVALID TREE; err=%s\n", err)
+	}
+
+	var shouldHaveKvs = []KeyVal{
+		{IntKey(10), 10},
+		{IntKey(20), 20},
+		{IntKey(30), 30},
+		{IntKey(40), 40},
+		{IntKey(50), 50},
+		{IntKey(60), 60},
+		{IntKey(70), 70},
+		{IntKey(80), 80},
+		{IntKey(90), 90},
+		{IntKey(100), 100},
+		{IntKey(110), 110},
+		{IntKey(120), 120},
+		{IntKey(130), 130},
+	}
+
+	//var numKeys = len(shouldHaveKvs)
+	var eltOffset = 3
+	var startKey = InfKey(1)                   //positive infinity
+	var endKey = IntKey(eltOffset * 10)        //IntKey(30)
+	var keyRange = shouldHaveKvs[eltOffset-1:] //??
+	var i = len(keyRange) - 1
+	var fn = func(k0 MapKey, v0 interface{}) bool {
+		if i < 0 {
+			t.Fatalf("i,%d < 0", i)
+		}
+		var k1 = keyRange[i].Key
+		var v1 = keyRange[i].Val
+		log.Printf("k0=%s; v0=%v;", k0, v0)
+		log.Printf("k1=%s; v0=%v;", k1, v1)
+		if k0.Less(k1) || k1.Less(k0) {
+			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
+		}
+		if v0 != v1 {
+			t.Fatalf("i=%d; v0,%d != v1,%d", i, v0, v1)
+		}
+		i--
+		return true
+	}
+	m.RangeLimit(startKey, endKey, fn)
+	if i != -1 {
+		t.Fatalf("after RangeLimit: i,%d != -1", i)
+	}
+}
+
+func TestBasicRangeRevEndInexact(t *testing.T) {
+	var m = mkmap(
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
+
+	if err := m.valid(); err != nil {
+		t.Fatalf("INVALID TREE; err=%s\n", err)
+	}
+
+	var shouldHaveKvs = []KeyVal{
+		{IntKey(10), 10},
+		{IntKey(20), 20},
+		{IntKey(30), 30},
+		{IntKey(40), 40},
+		{IntKey(50), 50},
+		{IntKey(60), 60},
+		{IntKey(70), 70},
+		{IntKey(80), 80},
+		{IntKey(90), 90},
+		{IntKey(100), 100},
+		{IntKey(110), 110},
+		{IntKey(120), 120},
+		{IntKey(130), 130},
+	}
+
+	//var numKeys = len(shouldHaveKvs)
+	var eltOffset = 3
+	var startKey = InfKey(1)                   //positive infinity
+	var endKey = IntKey(eltOffset*10 - 5)      //IntKey(25)
+	var keyRange = shouldHaveKvs[eltOffset-1:] //??
+	var i = len(keyRange) - 1
+	var fn = func(k0 MapKey, v0 interface{}) bool {
+		if i < 0 {
+			t.Fatalf("i,%d < 0", i)
+		}
+		var k1 = keyRange[i].Key
+		var v1 = keyRange[i].Val
+		log.Printf("k0=%s; v0=%v;", k0, v0)
+		log.Printf("k1=%s; v0=%v;", k1, v1)
+		if k0.Less(k1) || k1.Less(k0) {
+			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
+		}
+		if v0 != v1 {
+			t.Fatalf("i=%d; v0,%d != v1,%d", i, v0, v1)
+		}
+		i--
+		return true
+	}
+	m.RangeLimit(startKey, endKey, fn)
+	if i != -1 {
+		t.Fatalf("after RangeLimit: i,%d != -1", i)
+	}
+}
+
+// TestBasicRangeForwToSmall test a range which is between two valid keys
+func TestBasicRangeForwToSmall(t *testing.T) {
+	var m = mkmap(
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
+
+	var startKey = IntKey(62)
+	var endKey = IntKey(68)
+	var fn = func(k MapKey, v interface{}) bool {
+		t.Fatalf("node found where no node should be found.k=%s; v=%d", k, v)
+		return true
+	}
+	m.RangeLimit(startKey, endKey, fn)
+}
+
+// TestBasicRangeRevToSmall test a range which is between two valid keys
+func TestBasicRangeRevToSmall(t *testing.T) {
+	var m = mkmap(
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
+
+	var startKey = IntKey(58)
+	var endKey = IntKey(52)
+	var fn = func(k MapKey, v interface{}) bool {
+		t.Fatalf("node found where no node should be found.k=%s; v=%d", k, v)
+		return true
+	}
+	m.RangeLimit(startKey, endKey, fn)
 }
 
 func TestBasicRangeStop(t *testing.T) {

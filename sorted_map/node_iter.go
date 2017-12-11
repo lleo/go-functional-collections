@@ -1,5 +1,7 @@
 package sorted_map
 
+import "log"
+
 type nodeIter struct {
 	dir    bool // true == lower-to-higher; false == higher-to-lower
 	endKey MapKey
@@ -7,9 +9,14 @@ type nodeIter struct {
 	path   *nodeStack
 }
 
-func newNodeIter(start *node, endKey MapKey, path *nodeStack) *nodeIter {
+func newNodeIter(
+	dir bool,
+	start *node,
+	endKey MapKey,
+	path *nodeStack,
+) *nodeIter {
 	var iter = new(nodeIter)
-	iter.dir = less(start.key, endKey)
+	iter.dir = dir
 	iter.endKey = endKey
 	iter.cur = start
 	iter.path = path
@@ -78,11 +85,16 @@ func (it *nodeIter) Back() *node {
 }
 
 func (it *nodeIter) toFar() bool {
+	log.Printf("%v", *it)
 	if it.dir {
 		// lower to higher
+		log.Printf("it.dir=%v; it.endKey,%s <? it.cur.key,%s",
+			it.dir, it.endKey, it.cur.key)
 		return less(it.endKey, it.cur.key) // cur <= end
 	} else {
 		// higher to lower
+		log.Printf("it.dir=%v; it.cur.key,%s <? it.endKey,%s",
+			it.dir, it.cur.key, it.endKey)
 		return less(it.cur.key, it.endKey) // end <= cur
 	}
 }
