@@ -318,34 +318,34 @@ func (n *node) findNodeIterPath(k MapKey, dir bool) (*node, *nodeStack) {
 // if the node exists.
 //
 // should never be called when n == nil.
-func (n *node) visitPreOrder(
-	fn func(*node, *nodeStack) bool,
-	path *nodeStack,
-) bool {
-	assert(n != nil, "visitPreOrder() called when n == nil")
-
-	if !fn(n, path) {
-		return false
-	}
-
-	if n.ln != nil {
-		path.push(n)
-		if !n.ln.visitPreOrder(fn, path) {
-			return false
-		}
-		path.pop()
-	}
-
-	if n.rn != nil {
-		path.push(n)
-		if !n.rn.visitPreOrder(fn, path) {
-			return false
-		}
-		path.pop()
-	}
-
-	return true
-}
+//func (n *node) visitPreOrder(
+//	fn func(*node, *nodeStack) bool,
+//	path *nodeStack,
+//) bool {
+//	assert(n != nil, "visitPreOrder() called when n == nil")
+//
+//	if !fn(n, path) {
+//		return false
+//	}
+//
+//	if n.ln != nil {
+//		path.push(n)
+//		if !n.ln.visitPreOrder(fn, path) {
+//			return false
+//		}
+//		path.pop()
+//	}
+//
+//	if n.rn != nil {
+//		path.push(n)
+//		if !n.rn.visitPreOrder(fn, path) {
+//			return false
+//		}
+//		path.pop()
+//	}
+//
+//	return true
+//}
 
 // visitInOrder() conditionally calls visitInOrder() on its left child, then
 // calls the visit function on the current node, and finnaly conditionally
@@ -353,34 +353,34 @@ func (n *node) visitPreOrder(
 // exists.
 //
 // should never be called when n == nil.
-func (n *node) visitInOrder(
-	fn func(*node, *nodeStack) bool,
-	path *nodeStack,
-) bool {
-	assert(n != nil, "visitInOrder() called when n == nil")
-
-	if n.ln != nil {
-		path.push(n)
-		if !n.ln.visitInOrder(fn, path) {
-			return false
-		}
-		path.pop()
-	}
-
-	if !fn(n, path) {
-		return false
-	}
-
-	if n.rn != nil {
-		path.push(n)
-		if !n.rn.visitInOrder(fn, path) {
-			return false
-		}
-		path.pop()
-	}
-
-	return true
-}
+//func (n *node) visitInOrder(
+//	fn func(*node, *nodeStack) bool,
+//	path *nodeStack,
+//) bool {
+//	assert(n != nil, "visitInOrder() called when n == nil")
+//
+//	if n.ln != nil {
+//		path.push(n)
+//		if !n.ln.visitInOrder(fn, path) {
+//			return false
+//		}
+//		path.pop()
+//	}
+//
+//	if !fn(n, path) {
+//		return false
+//	}
+//
+//	if n.rn != nil {
+//		path.push(n)
+//		if !n.rn.visitInOrder(fn, path) {
+//			return false
+//		}
+//		path.pop()
+//	}
+//
+//	return true
+//}
 
 const toStrFmt0 = "%p,node{key:%s, val:%#v, color:%s\n"
 const toStrFmt1 = "%s  ln: %s,\n"

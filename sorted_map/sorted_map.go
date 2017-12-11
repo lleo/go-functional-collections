@@ -23,7 +23,7 @@ func (m *Map) valid() error {
 	}
 	var count = m.root.count()
 	if uint(count) != m.numEnts {
-		return errors.New("enumerated count of subnodes != m.numEnts")
+		return errors.New("enumerated count of subnodes != m.NumEntries()")
 	}
 	return nil
 }
@@ -786,12 +786,11 @@ func (m *Map) deleteCase5(on, nn *node, path *nodeStack) {
 			nsibling.setRed()
 			nsibling.ln.setBlack()
 
-			//if on.key.Less(parent.key) {
-			if on.isLeftChildOf(parent) {
-				parent.rn = nsibling
-			} else {
-				parent.ln = nsibling
-			}
+			//if on.isLeftChildOf(parent) {
+			parent.rn = nsibling
+			//} else {
+			//	parent.ln = nsibling
+			//}
 
 			//log.Printf("before rotateRight: parent Tree =\n%s",
 			//	parent.treeString())
@@ -811,12 +810,11 @@ func (m *Map) deleteCase5(on, nn *node, path *nodeStack) {
 			nsibling.setRed()
 			nsibling.rn.setBlack()
 
-			//if on.key.Less(parent.key) {
-			if on.isLeftChildOf(parent) {
-				parent.rn = nsibling
-			} else {
-				parent.ln = nsibling
-			}
+			//if on.isLeftChildOf(parent) {
+			//	parent.rn = nsibling
+			//} else {
+			parent.ln = nsibling
+			//}
 
 			_, _ = m.rotateLeft(nsibling, parent)
 
@@ -959,21 +957,21 @@ func (m *Map) Keys() []MapKey {
 
 //DELtype visitFn func(*node, *nodeStack) bool
 
-func (m *Map) walkPreOrder(fn func(*node, *nodeStack) bool) bool {
-	if m.root != nil {
-		var path = newNodeStack(0)
-		return m.root.visitPreOrder(fn, path)
-	}
-	return true
-}
+//func (m *Map) walkPreOrder(fn func(*node, *nodeStack) bool) bool {
+//	if m.root != nil {
+//		var path = newNodeStack(0)
+//		return m.root.visitPreOrder(fn, path)
+//	}
+//	return true
+//}
 
-func (m *Map) walkInOrder(fn func(*node, *nodeStack) bool) bool {
-	if m.root != nil {
-		var path = newNodeStack(0)
-		return m.root.visitInOrder(fn, path)
-	}
-	return true
-}
+//func (m *Map) walkInOrder(fn func(*node, *nodeStack) bool) bool {
+//	if m.root != nil {
+//		var path = newNodeStack(0)
+//		return m.root.visitInOrder(fn, path)
+//	}
+//	return true
+//}
 
 //dup() is for testing only. It is a recusive copy.
 func (m *Map) dup() *Map {

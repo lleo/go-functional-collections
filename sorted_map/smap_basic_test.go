@@ -5,6 +5,32 @@ import (
 	"testing"
 )
 
+func TestBasicGetPos(t *testing.T) {
+	var m = mkmap(
+		mknod(20, black,
+			mknod(10, red, nil, nil),
+			mknod(30, red, nil, nil)))
+
+	var val = m.Get(IntKey(20))
+
+	if val != 20 {
+		t.Fatal("m.Get(IntKey(20)) did not return a val==20")
+	}
+}
+
+func TestBasicGetNeg(t *testing.T) {
+	var m = mkmap(
+		mknod(20, black,
+			mknod(10, red, nil, nil),
+			mknod(30, red, nil, nil)))
+
+	var val = m.Get(IntKey(40))
+
+	if val != nil {
+		t.Fatal("m.Get(IntKey(40)) did not return a val==nil")
+	}
+}
+
 func TestBasicLoadOrStoreTree0(t *testing.T) {
 	var m0 = mkmap(
 		mknod(20, black,
@@ -33,7 +59,7 @@ func TestBasicLoadOrStoreTree0(t *testing.T) {
 	}
 
 	if !origM.equiv(dupM) {
-		t.Fatal("TestBasicPutCase1: orig Map and duplicate of orig Map are not identical.")
+		t.Fatal("TestBasicLoadOrStoreTree0: orig Map and duplicate of orig Map are not identical.")
 	}
 }
 
@@ -69,7 +95,7 @@ func TestBasicLoadOrStoreTree1(t *testing.T) {
 	}
 
 	if !origM.equiv(dupM) {
-		t.Fatal("TestBasicPutCase1: orig Map and duplicate of orig Map are not identical.")
+		t.Fatal("TestBasicLoadOrStoreTree1: orig Map and duplicate of orig Map are not identical.")
 	}
 }
 
@@ -105,7 +131,7 @@ func TestBasicLoadOrStoreTree2(t *testing.T) {
 	}
 
 	if !origM.equiv(dupM) {
-		t.Fatal("TestBasicPutCase1: orig Map and duplicate of orig Map are not identical.")
+		t.Fatal("TestBasicLoadOrStoreTree2: orig Map and duplicate of orig Map are not identical.")
 	}
 }
 
@@ -151,7 +177,32 @@ func TestBasicLoadOrStoreTree3(t *testing.T) {
 	}
 
 	if !origM.equiv(dupM) {
-		t.Fatal("TestBasicPutCase1: orig Map and duplicate of orig Map are not identical.")
+		t.Fatal("TestBasicLoadOrStoreTree3: orig Map and duplicate of orig Map are not identical.")
+	}
+}
+
+func TestBasicStoreReplace(t *testing.T) {
+	var m0 = mkmap(
+		mknod(20, black,
+			mknod(10, red, nil, nil),
+			mknod(30, red, nil, nil)))
+
+	var origM0 = m0
+	var dupM0 = m0.dup()
+
+	var m1, added = m0.Store(IntKey(30), 31)
+
+	if added {
+		t.Fatal("Store added new entry when it should not")
+	}
+
+	var val = m1.Get(IntKey(30))
+	if val != 31 {
+		t.Fatal("new map did not return value of 31 for a lookup of IntKey(31)")
+	}
+
+	if !origM0.equiv(dupM0) {
+		t.Fatal("TestBasicStoreReplace: orig Map and duplicate of orig Map are not identical.")
 	}
 }
 
@@ -282,6 +333,27 @@ func TestBasicPutCase4(t *testing.T) {
 
 	if !origM.equiv(dupM) {
 		t.Fatal("TestBasicPutCase4: orig Map and duplicate of orig Map are not identical.")
+	}
+}
+
+func TestRemoveNeg(t *testing.T) {
+	var m0 = mkmap(
+		mknod(20, black,
+			mknod(10, red, nil, nil),
+			mknod(30, red, nil, nil)))
+
+	var m1, val, found = m0.Remove(IntKey(40))
+
+	if found {
+		t.Fatal("found a key that does not exist")
+	}
+
+	if val != nil {
+		t.Fatal("val != nil")
+	}
+
+	if m1 != m0 {
+		t.Fatal("returned map not the same as the original map")
 	}
 }
 
@@ -970,5 +1042,86 @@ func TestBasicRangeForwEnd(t *testing.T) {
 	m.RangeLimit(startKey, endKey, fn)
 	if i != len(keyRange) {
 		t.Fatalf("after RangeLimit: i,%d != len(keyRange),%d", i, len(keyRange))
+	}
+}
+
+func TestBasicRangeStop(t *testing.T) {
+	var m = mkmap(
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
+
+	var fn = func(k MapKey, v interface{}) bool {
+		if cmp(k, IntKey(60)) == 0 {
+			return false
+		}
+		if less(IntKey(60), k) {
+			t.Fatal("encountered a key higher that the stop condition")
+		}
+		return true
+	}
+	m.Range(fn)
+}
+
+func TestBasicMapString(t *testing.T) {
+	var m = mkmap(
+		mknod(20, black,
+			mknod(10, red, nil, nil),
+			mknod(30, red, nil, nil)))
+
+	var expectedStr = "{10: 10, 20: 20, 30: 30}"
+
+	if m.String() != expectedStr {
+		t.Fatalf("m.String() != %q", expectedStr)
+	}
+}
+
+func TestBasicKeys(t *testing.T) {
+	var m = mkmap(
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
+
+	var shouldHaveKvs = []KeyVal{
+		{IntKey(10), 10},
+		{IntKey(20), 20},
+		{IntKey(30), 30},
+		{IntKey(40), 40},
+		{IntKey(50), 50},
+		{IntKey(60), 60},
+		{IntKey(70), 70},
+		{IntKey(80), 80},
+		{IntKey(90), 90},
+		{IntKey(100), 100},
+		{IntKey(110), 110},
+		{IntKey(120), 120},
+		{IntKey(130), 130},
+	}
+
+	var foundKeys = m.Keys()
+	for i, kv := range shouldHaveKvs {
+		if cmp(kv.Key, foundKeys[i]) != 0 {
+			t.Fatalf("kv.Key,%s != foundKeys[%d],%s", kv.Key, i, foundKeys[i])
+		}
 	}
 }
