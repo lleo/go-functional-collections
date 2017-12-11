@@ -336,7 +336,7 @@ func TestBasicPutCase4(t *testing.T) {
 	}
 }
 
-func TestRemoveNeg(t *testing.T) {
+func TestBasicRemoveNeg(t *testing.T) {
 	var m0 = mkmap(
 		mknod(20, black,
 			mknod(10, red, nil, nil),
@@ -1223,8 +1223,8 @@ func TestBasicRangeRevBeg(t *testing.T) {
 		}
 		var k1 = keyRange[i].Key
 		var v1 = keyRange[i].Val
-		log.Printf("k0=%s; v0=%v;", k0, v0)
-		log.Printf("k1=%s; v0=%v;", k1, v1)
+		//log.Printf("k0=%s; v0=%v;", k0, v0)
+		//log.Printf("k1=%s; v0=%v;", k1, v1)
 		if k0.Less(k1) || k1.Less(k0) {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
@@ -1234,7 +1234,7 @@ func TestBasicRangeRevBeg(t *testing.T) {
 		i--
 		return true
 	}
-	log.Printf("m.RangeLimit(startKey,%s, endKey,%s, fn)", startKey, endKey)
+	//log.Printf("m.RangeLimit(startKey,%s, endKey,%s, fn)", startKey, endKey)
 	m.RangeLimit(startKey, endKey, fn)
 	if i != -1 {
 		t.Fatalf("after RangeLimit: i,%d != -1", i)
@@ -1289,8 +1289,8 @@ func TestBasicRangeRevBegInexact(t *testing.T) {
 		}
 		var k1 = keyRange[i].Key
 		var v1 = keyRange[i].Val
-		log.Printf("k0=%s; v0=%v;", k0, v0)
-		log.Printf("k1=%s; v0=%v;", k1, v1)
+		//log.Printf("k0=%s; v0=%v;", k0, v0)
+		//log.Printf("k1=%s; v0=%v;", k1, v1)
 		if k0.Less(k1) || k1.Less(k0) {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
@@ -1300,7 +1300,7 @@ func TestBasicRangeRevBegInexact(t *testing.T) {
 		i--
 		return true
 	}
-	log.Printf("m.RangeLimit(startKey,%s, endKey,%s, fn)", startKey, endKey)
+	//log.Printf("m.RangeLimit(startKey,%s, endKey,%s, fn)", startKey, endKey)
 	m.RangeLimit(startKey, endKey, fn)
 	if i != -1 {
 		t.Fatalf("after RangeLimit: i,%d != -1", i)
@@ -1355,8 +1355,8 @@ func TestBasicRangeRevEnd(t *testing.T) {
 		}
 		var k1 = keyRange[i].Key
 		var v1 = keyRange[i].Val
-		log.Printf("k0=%s; v0=%v;", k0, v0)
-		log.Printf("k1=%s; v0=%v;", k1, v1)
+		//log.Printf("k0=%s; v0=%v;", k0, v0)
+		//log.Printf("k1=%s; v0=%v;", k1, v1)
 		if k0.Less(k1) || k1.Less(k0) {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
@@ -1420,8 +1420,8 @@ func TestBasicRangeRevEndInexact(t *testing.T) {
 		}
 		var k1 = keyRange[i].Key
 		var v1 = keyRange[i].Val
-		log.Printf("k0=%s; v0=%v;", k0, v0)
-		log.Printf("k1=%s; v0=%v;", k1, v1)
+		//log.Printf("k0=%s; v0=%v;", k0, v0)
+		//log.Printf("k1=%s; v0=%v;", k1, v1)
 		if k0.Less(k1) || k1.Less(k0) {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
