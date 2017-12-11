@@ -1,7 +1,5 @@
 package sorted_map
 
-import "log"
-
 type nodeIter struct {
 	dir    bool // true == lower-to-higher; false == higher-to-lower
 	endKey MapKey
@@ -85,16 +83,11 @@ func (it *nodeIter) Back() *node {
 }
 
 func (it *nodeIter) toFar() bool {
-	log.Printf("%v", *it)
 	if it.dir {
 		// lower to higher
-		log.Printf("it.dir=%v; it.endKey,%s <? it.cur.key,%s",
-			it.dir, it.endKey, it.cur.key)
 		return less(it.endKey, it.cur.key) // cur <= end
 	} else {
 		// higher to lower
-		log.Printf("it.dir=%v; it.cur.key,%s <? it.endKey,%s",
-			it.dir, it.cur.key, it.endKey)
 		return less(it.cur.key, it.endKey) // end <= cur
 	}
 }
