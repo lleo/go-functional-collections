@@ -1489,6 +1489,110 @@ func TestBasicRangeRevToSmall(t *testing.T) {
 	m.RangeLimit(startKey, endKey, fn)
 }
 
+// TestBasicRangeForwToFarAbove test a range which is above any valid keys
+func TestBasicRangeForwToFarAbove(t *testing.T) {
+	var m = mkmap(
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
+
+	var startKey = IntKey(200)
+	var endKey = IntKey(300)
+	var fn = func(k MapKey, v interface{}) bool {
+		t.Fatalf("node found where no node should be found.k=%s; v=%d", k, v)
+		return true
+	}
+	m.RangeLimit(startKey, endKey, fn)
+}
+
+// TestBasicRangeRevToFarAbove test a range which is above any valid keys
+func TestBasicRangeRevToFarAbove(t *testing.T) {
+	var m = mkmap(
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
+
+	var startKey = IntKey(300)
+	var endKey = IntKey(200)
+	var fn = func(k MapKey, v interface{}) bool {
+		t.Fatalf("node found where no node should be found.k=%s; v=%d", k, v)
+		return true
+	}
+	m.RangeLimit(startKey, endKey, fn)
+}
+
+// TestBasicRangeForwToFarBelow test a range which is below any valid keys
+func TestBasicRangeForwToFarBelow(t *testing.T) {
+	var m = mkmap(
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
+
+	var startKey = IntKey(-100)
+	var endKey = IntKey(0)
+	var fn = func(k MapKey, v interface{}) bool {
+		t.Fatalf("node found where no node should be found.k=%s; v=%d", k, v)
+		return true
+	}
+	m.RangeLimit(startKey, endKey, fn)
+}
+
+// TestBasicRangeRevToFarBelow test a range which is below any valid keys
+func TestBasicRangeRevToFarBelow(t *testing.T) {
+	var m = mkmap(
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
+
+	var startKey = IntKey(0)
+	var endKey = IntKey(-100)
+	var fn = func(k MapKey, v interface{}) bool {
+		t.Fatalf("node found where no node should be found.k=%s; v=%d", k, v)
+		return true
+	}
+	m.RangeLimit(startKey, endKey, fn)
+}
+
 func TestBasicRangeStop(t *testing.T) {
 	var m = mkmap(
 		mknod(60, black,
