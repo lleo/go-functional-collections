@@ -13,9 +13,6 @@ func newNodeIter(start *node, endKey MapKey, path *nodeStack) *nodeIter {
 	iter.endKey = endKey
 	iter.cur = start
 	iter.path = path
-	//log.Printf("newNodeIter: constructed:"+
-	//	"\niter.dir=%v\niter.endKey=%s\niter.cur=%s\niter.path=%s",
-	//	iter.dir, iter.endKey, iter.cur, iter.path)
 	return iter
 }
 

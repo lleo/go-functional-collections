@@ -18,7 +18,6 @@ func (ns *nodeStack) dup() *nodeStack {
 		//i is relative to (*ns)[1:] not (*ns)[] so it is -1 what I was
 		//expecting.
 		var nn = n.copy()
-		//log.Printf("nodeStack.dup: i=%d; ns.len()=%d;", i, ns.len())
 		if n.isLeftChildOf((*ns)[i]) {
 			(*nns)[i].ln = nn
 		} else {
