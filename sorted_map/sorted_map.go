@@ -83,9 +83,6 @@ func (m *Map) Load(k MapKey) (interface{}, bool) {
 // value, and a false value indicating the key was not found and the store
 // occured.
 func (m *Map) LoadOrStore(k MapKey, v interface{}) (*Map, interface{}, bool) {
-	//panic("not implemented")
-	//return nil, nil, false
-
 	var n, path = m.root.findNodeWithPath(k)
 	if n != nil {
 		return m, n.val, true
@@ -322,7 +319,6 @@ func (m *Map) insertCase3(on, nn *node, path *nodeStack) {
 	var ogp = path.pop() //gp means grandparent
 
 	var ouncle *node
-	//if parent.isLeftChildOf(gp) {
 	if less(oparent.key, ogp.key) {
 		ouncle = ogp.rn
 	} else {
@@ -374,9 +370,6 @@ func (m *Map) insertCase4(on, nn *node, path *nodeStack) {
 		path.push(nn)
 
 		nn = nn.rn //nn.rn == parent
-
-		//} else if nn.isRightChildOf(nparent) && oparent.isLeftChildOf(ogp) {
-		//} else if less(oparent.key, nn.key) && less(oparent.key, ogp.key) {
 	} else if less(parent.key, nn.key) && parent.isLeftChildOf(gp) {
 		parent.rn = nn
 
@@ -587,8 +580,6 @@ func (m *Map) deleteCase2(on, nn *node, path *nodeStack) {
 
 	if osibling.isRed() {
 		nsibling = osibling.copy()
-		//if on.isLeftChildOf(oparent) {
-		//if on.key.Less(oparent.key) {
 		if nsibling.key.Less(parent.key) {
 			//parent.rn = nn
 			parent.ln = nsibling
@@ -600,7 +591,6 @@ func (m *Map) deleteCase2(on, nn *node, path *nodeStack) {
 		parent.setRed()
 		nsibling.setBlack()
 
-		//if on.key.Less(oparent.key) {
 		if on.isLeftChildOf(parent) {
 			parent, nsibling = m.rotateLeft(parent, gp)
 			//parent childOf nsibling childOf gp
@@ -696,11 +686,7 @@ func (m *Map) deleteCase5(on, nn *node, path *nodeStack) {
 			nsibling.setRed()
 			nsibling.ln.setBlack()
 
-			//if on.isLeftChildOf(parent) {
 			parent.rn = nsibling
-			//} else {
-			//	parent.ln = nsibling
-			//}
 
 			_, _ = m.rotateRight(nsibling, parent)
 		} else if on.isRightChildOf(parent) &&
@@ -712,11 +698,7 @@ func (m *Map) deleteCase5(on, nn *node, path *nodeStack) {
 			nsibling.setRed()
 			nsibling.rn.setBlack()
 
-			//if on.isLeftChildOf(parent) {
-			//	parent.rn = nsibling
-			//} else {
 			parent.ln = nsibling
-			//}
 
 			_, _ = m.rotateLeft(nsibling, parent)
 		}
@@ -749,7 +731,6 @@ func (m *Map) deleteCase6(on, nn *node, path *nodeStack) {
 
 	var gp = path.peek()
 
-	//if on.key.Less(parent.key) {
 	if on.isLeftChildOf(parent) {
 		if osibling.rn != nil {
 			nsibling.rn = osibling.rn.copy()
@@ -780,9 +761,6 @@ func (m *Map) deleteCase6(on, nn *node, path *nodeStack) {
 		path.push(parent)
 	}
 
-	//path.pop() //take nsibling off path
-	//path.pop() //take parent off path
-	//m.persist(parent, nsibling, path)
 	m.persist(on, nn, path)
 	return
 }
@@ -831,8 +809,6 @@ func (m *Map) Keys() []MapKey {
 	m.Range(fn)
 	return keys
 }
-
-//DELtype visitFn func(*node, *nodeStack) bool
 
 //func (m *Map) walkPreOrder(fn func(*node, *nodeStack) bool) bool {
 //	if m.root != nil {
