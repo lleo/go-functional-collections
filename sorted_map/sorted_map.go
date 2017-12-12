@@ -122,14 +122,12 @@ func (m *Map) Store(k MapKey, v interface{}) (*Map, bool) {
 //
 // replace() MUST be called on a new *Map.
 func (m *Map) replace(k MapKey, v interface{}, on *node, path *nodeStack) {
-	assert(cmp(on.key, k) == 0, "on.key != nn.key")
+	_ = assertOn && assert(cmp(on.key, k) == 0, "on.key != nn.key")
 
 	var nn = on.copy()
 	nn.val = v
 
 	m.persist(on, nn, path)
-
-	return
 }
 
 // insert() inserts a new node, create from a key-value pair,  into the tip of
@@ -144,8 +142,6 @@ func (m *Map) insert(k MapKey, v interface{}, path *nodeStack) {
 
 	m.insertRepair(on, nn, path)
 	m.numEnts++
-
-	return
 }
 
 //persist() takes a duped path and sets the first element of the path to the
@@ -174,8 +170,6 @@ func (m *Map) persist(on, nn *node, path *nodeStack) {
 			parent.rn = nn
 		}
 	}
-
-	return
 }
 
 // rotateLeft() takes the target node(n) and its parent(p). We are rotating on
@@ -194,8 +188,8 @@ func (m *Map) persist(on, nn *node, path *nodeStack) {
 // they changed position and swapped their parent-child relationship.
 // Only p, n, and r changed values.
 func (m *Map) rotateLeft(n, p *node) (*node, *node) {
-	//assert(n == p.rn, "new node is not right child of new parent")
-	//assert(p == nil || n == p.ln,
+	//_ = assertOn && assert(n == p.rn, "new node is not right child of new parent")
+	//_ = assertOn && assert(p == nil || n == p.ln,
 	//	"node is not the left child of parent")
 	var r = n.rn //assume n.rn is already a copy.
 
@@ -231,8 +225,8 @@ func (m *Map) rotateLeft(n, p *node) (*node, *node) {
 // they changed position and swapped their parent-child relationship.
 // Only p, n, and l changed values.
 func (m *Map) rotateRight(n, p *node) (*node, *node) {
-	//assert(l == n.ln, "new node is not left child of new parent")
-	//assert(p == nil || n == p.rn,
+	//_ = assertOn && assert(l == n.ln, "new node is not left child of new parent")
+	//_ = assertOn && assert(p == nil || n == p.rn,
 	//	"node is not the right child of parent")
 	var l = n.ln //assume n.ln is already a copy.
 
@@ -254,7 +248,7 @@ func (m *Map) rotateRight(n, p *node) (*node, *node) {
 
 // insertRepair() MUST be called on a new *Map.
 func (m *Map) insertRepair(on, nn *node, path *nodeStack) {
-	assert(nn != nil, "nn == nil")
+	_ = assertOn && assert(nn != nil, "nn == nil")
 
 	var parent, gp, uncle *node
 
@@ -290,17 +284,15 @@ func (m *Map) insertRepair(on, nn *node, path *nodeStack) {
 
 // insertCase1() MUST be called on a new *Map.
 func (m *Map) insertCase1(on, nn *node, path *nodeStack) {
-	assert(path.len() == 0, "path.peek()==nil BUT path.len() != 0")
+	_ = assertOn && assert(path.len() == 0, "path.peek()==nil BUT path.len() != 0")
 
 	nn.setBlack()
 	m.persist(on, nn, path)
-	//return
 }
 
 // insertCase2() MUST be called on a new *Map.
 func (m *Map) insertCase2(on, nn *node, path *nodeStack) {
 	m.persist(on, nn, path)
-	return
 }
 
 // insertCase3() MUST be called on a new *Map.
@@ -340,7 +332,6 @@ func (m *Map) insertCase3(on, nn *node, path *nodeStack) {
 	}
 
 	m.insertRepair(ogp, ngp, path)
-	return
 }
 
 // insertCase4() MUST be called on a new *Map.
@@ -371,7 +362,6 @@ func (m *Map) insertCase4(on, nn *node, path *nodeStack) {
 	}
 
 	m.insertCase4pt2(on, nn, path)
-	return
 }
 
 func (m *Map) insertCase4pt2(on, nn *node, path *nodeStack) {
@@ -536,7 +526,6 @@ func (m *Map) removeNodeWithZeroOrOneChild(on *node, path *nodeStack) {
 
 	//on.isRed so just delete it
 	m.persist(on, nn, path) //nn == nil
-	return
 }
 
 func (m *Map) deleteCase1(on, nn *node, path *nodeStack) {
@@ -549,7 +538,6 @@ func (m *Map) deleteCase1(on, nn *node, path *nodeStack) {
 	}
 
 	m.deleteCase2(on, nn, path)
-	return
 }
 
 // deleteCase2() ...
@@ -596,7 +584,6 @@ func (m *Map) deleteCase2(on, nn *node, path *nodeStack) {
 	}
 
 	m.deleteCase3(on, nn, path)
-	return
 }
 
 func (m *Map) deleteCase3(on, nn *node, path *nodeStack) {
@@ -628,7 +615,6 @@ func (m *Map) deleteCase3(on, nn *node, path *nodeStack) {
 	}
 
 	m.deleteCase4(on, nn, path)
-	return
 }
 
 func (m *Map) deleteCase4(on, nn *node, path *nodeStack) {
@@ -657,7 +643,6 @@ func (m *Map) deleteCase4(on, nn *node, path *nodeStack) {
 	}
 
 	m.deleteCase5(on, nn, path)
-	return
 }
 
 func (m *Map) deleteCase5(on, nn *node, path *nodeStack) {
@@ -695,7 +680,6 @@ func (m *Map) deleteCase5(on, nn *node, path *nodeStack) {
 	}
 
 	m.deleteCase6(on, nn, path)
-	return
 }
 
 //deleteCase6()
@@ -752,7 +736,6 @@ func (m *Map) deleteCase6(on, nn *node, path *nodeStack) {
 	}
 
 	m.persist(on, nn, path)
-	return
 }
 
 //RangeLimit() executes the given function starting with the start key (if
@@ -777,15 +760,12 @@ func (m *Map) RangeLimit(start, end MapKey, fn func(MapKey, interface{}) bool) {
 			return //STOP
 		}
 	}
-
-	return
 }
 
 //Range() executes the given function on every key, value pair in order. If the
 //function returns false the traversal of key, value pairs will stop.
 func (m *Map) Range(fn func(MapKey, interface{}) bool) {
 	m.RangeLimit(ninf, pinf, fn)
-	return
 }
 
 func (m *Map) Keys() []MapKey {

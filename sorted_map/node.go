@@ -322,7 +322,7 @@ func (n *node) findNodeIterPath(k MapKey, dir bool) (*node, *nodeStack) {
 //	fn func(*node, *nodeStack) bool,
 //	path *nodeStack,
 //) bool {
-//	assert(n != nil, "visitPreOrder() called when n == nil")
+//	_ = assertOn && assert(n != nil, "visitPreOrder() called when n == nil")
 //
 //	if !fn(n, path) {
 //		return false
@@ -357,7 +357,7 @@ func (n *node) findNodeIterPath(k MapKey, dir bool) (*node, *nodeStack) {
 //	fn func(*node, *nodeStack) bool,
 //	path *nodeStack,
 //) bool {
-//	assert(n != nil, "visitInOrder() called when n == nil")
+//	_ = assertOn && assert(n != nil, "visitInOrder() called when n == nil")
 //
 //	if n.ln != nil {
 //		path.push(n)
