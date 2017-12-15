@@ -14,19 +14,24 @@ type KeyVal struct {
 }
 
 func buildKvs(numMapKvs, numKvsXtra int) ([]KeyVal, []KeyVal) {
-	var kvs = make([]KeyVal, numMapKvs)
-	var xtra = make([]KeyVal, numKvsXtra)
+	var kvs = make([]KeyVal, numMapKvs+numKvsXtra)
 
-	var i int
 	var s = "a"
-	for i = 0; i < numMapKvs; i++ {
+	for i := 0; i < numMapKvs+numKvsXtra; i++ {
 		kvs[i] = KeyVal{StringKey(s), i}
 		s = Inc(s)
 	}
-	for j := 0; j < numKvsXtra; j++ {
-		xtra[j] = KeyVal{StringKey(s), i + j}
-		s = Inc(s)
+
+	//randomize kvs
+	//https://en.wikipedia.org/wiki/Fisher–Yates_shuffle#The_modern_algorithm
+	for i := len(kvs) - 1; i > 0; i-- {
+		var j = rand.Intn(i + 1)
+		kvs[i], kvs[j] = kvs[j], kvs[i]
 	}
+
+	var xtra = kvs[len(kvs)-numKvsXtra:]
+	kvs = kvs[:len(kvs)-numKvsXtra]
+
 	return kvs, xtra
 }
 
