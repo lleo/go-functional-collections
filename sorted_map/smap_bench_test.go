@@ -1,6 +1,7 @@
 package sorted_map_test
 
 import (
+	"log"
 	"math/rand"
 	"testing"
 
@@ -20,6 +21,7 @@ func buildKvs(numMapKvs, numKvsXtra int) ([]KeyVal, []KeyVal) {
 	}
 
 	//randomize kvs
+	//https://en.wikipedia.org/wiki/Fisher–Yates_shuffle#The_modern_algorithm
 	for i := len(kvs) - 1; i > 0; i-- {
 		var j = rand.Intn(i + 1)
 		kvs[i], kvs[j] = kvs[j], kvs[i]
@@ -32,6 +34,7 @@ func buildKvs(numMapKvs, numKvsXtra int) ([]KeyVal, []KeyVal) {
 }
 
 func buildMap(kvs []KeyVal) *sorted_map.Map {
+	log.Printf("buildMap: len(kvs)=%d;\n", len(kvs))
 	var m = sorted_map.New()
 	for _, kv := range kvs {
 		m = m.Put(kv.Key, kv.Val)
@@ -72,128 +75,140 @@ var XtraKvs1MM []KeyVal
 var XtraKvs10MM []KeyVal
 
 func BenchmarkPutOne10(b *testing.B) {
-	//log.Printf("BenchmarkPutOne10: called b.N=%d\n", b.N)
-	var kvs, XtraKvs10 []KeyVal
-	if SMap10 == nil || XtraKvs10 == nil {
-		//log.Println("Generating Smap10 & XtraKvs10")
-		kvs, XtraKvs10 = buildKvs(NumKvs10, NumKvsExtra10)
-		SMap10 = buildMap(kvs)
-	}
+	var xtra = XtraKvs10
 	var m = SMap10
-	var xtraKvs = XtraKvs10
+	if m == nil {
+		var kvs []KeyVal
+		kvs, xtra = buildKvs(NumKvs10, NumKvsExtra10)
+		m = buildMap(kvs)
+		XtraKvs10 = xtra
+		SMap10 = m
+	}
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		var i = rand.Int() % NumKvsExtra10
-		_ = m.Put(xtraKvs[i].Key, xtraKvs[i].Val)
+		var j = rand.Int() % len(xtra)
+		var kv = xtra[j]
+		_ = m.Put(kv.Key, kv.Val)
 	}
 }
 
 func BenchmarkPutOne100(b *testing.B) {
-	//log.Printf("BenchmarkPutOne100: called b.N=%d\n", b.N)
-	var kvs, XtraKvs100 []KeyVal
-	if SMap100 == nil || XtraKvs100 == nil {
-		//log.Println("Generating Smap100 & XtraKvs100")
-		kvs, XtraKvs100 = buildKvs(NumKvs100, NumKvsExtra100)
-		SMap100 = buildMap(kvs)
-	}
+	log.Printf("BenchmarkPutOne100: b.N=%d\n", b.N)
+	var xtra = XtraKvs100
 	var m = SMap100
-	var xtraKvs = XtraKvs100
+	if m == nil {
+		var kvs []KeyVal
+		kvs, xtra = buildKvs(NumKvs100, NumKvsExtra100)
+		m = buildMap(kvs)
+		XtraKvs100 = xtra
+		SMap100 = m
+	}
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		var i = rand.Int() % NumKvsExtra100
-		_ = m.Put(xtraKvs[i].Key, xtraKvs[i].Val)
+		var j = rand.Int() % len(xtra)
+		var kv = xtra[j]
+		_ = m.Put(kv.Key, kv.Val)
 	}
 }
 
 func BenchmarkPutOne1M(b *testing.B) {
-	//log.Printf("BenchmarkPutOne1M: called b.N=%d\n", b.N)
-	var kvs, XtraKvs1M []KeyVal
-	if SMap1M == nil || XtraKvs1M == nil {
-		//log.Println("Generating Smap1M & XtraKvs1M")
-		kvs, XtraKvs1M = buildKvs(NumKvs1M, NumKvsExtra1M)
-		SMap1M = buildMap(kvs)
-	}
+	log.Printf("BenchmarkPutOne1M: b.N=%d\n", b.N)
+	var xtra = XtraKvs1M
 	var m = SMap1M
-	var xtraKvs = XtraKvs1M
+	if m == nil {
+		var kvs []KeyVal
+		kvs, xtra = buildKvs(NumKvs1M, NumKvsExtra1M)
+		m = buildMap(kvs)
+		XtraKvs1M = xtra
+		SMap1M = m
+	}
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		var i = rand.Int() % NumKvsExtra1M
-		_ = m.Put(xtraKvs[i].Key, xtraKvs[i].Val)
+		var j = rand.Int() % len(xtra)
+		var kv = xtra[j]
+		_ = m.Put(kv.Key, kv.Val)
 	}
 }
 
 func BenchmarkPutOne10M(b *testing.B) {
-	//log.Printf("BenchmarkPutOne10M: called b.N=%d\n", b.N)
-	var kvs, XtraKvs10M []KeyVal
-	if SMap10M == nil || XtraKvs10M == nil {
-		//log.Println("Generating Smap10M & XtraKvs10M")
-		kvs, XtraKvs10M = buildKvs(NumKvs10M, NumKvsExtra10M)
-		SMap10M = buildMap(kvs)
-	}
+	log.Printf("BenchmarkPutOne10M: b.N=%d\n", b.N)
+	var xtra = XtraKvs10M
 	var m = SMap10M
-	var xtraKvs = XtraKvs10M
+	if m == nil {
+		var kvs []KeyVal
+		kvs, xtra = buildKvs(NumKvs10M, NumKvsExtra10M)
+		m = buildMap(kvs)
+		XtraKvs10M = xtra
+		SMap10M = m
+	}
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		var i = rand.Int() % NumKvsExtra10M
-		_ = m.Put(xtraKvs[i].Key, xtraKvs[i].Val)
+		var j = rand.Int() % len(xtra)
+		var kv = xtra[j]
+		_ = m.Put(kv.Key, kv.Val)
 	}
 }
 
 func BenchmarkPutOne100M(b *testing.B) {
-	//log.Printf("BenchmarkPutOne100M: called b.N=%d\n", b.N)
-	var kvs, XtraKvs100M []KeyVal
-	if SMap100M == nil || XtraKvs100M == nil {
-		//log.Println("Generating Smap100M & XtraKvs100M")
-		kvs, XtraKvs100M = buildKvs(NumKvs100M, NumKvsExtra100M)
-		SMap100M = buildMap(kvs)
-	}
+	log.Printf("BenchmarkPutOne100M: b.N=%d\n", b.N)
+	var xtra = XtraKvs100M
 	var m = SMap100M
-	var xtraKvs = XtraKvs100M
+	if m == nil {
+		var kvs []KeyVal
+		kvs, xtra = buildKvs(NumKvs100M, NumKvsExtra100M)
+		m = buildMap(kvs)
+		XtraKvs100M = xtra
+		SMap100M = m
+	}
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		var i = rand.Int() % NumKvsExtra100M
-		_ = m.Put(xtraKvs[i].Key, xtraKvs[i].Val)
+		var j = rand.Int() % len(xtra)
+		var kv = xtra[j]
+		_ = m.Put(kv.Key, kv.Val)
 	}
 }
 
 func BenchmarkPutOne1MM(b *testing.B) {
-	//log.Printf("BenchmarkPutOne1MM: called b.N=%d\n", b.N)
-	var kvs, XtraKvs1MM []KeyVal
-	if SMap1MM == nil || XtraKvs1MM == nil {
-		//log.Println("Generating Smap1MM & XtraKvs1MM")
-		kvs, XtraKvs1MM = buildKvs(NumKvs1MM, NumKvsExtra1MM)
-		SMap1MM = buildMap(kvs)
-	}
+	log.Printf("BenchmarkPutOne1MM: b.N=%d\n", b.N)
+	var xtra = XtraKvs1MM
 	var m = SMap1MM
-	var xtraKvs = XtraKvs1MM
+	if m == nil {
+		var kvs []KeyVal
+		kvs, xtra = buildKvs(NumKvs1MM, NumKvsExtra1MM)
+		m = buildMap(kvs)
+		XtraKvs1MM = xtra
+		SMap1MM = m
+	}
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		var i = rand.Int() % NumKvsExtra1MM
-		_ = m.Put(xtraKvs[i].Key, xtraKvs[i].Val)
+		var j = rand.Int() % len(xtra)
+		var kv = xtra[j]
+		_ = m.Put(kv.Key, kv.Val)
 	}
 }
 
 func BenchmarkPutOne10MM(b *testing.B) {
-	//log.Printf("BenchmarkPutOne10MM: called b.N=%d\n", b.N)
-	var kvs, XtraKvs10MM []KeyVal
-	if SMap10MM == nil || XtraKvs10MM == nil {
-		//log.Println("Generating Smap10MM & XtraKvs10MM")
-		kvs, XtraKvs10MM = buildKvs(NumKvs10MM, NumKvsExtra10MM)
-		SMap10MM = buildMap(kvs)
-	}
+	log.Printf("BenchmarkPutOne10MM: b.N=%d\n", b.N)
+	var xtra = XtraKvs10MM
 	var m = SMap10MM
-	var xtraKvs = XtraKvs10MM
+	if m == nil {
+		var kvs []KeyVal
+		kvs, xtra = buildKvs(NumKvs10MM, NumKvsExtra10MM)
+		m = buildMap(kvs)
+		XtraKvs10MM = xtra
+		SMap10MM = m
+	}
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		//START HERE
-		var i = rand.Int() % NumKvsExtra10MM
-		_ = m.Put(xtraKvs[i].Key, xtraKvs[i].Val)
+		var j = rand.Int() % len(xtra)
+		var kv = xtra[j]
+		_ = m.Put(kv.Key, kv.Val)
 	}
 }
