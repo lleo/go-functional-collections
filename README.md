@@ -12,12 +12,12 @@ version.
 The following are currently implemented:
 
 * A functional Map, called _fmap_, which uses a [HAMT][1] internally.
+* A functional Set, called _set_, which uses a [HAMT][1] internally.
 * A functional sorted Map, called _sorted_map_, which uses a [standard Red-Black Tree][2] internally.
+* A functional sorted Set, called _sorted_set_, which uses a [standard Red-Black Tree][2] internally.
 
 I am planning on implementing:
 
-* A functional Set, called _set_, which uses a [HAMT][1] internally.
-* A functional Sorted Set, called _sorted_set_, which uses a [standard Red-Black Tree][2] internally.
 * A functional Vector, called _vector_, which uses a clojure-like implementation of the same name.
 
 [1]:https://en.wikipedia.org/wiki/Hash_array_mapped_trie
