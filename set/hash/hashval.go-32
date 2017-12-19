@@ -1,0 +1,190 @@
+package hash
+
+import (
+	"fmt"
+	"hash/fnv"
+	"strconv"
+	"strings"
+	"unsafe"
+
+	"github.com/pkg/errors"
+)
+
+// HashVal is the output of a hash algorithm applied to some data structure. It
+// is treated as a bit string that is split up into equal size groups of bits
+// to be used as Index values in a HAMT data structure.
+type HashVal uint32
+
+// hashSize is the size of HashVal in bits.
+// hashSize = 32 bits
+const hashSize uint = uint(unsafe.Sizeof(HashVal(0))) * 8
+
+// NumIndexBits is the fundemental setting for the Hamt data structure. Given
+// that we hash every key ([]byte slice) into a HashVal, that HashVal must be
+// split into depthLimit number of NumIndexBits wide parts. Each of those parts
+// of the HashVal is used as the Index into the given level of the Hamt tree.
+// So NumIndexBits determines how wide and how deep the Hamt can be.
+// NumIndexBits = 4 or 5
+const NumIndexBits uint = 4
+
+// DepthLimit is the maximum number of levels of the Hamt. It is calculated as
+// DepthLimit = floor(hashSize / NumIndexBits) or a strict integer division.
+// DepthLimit = 10 ;hashSize=64, NumIndexBits=6
+// DepthLimit = 8 or 6 ;hashSize=32, numIndex=4 or 5
+const DepthLimit = hashSize / NumIndexBits
+const remainder = hashSize - (DepthLimit * NumIndexBits)
+
+// IndexLimit is the maximum number of entries in a Hamt interior node. In other
+// words it is the width of the Hamt data structure.
+const IndexLimit = 1 << NumIndexBits
+
+// MaxDepth is the maximum value of a depth variable. MaxDepth = DepthLimit - 1
+const MaxDepth = DepthLimit - 1
+
+// maxIndex is the maximum value of a Index variable. maxIndex = IndexLimit - 1
+const MaxIndex = IndexLimit - 1
+
+// CalcHash deterministically calculates a randomized HashVal of a given byte
+// slice .
+func CalcHash(bs []byte) HashVal {
+	return HashVal(fold(hash(bs), remainder))
+}
+
+func hash(bs []byte) uint32 {
+	var h = fnv.New32()
+	h.Write(bs)
+	return h.Sum32()
+}
+
+func mask(size uint) uint32 {
+	return uint32(1<<size) - 1
+}
+
+func fold(hash uint32, rem uint) uint32 {
+	return (hash >> (hashSize - rem)) ^ (hash & mask(hashSize-rem))
+}
+
+func indexMask(depth uint) HashVal {
+	return HashVal((1<<NumIndexBits)-1) << (depth * NumIndexBits)
+}
+
+// Index returns the NumIndexBits bit value of the HashVal at 'depth' number of
+// NumIndexBits number of bits into HashVal.
+func (hv HashVal) Index(depth uint) uint {
+	_ = assertOn && assert(depth < DepthLimit, "Index: depth > MaxDepth")
+
+	var idxMask = indexMask(depth)
+	return uint((hv & idxMask) >> (depth * NumIndexBits))
+}
+
+func hashPathMask(depth uint) HashVal {
+	return HashVal(1<<((depth)*NumIndexBits)) - 1
+}
+
+// HashPath calculates the path required to read the given depth. In other words
+// it returns a HashVal that preserves the first depth-1 NumIndexBits Index
+// values. For depth=0 it always returns no path (aka a 0 value).
+// For depth=MaxDepth it returns all but the last Index value.
+func (hv HashVal) HashPath(depth uint) HashVal {
+	_ = assertOn && assert(depth < DepthLimit, "HashPath(): dept > MaxDepth")
+
+	if depth == 0 {
+		return 0
+	}
+
+	return hv & hashPathMask(depth)
+
+}
+
+// BuildHashPath method adds a idx at depth level of the HashPath. Given a
+// hash Path = "/11/07/13" and you call HashPath.BuildHashPath(23, 3) the method
+// will return HashPath "/11/07/13/23". HashPath is shown here in the string
+// representation, but the real value is HashVal (aka uint32).
+func (hv HashVal) BuildHashPath(idx, depth uint) HashVal {
+	_ = assertOn && assert(idx < DepthLimit, "BuildHashPath: idx > maxIndex")
+
+	hv &= hashPathMask(depth)
+	return hv | HashVal(idx<<(depth*NumIndexBits))
+}
+
+// HashPathString returns a string representation of the Index path of a
+// HashVal. It will be string of the form "/idx0/idx1/..." where each idxN value
+// will be a zero padded number between 0 and maxIndex. There will be limit
+// number of such values where limit <= DepthLimit.
+// If the limit parameter is 0 then the method will simply return "/".
+// Example: "/00/24/46/17" for limit=4 of a NumIndexBits=5 hash value
+// represented by "/00/24/46/17/34/08".
+func (hv HashVal) HashPathString(limit uint) string {
+	_ = assertOn && assertf(limit <= DepthLimit,
+		"HashPathString: limit,%d > DepthLimit,%d\n", limit, DepthLimit)
+
+	if limit == 0 {
+		return "/"
+	}
+
+	var strs = make([]string, limit)
+
+	for d := uint(0); d < limit; d++ {
+		var idx = hv.Index(d)
+		strs[d] = fmt.Sprintf("%02d", idx)
+	}
+
+	return "/" + strings.Join(strs, "/")
+}
+
+// bitString returns a HashVal as a string of bits separated into groups of
+// NumIndexBits bits.
+func (hv HashVal) BitString() string {
+	var strs = make([]string, DepthLimit)
+
+	var fmtStr = fmt.Sprintf("%%0%db", NumIndexBits)
+	for d := uint(0); d < DepthLimit; d++ {
+		strs[MaxDepth-d] = fmt.Sprintf(fmtStr, hv.Index(d))
+	}
+
+	var remStr string
+	if remainder > 0 {
+		remStr = strings.Repeat("0", int(remainder)) + " "
+	}
+
+	return remStr + strings.Join(strs, " ")
+}
+
+// String returns a string representation of a full HashVal. This is simply
+// hv.HashPathString(DepthLimit).
+func (hv HashVal) String() string {
+	return hv.HashPathString(DepthLimit)
+	//return hv.HashPathString(MaxDepth)
+}
+
+// parseHashPath
+func ParseHashPath(s string) (HashVal, error) {
+	if !strings.HasPrefix(s, "/") {
+		return 0, errors.Errorf(
+			"parseHashPath: input, %q, does not start with '/'", s)
+	}
+
+	if len(s) == 1 { // s="/"
+		return 0, nil
+	}
+
+	if strings.HasSuffix(s, "/") {
+		return 0, errors.Errorf("parseHashPath: input, %q, ends with '/'", s)
+	}
+	var s0 = s[1:] //take the leading '/' off
+	var idxStrs = strings.Split(s0, "/")
+
+	var hv HashVal
+	for i, idxStr := range idxStrs {
+		var idx, err = strconv.ParseUint(idxStr, 10, int(NumIndexBits))
+		if err != nil {
+			return 0, errors.Wrapf(err,
+				"parseHashPath: the %d'th Index string failed to parse.", i)
+		}
+
+		//hv |= HashVal(idx << (uint(i) * NumIndexBits))
+		hv = hv.BuildHashPath(uint(idx), uint(i))
+	}
+
+	return hv, nil
+}
