@@ -52,6 +52,12 @@ func New() *Map {
 	return new(Map)
 }
 
+func (m *Map) copy() *Map {
+	var nm = new(Map)
+	*nm = *m
+	return nm
+}
+
 func (m *Map) Get(key MapKey) interface{} {
 	var v, _ = m.Load(key)
 	return v
@@ -182,8 +188,7 @@ func (m *Map) LoadOrStore(
 
 	if curTable == &m.root {
 		if leaf == nil {
-			nm = new(Map)
-			*nm = *m
+			nm = m.copy()
 
 			nm.root.insert(idx, newFlatLeaf(key, val))
 		} else {
@@ -193,8 +198,7 @@ func (m *Map) LoadOrStore(
 			}
 			//else
 
-			nm = new(Map)
-			*nm = *m
+			nm = m.copy()
 
 			var node nodeI
 			if leaf.hash() == hv {
@@ -237,8 +241,7 @@ func (m *Map) LoadOrStore(
 			newTable.replace(idx, node)
 		}
 
-		nm = new(Map)
-		*nm = *m
+		nm = m.copy()
 
 		nm.persist(curTable, newTable, path)
 	}
@@ -259,8 +262,7 @@ func (m *Map) Put(key MapKey, val interface{}) *Map {
 // new *Map data structure and a bool indicating if a new pair was added (true)
 // or if the value merely replaced a prior value (false).
 func (m *Map) Store(key MapKey, val interface{}) (*Map, bool) {
-	var nm = new(Map)
-	*nm = *m
+	var nm = m.copy()
 
 	var hv = key.Hash()
 
@@ -357,8 +359,7 @@ func (m *Map) Remove(key MapKey) (*Map, interface{}, bool) {
 	var curTable = path.pop()
 	var depth = uint(path.len())
 
-	var nm = new(Map)
-	*nm = *m
+	var nm = m.copy()
 
 	nm.numEnts--
 
