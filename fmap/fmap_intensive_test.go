@@ -1,35 +1,37 @@
 package fmap_test
 
 import (
+	"log"
 	"testing"
+	"time"
 
 	"github.com/lleo/go-functional-collections/fmap"
 )
 
-var size1MM = 1000000
+var sizeBig = 1000000
 
-func Test_Intensive_ButildMap1MM(t *testing.T) {
+func Test_Intensive_ButildMapBig(t *testing.T) {
 	var m = fmap.New()
 
 	var s = "a"
-	for i := 0; i < size1MM; i++ {
+	for i := 0; i < sizeBig; i++ {
 		m = m.Put(StringKey(s), i)
 		s = Inc(s)
 	}
 
-	//log.Println("1MM large Map\n", m.LongString(""))
+	//log.Println("Big large Map\n", m.LongString(""))
 }
 
 // 32: 1st level collisions "a"&"ae", "b"&"af", "aa"&"e", "f"&"ab", "ac"&"g"
 // 10,000: 2nd level collisions "gug","crr","akc","ert","dri","fkp","ipv"
 // 10,000: 3rd level collisions "ktx","qk"
 
-func Test_Intensive_DestroyMap1MM(t *testing.T) {
+func Test_Intensive_DestroyMapBig(t *testing.T) {
 	var m = fmap.New()
-	var data = make(map[string]int, size1MM)
+	var data = make(map[string]int, sizeBig)
 
 	var s = "a"
-	for i := 0; i < size1MM; i++ {
+	for i := 0; i < sizeBig; i++ {
 		data[s] = i
 		m = m.Put(StringKey(s), i)
 		s = Inc(s)
@@ -51,5 +53,51 @@ func Test_Intensive_DestroyMap1MM(t *testing.T) {
 
 	if m.NumEntries() != 0 {
 		t.Fatal("Failed to empty Map")
+	}
+}
+
+//findAndRemove is just here to demonstrate how slow array O(n) remove is versus
+//HAMT O(log16(n)) remove is.
+func findAndRemove(k fmap.MapKey, kvs *[]keyVal) bool {
+	for i := 0; i < len(*kvs); i++ {
+		if k.Equals((*kvs)[i].Key) {
+			(*kvs)[i] = (*kvs)[len(*kvs)-1]
+			(*kvs) = (*kvs)[:len(*kvs)-1]
+			//log.Printf("findAndRemove: found i=%d; k=%s\n", i, k)
+			return true
+		}
+	}
+	return false
+}
+
+func TestIntensiveIterBig(t *testing.T) {
+	var kvs = buildKvs(sizeBig)
+	var s = buildMap(kvs)
+
+	var start = time.Now()
+	var numRemoved int
+	var it = s.Iter()
+	for k, v := it.Next(); k != nil; k, v = it.Next() {
+		var found bool
+		var val interface{}
+		s, val, found = s.Remove(k)
+		//found = findAndRemove(k, &kvs) //between 900 & 2700 times slower
+		if !found {
+			t.Fatalf("Failed to find k=%s", k)
+		}
+		if v != val {
+			t.Fatalf("Found val,%v != expected v,%v for key=%s;", val, v, k)
+		}
+		//log.Printf("removed k=%s", k)
+		numRemoved++
+		if numRemoved%10000 == 0 {
+			var timediff = time.Since(start)
+			var rate = 10000 * 1000000 / float64(timediff) //millisec
+			var numLeft = s.NumEntries()
+			//var numLeft = len(kvs)
+			log.Printf("found numRemoved=%d; numLeft=%d; rate=%.3g 1/ms",
+				numRemoved, numLeft, rate)
+			start = time.Now()
+		}
 	}
 }

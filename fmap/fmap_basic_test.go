@@ -1,6 +1,7 @@
 package fmap_test
 
 import (
+	"log"
 	"testing"
 
 	"github.com/lleo/go-functional-collections/fmap"
@@ -175,5 +176,21 @@ func Test_Basic_Remove(t *testing.T) {
 	m, val, found = m.Remove(key)
 	if found {
 		t.Fatalf("found key=%#v entry for key just Removed; val=%#v", key, val)
+	}
+}
+
+func TestBasicString(t *testing.T) {
+	var m = fmap.New()
+	m = m.
+		Put(StringKey("a"), 1).
+		Put(StringKey("b"), 2).
+		Put(StringKey("c"), 3)
+
+	var str = m.String()
+	log.Printf("m.String()=%s\n", str)
+
+	var expectedStr = "Map{\"c\":3,\"b\":2,\"a\":1}"
+	if str != expectedStr {
+		t.Fatalf("str,%q != expectedStr,%q", str, expectedStr)
 	}
 }

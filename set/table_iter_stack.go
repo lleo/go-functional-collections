@@ -1,14 +1,16 @@
 package set
 
 import (
+	"fmt"
+
 	"github.com/lleo/go-functional-collections/set/hash"
 )
 
 type tableIterStack []tableIterFunc
 
-func newTableIterStack() tableIterStack {
+func newTableIterStack() *tableIterStack {
 	var tis tableIterStack = make([]tableIterFunc, 0, hash.DepthLimit)
-	return tis
+	return &tis
 }
 
 func (tis *tableIterStack) push(f tableIterFunc) {
@@ -16,6 +18,9 @@ func (tis *tableIterStack) push(f tableIterFunc) {
 }
 
 func (tis *tableIterStack) pop() tableIterFunc {
+	if tis == nil {
+		panic("WTF!!! iterator is nil")
+	}
 	if len(*tis) == 0 {
 		return nil
 	}
@@ -25,4 +30,8 @@ func (tis *tableIterStack) pop() tableIterFunc {
 	*tis = (*tis)[:last]
 
 	return f
+}
+
+func (tis *tableIterStack) String() string {
+	return fmt.Sprintf("%#v", *tis)
 }

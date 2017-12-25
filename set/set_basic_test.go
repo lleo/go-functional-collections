@@ -1,12 +1,13 @@
 package set_test
 
 import (
+	"log"
 	"testing"
 
 	"github.com/lleo/go-functional-collections/set"
 )
 
-func Test_Basic_ButildSimpleSet(t *testing.T) {
+func TestBasicButildSimpleSet(t *testing.T) {
 	var s = set.New()
 	s = s.
 		Set(StringKey("a")).
@@ -26,7 +27,7 @@ func Test_Basic_ButildSimpleSet(t *testing.T) {
 	}
 }
 
-func Test_Basic_IsSet(t *testing.T) {
+func TestBasicIsSet(t *testing.T) {
 	var s = set.New()
 	s = s.Set(StringKey("a"))
 
@@ -41,7 +42,7 @@ func Test_Basic_IsSet(t *testing.T) {
 	}
 }
 
-func Test_Basic_Add(t *testing.T) {
+func TestBasicAdd(t *testing.T) {
 	var s = set.New()
 
 	var added bool
@@ -65,7 +66,7 @@ func Test_Basic_Add(t *testing.T) {
 	}
 }
 
-func Test_Basic_Unset(t *testing.T) {
+func TestBasicUnset(t *testing.T) {
 	var s = set.New()
 
 	if s.NumEntries() != 0 {
@@ -98,7 +99,7 @@ func Test_Basic_Unset(t *testing.T) {
 	}
 }
 
-func Test_Basic_Remove(t *testing.T) {
+func TestBasicRemove(t *testing.T) {
 	var s = set.New()
 
 	s = s.
@@ -128,5 +129,21 @@ func Test_Basic_Remove(t *testing.T) {
 	s, found = s.Remove(key)
 	if found {
 		t.Fatalf("found key=%#v entry for key just Removed;", key)
+	}
+}
+
+func TestBasicString(t *testing.T) {
+	var s = set.New()
+	s = s.
+		Set(StringKey("a")).
+		Set(StringKey("b")).
+		Set(StringKey("c"))
+
+	var str = s.String()
+	log.Printf("s.String()=%s\n", str)
+
+	var expectedStr = "Set{\"c\",\"b\",\"a\"}"
+	if str != expectedStr {
+		t.Fatalf("str,%q != expectedStr,%q", str, expectedStr)
 	}
 }

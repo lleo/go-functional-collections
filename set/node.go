@@ -14,9 +14,9 @@ import (
 type visitFn func(nodeI, uint) bool
 
 type nodeI interface {
-	String() string
 	hash() hash.HashVal
 	visit(fn visitFn, depth uint) (error, bool)
+	String() string
 }
 
 type leafI interface {
@@ -36,8 +36,6 @@ type tableI interface {
 	copy() tableI
 	deepCopy() tableI
 
-	LongString(indent string, depth uint) string
-
 	numEntries() uint
 	entries() []tableEntry
 
@@ -48,6 +46,8 @@ type tableI interface {
 	remove(idx uint)
 
 	iter() tableIterFunc
+
+	LongString(string, uint) string
 }
 
 type tableEntry struct {

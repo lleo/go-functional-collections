@@ -8,17 +8,12 @@ import (
 	"github.com/lleo/go-functional-collections/fmap"
 )
 
-type KeyVal struct {
-	Key fmap.MapKey
-	Val interface{}
-}
-
-func buildKvs(numMapKvs, numKvsXtra int) ([]KeyVal, []KeyVal) {
-	var kvs = make([]KeyVal, numMapKvs+numKvsXtra)
+func buildKvs2(numMapKvs, numKvsXtra int) ([]keyVal, []keyVal) {
+	var kvs = make([]keyVal, numMapKvs+numKvsXtra)
 
 	var s = "a"
 	for i := 0; i < numMapKvs+numKvsXtra; i++ {
-		kvs[i] = KeyVal{StringKey(s), i}
+		kvs[i] = keyVal{StringKey(s), i}
 		s = Inc(s)
 	}
 
@@ -33,15 +28,6 @@ func buildKvs(numMapKvs, numKvsXtra int) ([]KeyVal, []KeyVal) {
 	kvs = kvs[:len(kvs)-numKvsXtra]
 
 	return kvs, xtra
-}
-
-func buildMap(kvs []KeyVal) *fmap.Map {
-	log.Printf("buildMap: len(kvs)=%d;\n", len(kvs))
-	var m = fmap.New()
-	for _, kv := range kvs {
-		m = m.Put(kv.Key, kv.Val)
-	}
-	return m
 }
 
 const NumKvs10 = 1 * 10
@@ -68,20 +54,20 @@ var FMap100M *fmap.Map
 var FMap1MM *fmap.Map
 var FMap10MM *fmap.Map
 
-var XtraKvs10 []KeyVal
-var XtraKvs100 []KeyVal
-var XtraKvs1M []KeyVal
-var XtraKvs10M []KeyVal
-var XtraKvs100M []KeyVal
-var XtraKvs1MM []KeyVal
-var XtraKvs10MM []KeyVal
+var XtraKvs10 []keyVal
+var XtraKvs100 []keyVal
+var XtraKvs1M []keyVal
+var XtraKvs10M []keyVal
+var XtraKvs100M []keyVal
+var XtraKvs1MM []keyVal
+var XtraKvs10MM []keyVal
 
 func BenchmarkPutOne10(b *testing.B) {
 	var xtra = XtraKvs10
 	var m = FMap10
 	if m == nil {
-		var kvs []KeyVal
-		kvs, xtra = buildKvs(NumKvs10, NumKvsExtra10)
+		var kvs []keyVal
+		kvs, xtra = buildKvs2(NumKvs10, NumKvsExtra10)
 		m = buildMap(kvs)
 		XtraKvs10 = xtra
 		FMap10 = m
@@ -100,8 +86,8 @@ func BenchmarkPutOne100(b *testing.B) {
 	var xtra = XtraKvs100
 	var m = FMap100
 	if m == nil {
-		var kvs []KeyVal
-		kvs, xtra = buildKvs(NumKvs100, NumKvsExtra100)
+		var kvs []keyVal
+		kvs, xtra = buildKvs2(NumKvs100, NumKvsExtra100)
 		m = buildMap(kvs)
 		XtraKvs100 = xtra
 		FMap100 = m
@@ -120,8 +106,8 @@ func BenchmarkPutOne1M(b *testing.B) {
 	var xtra = XtraKvs1M
 	var m = FMap1M
 	if m == nil {
-		var kvs []KeyVal
-		kvs, xtra = buildKvs(NumKvs1M, NumKvsExtra1M)
+		var kvs []keyVal
+		kvs, xtra = buildKvs2(NumKvs1M, NumKvsExtra1M)
 		m = buildMap(kvs)
 		XtraKvs1M = xtra
 		FMap1M = m
@@ -140,8 +126,8 @@ func BenchmarkPutOne10M(b *testing.B) {
 	var xtra = XtraKvs10M
 	var m = FMap10M
 	if m == nil {
-		var kvs []KeyVal
-		kvs, xtra = buildKvs(NumKvs10M, NumKvsExtra10M)
+		var kvs []keyVal
+		kvs, xtra = buildKvs2(NumKvs10M, NumKvsExtra10M)
 		m = buildMap(kvs)
 		XtraKvs10M = xtra
 		FMap10M = m
@@ -160,8 +146,8 @@ func BenchmarkPutOne100M(b *testing.B) {
 	var xtra = XtraKvs100M
 	var m = FMap100M
 	if m == nil {
-		var kvs []KeyVal
-		kvs, xtra = buildKvs(NumKvs100M, NumKvsExtra100M)
+		var kvs []keyVal
+		kvs, xtra = buildKvs2(NumKvs100M, NumKvsExtra100M)
 		m = buildMap(kvs)
 		XtraKvs100M = xtra
 		FMap100M = m
@@ -180,8 +166,8 @@ func BenchmarkPutOne1MM(b *testing.B) {
 	var xtra = XtraKvs1MM
 	var m = FMap1MM
 	if m == nil {
-		var kvs []KeyVal
-		kvs, xtra = buildKvs(NumKvs1MM, NumKvsExtra1MM)
+		var kvs []keyVal
+		kvs, xtra = buildKvs2(NumKvs1MM, NumKvsExtra1MM)
 		m = buildMap(kvs)
 		XtraKvs1MM = xtra
 		FMap1MM = m
@@ -200,8 +186,8 @@ func BenchmarkPutOne10MM(b *testing.B) {
 	var xtra = XtraKvs10MM
 	var m = FMap10MM
 	if m == nil {
-		var kvs []KeyVal
-		kvs, xtra = buildKvs(NumKvs10MM, NumKvsExtra10MM)
+		var kvs []keyVal
+		kvs, xtra = buildKvs2(NumKvs10MM, NumKvsExtra10MM)
 		m = buildMap(kvs)
 		XtraKvs10MM = xtra
 		FMap10MM = m

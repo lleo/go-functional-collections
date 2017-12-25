@@ -21,22 +21,6 @@ const downgradeThreshold uint = hash.IndexLimit / 2
 // upgradeThreshold = 20 for hash.numIndexBits=5 aka hash.IndexLimit=32
 const upgradeThreshold uint = hash.IndexLimit * 5 / 8
 
-//type Set interface {
-//	Get(SetKey) interface{}
-//	Load(SetKey) (interface{}, bool)
-//	LoadOrStore(SetKey, interface{}) (Set, interface{}, bool)
-//	Put(SetKey, interface{}) Set
-//	Store(SetKey, interface{}) (Set, bool)
-//	Del(SetKey) Set
-//	Delete(SetKey) Set
-//	Remove(SetKey) (Set, interface{}, bool)
-//	Range(func(SetKey, interface{}) bool)
-//	NumEntries() uint
-//	String() string
-//	LongString(string) string
-//	Stats() *Stats
-//}
-
 type Set struct {
 	root    fixedTable
 	numEnts uint
@@ -325,20 +309,55 @@ func (s *Set) walk(fn visitFn) bool {
 //	}
 //}
 
-func (s *Set) Range(fn func(SetKey) bool) {
-	var visitLeafs = func(n nodeI, depth uint) bool {
-		if leaf, ok := n.(leafI); ok {
-			for _, key := range leaf.keys() {
-				if !fn(key) {
-					return false
-				}
-			}
+func (s *Set) Iter() *Iter {
+	if s.NumEntries() == 0 {
+		return nil
+	}
+
+	//log.Printf("s.Iter: s=\n%s", s.LongString(""))
+	var it = newIter(&s.root)
+
+	//find left-most leaf
+LOOP:
+	for {
+		var curNode = it.tblNextNode()
+		switch x := curNode.(type) {
+		case nil:
+			panic("finding first leaf; it.tblNextNode() returned nil")
+		case tableI:
+			it.stack.push(it.tblNextNode)
+			it.tblNextNode = x.iter()
+			assert(it.tblNextNode != nil, "it.tblNextNode==nil")
+			break //switch
+		case leafI:
+			it.curLeaf = x
+			break LOOP
+		default:
+			panic("finding first leaf; unknown type")
 		}
+	}
 
-		return true
-	} //end: visitLeafsFn = func(nodeI)
+	return it
+}
 
-	s.walk(visitLeafs)
+func (s *Set) Range(fn func(SetKey) bool) {
+	//var visitLeafs = func(n nodeI, depth uint) bool {
+	//	if leaf, ok := n.(leafI); ok {
+	//		for _, key := range leaf.keys() {
+	//			if !fn(key) {
+	//				return false
+	//			}
+	//		}
+	//	}
+	//	return true
+	//} //end: visitLeafsFn = func(nodeI)
+	//s.walk(visitLeafs)
+	var it = s.Iter()
+	for k := it.Next(); k != nil; k = it.Next() {
+		if !fn(k) {
+			break
+		}
+	}
 }
 
 func (s *Set) NumEntries() uint {

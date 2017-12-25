@@ -21,22 +21,6 @@ const downgradeThreshold uint = hash.IndexLimit / 2
 // upgradeThreshold = 20 for hash.numIndexBits=5 aka hash.IndexLimit=32
 const upgradeThreshold uint = hash.IndexLimit * 5 / 8
 
-//type Map interface {
-//	Get(MapKey) interface{}
-//	Load(MapKey) (interface{}, bool)
-//	LoadOrStore(MapKey, interface{}) (Map, interface{}, bool)
-//	Put(MapKey, interface{}) Map
-//	Store(MapKey, interface{}) (Map, bool)
-//	Del(MapKey) Map
-//	Delete(MapKey) Map
-//	Remove(MapKey) (Map, interface{}, bool)
-//	Range(func(MapKey, interface{}) bool)
-//	NumEntries() uint
-//	String() string
-//	LongString(string) string
-//	Stats() *Stats
-//}
-
 type Map struct {
 	root    fixedTable
 	numEnts uint
@@ -100,7 +84,6 @@ DepthIter:
 // find() traverses the path defined by the given HashVal till it encounters
 // a leafI, then it returns the table path leading to the current table (also
 // returned) and the Index in the current table the leaf is at.
-//func (m *Map) find(hv HashVal) (*tableStack, tableI, uint) {
 func (m *Map) find(hv hash.HashVal) (*tableStack, leafI, uint) {
 	var curTable tableI = &m.root
 
@@ -169,10 +152,9 @@ func (m *Map) persist(oldTable, newTable tableI, path *tableStack) {
 	return
 }
 
-func (m *Map) LoadOrStore(
-	key MapKey,
-	val interface{},
-) (*Map, interface{}, bool) {
+func (m *Map) LoadOrStore(key MapKey, val interface{}) (
+	*Map, interface{}, bool,
+) {
 	var hv = key.Hash()
 
 	var path, leaf, idx = m.find(hv)
@@ -420,20 +402,55 @@ func (m *Map) walk(fn visitFn) bool {
 //	}
 //}
 
-func (m *Map) Range(fn func(MapKey, interface{}) bool) {
-	var visitLeafs = func(n nodeI, depth uint) bool {
-		if leaf, ok := n.(leafI); ok {
-			for _, kv := range leaf.keyVals() {
-				if !fn(kv.Key, kv.Val) {
-					return false
-				}
-			}
+func (m *Map) Iter() *Iter {
+	if m.NumEntries() == 0 {
+		return nil
+	}
+
+	//log.Printf("m.Iter: m=\n%s", m.LongString(""))
+	var it = newIter(&m.root)
+
+	//find left-most leaf
+LOOP:
+	for {
+		var curNode = it.tblNextNode()
+		switch x := curNode.(type) {
+		case nil:
+			panic("finding first leaf; it.tblNextNode() returned nil")
+		case tableI:
+			it.stack.push(it.tblNextNode)
+			it.tblNextNode = x.iter()
+			assert(it.tblNextNode != nil, "it.tblNextNode==nil")
+			break //switch
+		case leafI:
+			it.curLeaf = x
+			break LOOP
+		default:
+			panic("finding first leaf; unknown type")
 		}
+	}
 
-		return true
-	} //end: visitLeafsFn = func(nodeI)
+	return it
+}
 
-	m.walk(visitLeafs)
+func (m *Map) Range(fn func(MapKey, interface{}) bool) {
+	//var visitLeafs = func(n nodeI, depth uint) bool {
+	//	if leaf, ok := n.(leafI); ok {
+	//		for _, kv := range leaf.keyVals() {
+	//			if !fn(kv.Key, kv.Val) {
+	//				return false
+	//			}
+	//		}
+	//	}
+	//	return true
+	//} //end: visitLeafsFn = func(nodeI)
+	//m.walk(visitLeafs)
+	var it = m.Iter()
+	for k, v := it.Next(); k != nil; k, v = it.Next() {
+		if !fn(k, v) {
+			break
+		}
+	}
 }
 
 func (m *Map) NumEntries() uint {

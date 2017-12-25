@@ -6,9 +6,9 @@ import (
 
 type tableIterStack []tableIterFunc
 
-func newTableIterStack() tableIterStack {
+func newTableIterStack() *tableIterStack {
 	var tis tableIterStack = make([]tableIterFunc, 0, hash.DepthLimit)
-	return tis
+	return &tis
 }
 
 func (tis *tableIterStack) push(f tableIterFunc) {
@@ -16,6 +16,9 @@ func (tis *tableIterStack) push(f tableIterFunc) {
 }
 
 func (tis *tableIterStack) pop() tableIterFunc {
+	if tis == nil {
+		panic("WTF!!! iterator is nil")
+	}
 	if len(*tis) == 0 {
 		return nil
 	}
