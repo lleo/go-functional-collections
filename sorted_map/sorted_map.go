@@ -423,18 +423,10 @@ func (m *Map) insertCase4pt2(on, nn *node, path *nodeStack) {
 	m.persist(gp, gp, path)
 }
 
-// Del() calls Remove() but only returns the modified *Map.
-//
-// I wonder if this is inlined as Delete() may have.
+// Del calls Remove() but only returns the modified *Map.
 func (m *Map) Del(k MapKey) *Map {
-	var nm /*deletedVal*/, _ /*wasDeleted*/, _ = m.Remove(k)
+	var nm, _, _ = m.Remove(k)
 	return nm
-}
-
-// Delete() calls m.Del() and any call to id SHOULD be eliminated by compiler
-// replaced by inlined call to m.Del() for go version >= "1.8 (1.7 on amd64)".
-func (m *Map) Delete(k MapKey) *Map {
-	return m.Del(k)
 }
 
 // Remove() eliminates the node pointed to by the MapKey argument (and
