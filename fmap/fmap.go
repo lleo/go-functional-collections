@@ -1,3 +1,19 @@
+// Package fmap implements a functional Map data structure; mapping a key to a
+// value. The package name cannot be map because that is a reserved keyword in
+// Golang, so "fmap" was used instead. The internal data structure of fmap is a
+// [Hashed Array Mapped Trie](https://en.wikipedia.org/wiki/Hash_array_mapped_trie)
+//
+// Functional means that each data structure is immutable and persistent.
+// The Map is immutable because you never modify a Map in place, but rather
+// every modification (like a Store or Remove) creates a new Map with that
+// modification. This is not as inefficient as it sounds like it would be. Each
+// modification only changes the smallest  branch of the data structure it needs
+// to in order to effect the new mapping. Otherwise, the new data structure
+// shares the majority of the previous data structure. That is the Persistent
+// property.
+//
+// Each method call that potentially modifies the Map, returns a new Map data
+// structure in addition to the other pertinent return values.
 package fmap
 
 import (
@@ -42,6 +58,8 @@ func (m *Map) copy() *Map {
 	return nm
 }
 
+// Get loads the value stored for the given key. If the key doesn't exist in the
+// map a nil is returned.
 func (m *Map) Get(key MapKey) interface{} {
 	var v, _ = m.Load(key)
 	return v
@@ -152,6 +170,11 @@ func (m *Map) persist(oldTable, newTable tableI, path *tableStack) {
 	return
 }
 
+// LoadOrStore returns the existing value for the key if present. Otherwise,
+// it stores and returns the given value. The loaded result is true if the
+// value was loaded, false if stored. Lastly, if the result was loaded the
+// returned map is the original *Map, if the val was stored the returned *Map
+// is the new persistent *Map.
 func (m *Map) LoadOrStore(key MapKey, val interface{}) (
 	*Map, interface{}, bool,
 ) {
@@ -235,13 +258,15 @@ func (m *Map) LoadOrStore(key MapKey, val interface{}) (
 	return nm, nil, false // result for a Stored value
 }
 
+// Put stores a new (key,value) pair in the Map. It returns a new persistent
+// *Map data structure.
 func (m *Map) Put(key MapKey, val interface{}) *Map {
 	m, _ = m.Store(key, val)
 	return m
 }
 
-// Store stores a new (key,value) pair in the Map data structure. It returns the
-// new *Map data structure and a bool indicating if a new pair was added (true)
+// Store stores a new (key,value) pair in the Map. It returns a new persistent
+// *Map data structure and a bool indicating if a new pair was added (true)
 // or if the value merely replaced a prior value (false).
 func (m *Map) Store(key MapKey, val interface{}) (*Map, bool) {
 	var nm = m.copy()
@@ -311,15 +336,17 @@ func (m *Map) Store(key MapKey, val interface{}) (*Map, bool) {
 	return nm, added
 }
 
+// Del deletes any entry with the given key, but does not indicate if the key
+// existed or not. However, if the key did not exist the returned *Map will be
+// the original *Map.
 func (m *Map) Del(key MapKey) *Map {
 	m, _, _ = m.Remove(key)
 	return m
 }
 
-func (m *Map) Delete(key MapKey) *Map {
-	return m.Del(key)
-}
-
+// Remove deletes any entry with the given key. It returns and new persisten
+// *Map data structure, the value that was stored with that key, and a boolean
+// idicating if the key was found and deleted.
 func (m *Map) Remove(key MapKey) (*Map, interface{}, bool) {
 	if m.numEnts == 0 {
 		return m, nil, false
