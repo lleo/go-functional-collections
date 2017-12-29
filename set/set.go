@@ -1,3 +1,18 @@
+// Package set implements a functional Set data structure. The internal data
+// structure of set is a
+// [Hashed Array Mapped Trie](https://en.wikipedia.org/wiki/Hash_array_mapped_trie)
+//
+// Functional means that each data structure is immutable and persistent.
+// The Set is immutable because you never modify a Set in place, but rather
+// every modification (like a Add or Remove) creates a new Set with that
+// modification. This is not as inefficient as it sounds like it would be. Each
+// modification only changes the smallest  branch of the data structure it needs
+// to in order to effect the new set. Otherwise, the new data structure
+// shares the majority of the previous data structure. That is the Persistent
+// property.
+//
+// Each method call that potentially modifies the Set, returns a new Set data
+// structure in addition to the other pertinent return values.
 package set
 
 import (
