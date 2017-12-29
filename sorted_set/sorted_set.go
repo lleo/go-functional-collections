@@ -1,3 +1,18 @@
+// Package sorted_set implements a functional Set data structure that preserves
+// the ordering of the keys. The internal data structure of the sorted_set is
+// a regular Red-Black Tree (as opposed to a Left-Leaning Red-Black Tree).
+//
+// Functional means that each data structure is immutable and persistent.
+// The Set is immutable because you never modify a Set in place, but rather
+// every modification (like a Add or Remove) creates a new Set with that
+// modification. This is not as inefficient as it sounds like it would be. Each
+// modification only changes the smallest  branch of the data structure it needs
+// to in order to effect the new set. Otherwise, the new data structure
+// shares the majority of the previous data structure. That is the Persistent
+// property.
+//
+// Each method call that potentially modifies the Set, returns a new Set data
+// structure in addition to the other pertinent return values.
 package sorted_set
 
 import (
