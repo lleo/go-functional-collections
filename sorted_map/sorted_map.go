@@ -775,17 +775,17 @@ func (m *Map) Range(fn func(MapKey, interface{}) bool) {
 	m.RangeLimit(ninf, pinf, fn)
 }
 
-func (m *Map) Keys() []MapKey {
-	var keys = make([]MapKey, m.NumEntries())
-	var i int
-	var fn = func(k MapKey, v interface{}) bool {
-		keys[i] = k
-		i++
-		return true
-	}
-	m.Range(fn)
-	return keys
-}
+//func (m *Map) Keys() []MapKey {
+//	var keys = make([]MapKey, m.NumEntries())
+//	var i int
+//	var fn = func(k MapKey, v interface{}) bool {
+//		keys[i] = k
+//		i++
+//		return true
+//	}
+//	m.Range(fn)
+//	return keys
+//}
 
 //func (m *Map) walkPreOrder(fn func(*node, *nodeStack) bool) bool {
 //	if m.root != nil {
