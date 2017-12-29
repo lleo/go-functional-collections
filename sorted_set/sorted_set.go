@@ -722,17 +722,17 @@ func (s *Set) Range(fn func(SetKey) bool) {
 	s.RangeLimit(ninf, pinf, fn)
 }
 
-func (s *Set) Keys() []SetKey {
-	var keys = make([]SetKey, s.NumEntries())
-	var i int
-	var fn = func(k SetKey) bool {
-		keys[i] = k
-		i++
-		return true
-	}
-	s.Range(fn)
-	return keys
-}
+//func (s *Set) Keys() []SetKey {
+//	var keys = make([]SetKey, s.NumEntries())
+//	var i int
+//	var fn = func(k SetKey) bool {
+//		keys[i] = k
+//		i++
+//		return true
+//	}
+//	s.Range(fn)
+//	return keys
+//}
 
 //func (s *Set) walkPreOrder(fn func(*node, *nodeStack) bool) bool {
 //	if s.root != nil {
