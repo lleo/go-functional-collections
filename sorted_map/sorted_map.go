@@ -53,11 +53,11 @@ func (m *Map) copy() *Map {
 	return nm
 }
 
-func (m *Map) iter() *nodeIter {
-	return m.iterRange(ninf, pinf)
+func (m *Map) Iter() *Iter {
+	return m.IterLimit(ninf, pinf)
 }
 
-func (m *Map) iterRange(startKey, endKey MapKey) *nodeIter {
+func (m *Map) IterLimit(startKey, endKey MapKey) *Iter {
 	var dir = less(startKey, endKey)
 	var cur, path = m.root.findNodeIterPath(startKey, dir)
 	if cur == nil {
@@ -759,11 +759,11 @@ func (m *Map) deleteCase6(on, nn *node, path *nodeStack) {
 //greater than any other key. A call to sorted_map.InfKey(-1) returns a key less
 //than any other key.
 func (m *Map) RangeLimit(start, end MapKey, fn func(MapKey, interface{}) bool) {
-	var iter = m.iterRange(start, end)
+	var it = m.IterLimit(start, end)
 
-	//walk iter
-	for n := iter.Next(); n != nil; n = iter.Next() {
-		if !fn(n.key, n.val) {
+	//walk it
+	for k, v := it.Next(); k != nil; k, v = it.Next() {
+		if !fn(k, v) {
 			return //STOP
 		}
 	}
@@ -855,10 +855,10 @@ func (m *Map) String() string {
 	//}
 	//m.walkInOrder(fn)
 
-	var iter = m.iter()
+	var it = m.Iter()
 	var i int
-	for n := iter.Next(); n != nil; n = iter.Next() {
-		strs[i] = fmt.Sprintf("%#v: %#v", n.key, n.val)
+	for k, v := it.Next(); k != nil; k, v = it.Next() {
+		strs[i] = fmt.Sprintf("%#v: %#v", k, v)
 		i++
 	}
 
