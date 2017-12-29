@@ -1634,42 +1634,42 @@ func TestBasicMapString(t *testing.T) {
 	}
 }
 
-func TestBasicKeys(t *testing.T) {
-	var m = mkmap(
-		mknod(60, black,
-			mknod(20, black,
-				mknod(10, black, nil, nil),
-				mknod(40, black,
-					mknod(30, red, nil, nil),
-					mknod(50, red, nil, nil))),
-			mknod(100, black,
-				mknod(80, black,
-					mknod(70, red, nil, nil),
-					mknod(90, red, nil, nil)),
-				mknod(120, black,
-					mknod(110, red, nil, nil),
-					mknod(130, red, nil, nil)))))
-
-	var shouldHaveKvs = []KeyVal{
-		{IntKey(10), 10},
-		{IntKey(20), 20},
-		{IntKey(30), 30},
-		{IntKey(40), 40},
-		{IntKey(50), 50},
-		{IntKey(60), 60},
-		{IntKey(70), 70},
-		{IntKey(80), 80},
-		{IntKey(90), 90},
-		{IntKey(100), 100},
-		{IntKey(110), 110},
-		{IntKey(120), 120},
-		{IntKey(130), 130},
-	}
-
-	var foundKeys = m.Keys()
-	for i, kv := range shouldHaveKvs {
-		if cmp(kv.Key, foundKeys[i]) != 0 {
-			t.Fatalf("kv.Key,%s != foundKeys[%d],%s", kv.Key, i, foundKeys[i])
-		}
-	}
-}
+//func TestBasicKeys(t *testing.T) {
+//	var m = mkmap(
+//		mknod(60, black,
+//			mknod(20, black,
+//				mknod(10, black, nil, nil),
+//				mknod(40, black,
+//					mknod(30, red, nil, nil),
+//					mknod(50, red, nil, nil))),
+//			mknod(100, black,
+//				mknod(80, black,
+//					mknod(70, red, nil, nil),
+//					mknod(90, red, nil, nil)),
+//				mknod(120, black,
+//					mknod(110, red, nil, nil),
+//					mknod(130, red, nil, nil)))))
+//
+//	var shouldHaveKvs = []KeyVal{
+//		{IntKey(10), 10},
+//		{IntKey(20), 20},
+//		{IntKey(30), 30},
+//		{IntKey(40), 40},
+//		{IntKey(50), 50},
+//		{IntKey(60), 60},
+//		{IntKey(70), 70},
+//		{IntKey(80), 80},
+//		{IntKey(90), 90},
+//		{IntKey(100), 100},
+//		{IntKey(110), 110},
+//		{IntKey(120), 120},
+//		{IntKey(130), 130},
+//	}
+//
+//	var foundKeys = m.Keys()
+//	for i, kv := range shouldHaveKvs {
+//		if cmp(kv.Key, foundKeys[i]) != 0 {
+//			t.Fatalf("kv.Key,%s != foundKeys[%d],%s", kv.Key, i, foundKeys[i])
+//		}
+//	}
+//}
