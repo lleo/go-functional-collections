@@ -407,7 +407,7 @@ func (m *Map) Iter() *Iter {
 		return nil
 	}
 
-	//log.Printf("m.Iter: m=\n%s", m.LongString(""))
+	//log.Printf("m.Iter: m=\n%s", m.treeString(""))
 	var it = newIter(&m.root)
 
 	//find left-most leaf
@@ -471,14 +471,14 @@ func (m *Map) String() string {
 	return "Map{" + strings.Join(ents, ",") + "}"
 }
 
-// LongString returns a (potentially very large) string that represets the
-// entire Map data structure.
-func (m *Map) LongString(indent string) string {
+// treeString returns a (potentially very large) string that represets the
+// entire Map data structure. It is for print debugging.
+func (m *Map) treeString(indent string) string {
 	var str string
 
 	str = indent +
 		fmt.Sprintf("Map{ numEnts: %d, root:\n", m.numEnts)
-	str += indent + m.root.LongString(indent, 0)
+	str += indent + m.root.treeString(indent, 0)
 	str += indent + "}"
 
 	return str

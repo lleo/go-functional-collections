@@ -47,7 +47,7 @@ type tableI interface {
 
 	iter() tableIterFunc
 
-	LongString(string, uint) string
+	treeString(string, uint) string
 }
 
 type tableEntry struct {
