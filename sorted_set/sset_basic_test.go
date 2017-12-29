@@ -1416,42 +1416,42 @@ func TestBasicSetString(t *testing.T) {
 	}
 }
 
-func TestBasicKeys(t *testing.T) {
-	var s = mkset(
-		mknod(60, black,
-			mknod(20, black,
-				mknod(10, black, nil, nil),
-				mknod(40, black,
-					mknod(30, red, nil, nil),
-					mknod(50, red, nil, nil))),
-			mknod(100, black,
-				mknod(80, black,
-					mknod(70, red, nil, nil),
-					mknod(90, red, nil, nil)),
-				mknod(120, black,
-					mknod(110, red, nil, nil),
-					mknod(130, red, nil, nil)))))
-
-	var shouldHaveKeys = []SetKey{
-		IntKey(10),
-		IntKey(20),
-		IntKey(30),
-		IntKey(40),
-		IntKey(50),
-		IntKey(60),
-		IntKey(70),
-		IntKey(80),
-		IntKey(90),
-		IntKey(100),
-		IntKey(110),
-		IntKey(120),
-		IntKey(130),
-	}
-
-	var foundKeys = s.Keys()
-	for i, key := range shouldHaveKeys {
-		if cmp(key, foundKeys[i]) != 0 {
-			t.Fatalf("key,%s != foundKeys[%d],%s", key, i, foundKeys[i])
-		}
-	}
-}
+//func TestBasicKeys(t *testing.T) {
+//	var s = mkset(
+//		mknod(60, black,
+//			mknod(20, black,
+//				mknod(10, black, nil, nil),
+//				mknod(40, black,
+//					mknod(30, red, nil, nil),
+//					mknod(50, red, nil, nil))),
+//			mknod(100, black,
+//				mknod(80, black,
+//					mknod(70, red, nil, nil),
+//					mknod(90, red, nil, nil)),
+//				mknod(120, black,
+//					mknod(110, red, nil, nil),
+//					mknod(130, red, nil, nil)))))
+//
+//	var shouldHaveKeys = []SetKey{
+//		IntKey(10),
+//		IntKey(20),
+//		IntKey(30),
+//		IntKey(40),
+//		IntKey(50),
+//		IntKey(60),
+//		IntKey(70),
+//		IntKey(80),
+//		IntKey(90),
+//		IntKey(100),
+//		IntKey(110),
+//		IntKey(120),
+//		IntKey(130),
+//	}
+//
+//	var foundKeys = s.Keys()
+//	for i, key := range shouldHaveKeys {
+//		if cmp(key, foundKeys[i]) != 0 {
+//			t.Fatalf("key,%s != foundKeys[%d],%s", key, i, foundKeys[i])
+//		}
+//	}
+//}
