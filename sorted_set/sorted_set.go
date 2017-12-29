@@ -53,11 +53,11 @@ func (s *Set) copy() *Set {
 	return nm
 }
 
-func (s *Set) iter() *nodeIter {
-	return s.iterRange(ninf, pinf)
+func (s *Set) Iter() *Iter {
+	return s.IterLimit(ninf, pinf)
 }
 
-func (s *Set) iterRange(startKey, endKey SetKey) *nodeIter {
+func (s *Set) IterLimit(startKey, endKey SetKey) *Iter {
 	var dir = less(startKey, endKey)
 	var cur, path = s.root.findNodeIterPath(startKey, dir)
 	if cur == nil {
@@ -706,11 +706,11 @@ func (s *Set) deleteCase6(on, nn *node, path *nodeStack) {
 //greater than any other key. A call to sorted_set.InfKey(-1) returns a key less
 //than any other key.
 func (s *Set) RangeLimit(start, end SetKey, fn func(SetKey) bool) {
-	var iter = s.iterRange(start, end)
+	var it = s.IterLimit(start, end)
 
-	//walk iter
-	for n := iter.Next(); n != nil; n = iter.Next() {
-		if !fn(n.key) {
+	//walk it
+	for k := it.Next(); k != nil; k = it.Next() {
+		if !fn(k) {
 			return //STOP
 		}
 	}
@@ -802,10 +802,10 @@ func (s *Set) String() string {
 	//}
 	//s.walkInOrder(fn)
 
-	var iter = s.iter()
+	var it = s.Iter()
 	var i int
-	for n := iter.Next(); n != nil; n = iter.Next() {
-		strs[i] = fmt.Sprintf("%#v", n.key)
+	for k := it.Next(); k != nil; k = it.Next() {
+		strs[i] = fmt.Sprintf("%#v", k)
 		i++
 	}
 

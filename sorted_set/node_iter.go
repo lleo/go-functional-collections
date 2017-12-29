@@ -1,6 +1,6 @@
 package sorted_set
 
-type nodeIter struct {
+type Iter struct {
 	dir    bool // true == lower-to-higher; false == higher-to-lower
 	endKey SetKey
 	cur    *node
@@ -12,8 +12,8 @@ func newNodeIter(
 	start *node,
 	endKey SetKey,
 	path *nodeStack,
-) *nodeIter {
-	var iter = new(nodeIter)
+) *Iter {
+	var iter = new(Iter)
 	iter.dir = dir
 	iter.endKey = endKey
 	iter.cur = start
@@ -21,15 +21,15 @@ func newNodeIter(
 	return iter
 }
 
-func (it *nodeIter) Next() *node {
+func (it *Iter) Next() SetKey {
 	if it.dir {
-		return it.Forw()
+		return it.forw()
 	} else {
-		return it.Back()
+		return it.back()
 	}
 }
 
-func (it *nodeIter) Forw() *node {
+func (it *Iter) forw() SetKey {
 	if it.cur == nil {
 		//the iterator is over
 		return nil
@@ -38,7 +38,7 @@ func (it *nodeIter) Forw() *node {
 		return nil
 	}
 
-	var ret = it.cur
+	var ret = it.cur.key
 
 	// set it.cur to next node
 	if it.cur.rn != nil {
@@ -56,7 +56,7 @@ func (it *nodeIter) Forw() *node {
 	return ret
 }
 
-func (it *nodeIter) Back() *node {
+func (it *Iter) back() SetKey {
 	if it.cur == nil {
 		//the iterator is over
 		return nil
@@ -64,7 +64,7 @@ func (it *nodeIter) Back() *node {
 	if it.toFar() {
 		return nil
 	}
-	var ret = it.cur
+	var ret = it.cur.key
 
 	// set it.cur to previous node
 	if it.cur.ln != nil {
@@ -82,7 +82,7 @@ func (it *nodeIter) Back() *node {
 	return ret
 }
 
-func (it *nodeIter) toFar() bool {
+func (it *Iter) toFar() bool {
 	if it.dir {
 		// lower to higher
 		return less(it.endKey, it.cur.key) // cur <= end
