@@ -7,7 +7,7 @@ import (
 	"github.com/lleo/go-functional-collections/fmap"
 )
 
-func Test_Basic_ButildSimpleMap(t *testing.T) {
+func TestBasicButildSimpleMap(t *testing.T) {
 	var m = fmap.New()
 	m = m.
 		Put(StringKey("a"), 1).
@@ -27,7 +27,7 @@ func Test_Basic_ButildSimpleMap(t *testing.T) {
 	}
 }
 
-func Test_Basic_Load(t *testing.T) {
+func TestBasicLoad(t *testing.T) {
 	var m = fmap.New()
 	m = m.Put(StringKey("a"), nil)
 
@@ -53,7 +53,7 @@ func Test_Basic_Load(t *testing.T) {
 	}
 }
 
-func Test_Basic_LoadOrStore(t *testing.T) {
+func TestBasicLoadOrStore(t *testing.T) {
 	var m = fmap.New()
 	m = m.Put(StringKey("a"), 1)
 
@@ -84,7 +84,7 @@ func Test_Basic_LoadOrStore(t *testing.T) {
 	}
 }
 
-func Test_Basic_Store(t *testing.T) {
+func TestBasicStore(t *testing.T) {
 	var m = fmap.New()
 
 	var added bool
@@ -108,7 +108,7 @@ func Test_Basic_Store(t *testing.T) {
 	}
 }
 
-func Test_Basic_Delete(t *testing.T) {
+func TestBasicDelete(t *testing.T) {
 	var m = fmap.New()
 
 	if m.NumEntries() != 0 {
@@ -142,7 +142,7 @@ func Test_Basic_Delete(t *testing.T) {
 	}
 }
 
-func Test_Basic_Remove(t *testing.T) {
+func TestBasicRemove(t *testing.T) {
 	var m = fmap.New()
 
 	m = m.

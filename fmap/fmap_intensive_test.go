@@ -10,7 +10,7 @@ import (
 
 var sizeBig = 1000000
 
-func Test_Intensive_ButildMapBig(t *testing.T) {
+func TestIntensiveButildMapBig(t *testing.T) {
 	var m = fmap.New()
 
 	var s = "a"
@@ -18,15 +18,13 @@ func Test_Intensive_ButildMapBig(t *testing.T) {
 		m = m.Put(StringKey(s), i)
 		s = Inc(s)
 	}
-
-	//log.Println("Big large Map\n", m.LongString(""))
 }
 
 // 32: 1st level collisions "a"&"ae", "b"&"af", "aa"&"e", "f"&"ab", "ac"&"g"
 // 10,000: 2nd level collisions "gug","crr","akc","ert","dri","fkp","ipv"
 // 10,000: 3rd level collisions "ktx","qk"
 
-func Test_Intensive_DestroyMapBig(t *testing.T) {
+func TestIntensiveDestroyMapBig(t *testing.T) {
 	var m = fmap.New()
 	var data = make(map[string]int, sizeBig)
 
@@ -61,6 +59,7 @@ func Test_Intensive_DestroyMapBig(t *testing.T) {
 func findAndRemove(k fmap.MapKey, kvs *[]keyVal) bool {
 	for i := 0; i < len(*kvs); i++ {
 		if k.Equals((*kvs)[i].Key) {
+			//BTW this is the fast non-order preserving element deletion
 			(*kvs)[i] = (*kvs)[len(*kvs)-1]
 			(*kvs) = (*kvs)[:len(*kvs)-1]
 			//log.Printf("findAndRemove: found i=%d; k=%s\n", i, k)
