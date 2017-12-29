@@ -511,102 +511,102 @@ func (m *Map) treeString(indent string) string {
 	return str
 }
 
-type Stats struct {
-	DeepestKeys struct {
-		Keys  []MapKey
-		Depth uint
-	}
-
-	// Depth of deepest table
-	MaxDepth uint
-
-	// TableCountsByNumEntries is a Hash table of the number of tables with each
-	// given number of entries in the tatble. There are slots for
-	// [0..IndexLimit] inclusive (so there are IndexLimit+1 slots). Technically,
-	// there should never be a table with zero entries, but I allow counting
-	// tables with zero entries just to catch those errors.
-	// [0..IndexLimit] inclusive
-	TableCountsByNumEntries [hash.IndexLimit + 1]uint
-
-	// TableCountsByDepth is a Hash table of the number of tables at a given
-	// depth. There are slots for [0..DepthLimit).
-	// [0..DepthLimit)
-	TableCountsByDepth [hash.DepthLimit]uint
-
-	// Nils is the total count of allocated slots that are unused in the Map.
-	Nils uint
-
-	// Nodes is the total count of nodeI capable structs in the Map.
-	Nodes uint
-
-	// Tables is the total count of tableI capable structs in the Map.
-	Tables uint
-
-	// Leafs is the total count of leafI capable structs in the Map.
-	Leafs uint
-
-	// FixedTables is the total count of fixedTable structs in the Map.
-	FixedTables uint
-
-	// SparseTables is the total count of sparseTable structs in the Map.
-	SparseTables uint
-
-	// FlatLeafs is the total count of flatLeaf structs in the Map.
-	FlatLeafs uint
-
-	// CollisionLeafs is the total count of collisionLeaf structs in the Map.
-	CollisionLeafs uint
-
-	// KeyVals is the total number of KeyVal pairs int the Map.
-	KeyVals uint
-}
-
-// Stats walks the Hamt in a pre-order traversal and populates a Stats data
-// struture which it returns.
-func (m *Map) Stats() *Stats {
-	var stats = new(Stats)
-
-	// statFn closes over the stats variable
-	var statFn = func(n nodeI, depth uint) bool {
-		var keepOn = true
-		switch x := n.(type) {
-		case nil:
-			stats.Nils++
-			keepOn = false
-		case *fixedTable:
-			stats.Nodes++
-			stats.Tables++
-			stats.FixedTables++
-			stats.TableCountsByNumEntries[x.numEntries()]++
-			stats.TableCountsByDepth[x.depth]++
-			if x.depth > stats.MaxDepth {
-				stats.MaxDepth = x.depth
-			}
-		case *sparseTable:
-			stats.Nodes++
-			stats.Tables++
-			stats.SparseTables++
-			stats.TableCountsByNumEntries[x.numEntries()]++
-			stats.TableCountsByDepth[x.depth]++
-			if x.depth > stats.MaxDepth {
-				stats.MaxDepth = x.depth
-			}
-		case *flatLeaf:
-			stats.Nodes++
-			stats.Leafs++
-			stats.FlatLeafs++
-			stats.KeyVals += 1
-			keepOn = false
-		case *collisionLeaf:
-			stats.Nodes++
-			stats.Leafs++
-			stats.CollisionLeafs++
-			stats.KeyVals += uint(len(x.kvs))
-			keepOn = false
-		}
-		return keepOn
-	}
-
-	m.walk(statFn)
-	return stats
-}
+//type Stats struct {
+//	DeepestKeys struct {
+//		Keys  []MapKey
+//		Depth uint
+//	}
+//
+//	// Depth of deepest table
+//	MaxDepth uint
+//
+//	// TableCountsByNumEntries is a Hash table of the number of tables with each
+//	// given number of entries in the tatble. There are slots for
+//	// [0..IndexLimit] inclusive (so there are IndexLimit+1 slots). Technically,
+//	// there should never be a table with zero entries, but I allow counting
+//	// tables with zero entries just to catch those errors.
+//	// [0..IndexLimit] inclusive
+//	TableCountsByNumEntries [hash.IndexLimit + 1]uint
+//
+//	// TableCountsByDepth is a Hash table of the number of tables at a given
+//	// depth. There are slots for [0..DepthLimit).
+//	// [0..DepthLimit)
+//	TableCountsByDepth [hash.DepthLimit]uint
+//
+//	// Nils is the total count of allocated slots that are unused in the Map.
+//	Nils uint
+//
+//	// Nodes is the total count of nodeI capable structs in the Map.
+//	Nodes uint
+//
+//	// Tables is the total count of tableI capable structs in the Map.
+//	Tables uint
+//
+//	// Leafs is the total count of leafI capable structs in the Map.
+//	Leafs uint
+//
+//	// FixedTables is the total count of fixedTable structs in the Map.
+//	FixedTables uint
+//
+//	// SparseTables is the total count of sparseTable structs in the Map.
+//	SparseTables uint
+//
+//	// FlatLeafs is the total count of flatLeaf structs in the Map.
+//	FlatLeafs uint
+//
+//	// CollisionLeafs is the total count of collisionLeaf structs in the Map.
+//	CollisionLeafs uint
+//
+//	// KeyVals is the total number of KeyVal pairs int the Map.
+//	KeyVals uint
+//}
+//
+//// Stats walks the Hamt in a pre-order traversal and populates a Stats data
+//// struture which it returns.
+//func (m *Map) Stats() *Stats {
+//	var stats = new(Stats)
+//
+//	// statFn closes over the stats variable
+//	var statFn = func(n nodeI, depth uint) bool {
+//		var keepOn = true
+//		switch x := n.(type) {
+//		case nil:
+//			stats.Nils++
+//			keepOn = false
+//		case *fixedTable:
+//			stats.Nodes++
+//			stats.Tables++
+//			stats.FixedTables++
+//			stats.TableCountsByNumEntries[x.numEntries()]++
+//			stats.TableCountsByDepth[x.depth]++
+//			if x.depth > stats.MaxDepth {
+//				stats.MaxDepth = x.depth
+//			}
+//		case *sparseTable:
+//			stats.Nodes++
+//			stats.Tables++
+//			stats.SparseTables++
+//			stats.TableCountsByNumEntries[x.numEntries()]++
+//			stats.TableCountsByDepth[x.depth]++
+//			if x.depth > stats.MaxDepth {
+//				stats.MaxDepth = x.depth
+//			}
+//		case *flatLeaf:
+//			stats.Nodes++
+//			stats.Leafs++
+//			stats.FlatLeafs++
+//			stats.KeyVals += 1
+//			keepOn = false
+//		case *collisionLeaf:
+//			stats.Nodes++
+//			stats.Leafs++
+//			stats.CollisionLeafs++
+//			stats.KeyVals += uint(len(x.kvs))
+//			keepOn = false
+//		}
+//		return keepOn
+//	}
+//
+//	m.walk(statFn)
+//	return stats
+//}
