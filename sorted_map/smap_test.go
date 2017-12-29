@@ -4,6 +4,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"strconv"
 
 	"github.com/pkg/errors"
 )
@@ -20,6 +21,20 @@ func init() {
 	log.SetOutput(logFile)
 
 	//log.Println("TESTING HAS STARTED...")
+}
+
+type IntKey int
+
+func (ik IntKey) Less(o MapKey) bool {
+	var oik, ok = o.(IntKey)
+	if !ok {
+		panic("o is not a IntKey")
+	}
+	return ik < oik
+}
+
+func (ik IntKey) String() string {
+	return strconv.Itoa(int(ik))
 }
 
 func mkmap(r *node) *Map {
