@@ -19,6 +19,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/lleo/go-functional-collections/sorted"
 )
 
 type Map struct {
@@ -54,11 +56,11 @@ func (m *Map) copy() *Map {
 }
 
 func (m *Map) Iter() *Iter {
-	return m.IterLimit(ninf, pinf)
+	return m.IterLimit(sorted.InfKey(-1), sorted.InfKey(1))
 }
 
-func (m *Map) IterLimit(startKey, endKey MapKey) *Iter {
-	var dir = less(startKey, endKey)
+func (m *Map) IterLimit(startKey, endKey sorted.Key) *Iter {
+	var dir = sorted.Less(startKey, endKey)
 	var cur, path = m.root.findNodeIterPath(startKey, dir)
 	if cur == nil {
 		cur = path.pop()
@@ -66,12 +68,12 @@ func (m *Map) IterLimit(startKey, endKey MapKey) *Iter {
 	return newNodeIter(dir, cur, endKey, path)
 }
 
-func (m *Map) Get(k MapKey) interface{} {
+func (m *Map) Get(k sorted.Key) interface{} {
 	var v, _ = m.Load(k)
 	return v
 }
 
-func (m *Map) Load(k MapKey) (interface{}, bool) {
+func (m *Map) Load(k sorted.Key) (interface{}, bool) {
 	var n = m.root.findNode(k)
 
 	if n == nil {
@@ -87,7 +89,9 @@ func (m *Map) Load(k MapKey) (interface{}, bool) {
 // new key:value pair and returns the new map value, a nil for the previous
 // value, and a false value indicating the key was not found and the store
 // occured.
-func (m *Map) LoadOrStore(k MapKey, v interface{}) (*Map, interface{}, bool) {
+func (m *Map) LoadOrStore(k sorted.Key, v interface{}) (
+	*Map, interface{}, bool,
+) {
 	var n, path = m.root.findNodeWithPath(k)
 	if n != nil {
 		return m, n.val, true
@@ -109,14 +113,14 @@ func (m *Map) LoadOrStore(k MapKey, v interface{}) (*Map, interface{}, bool) {
 
 }
 
-func (m *Map) Put(k MapKey, v interface{}) *Map {
+func (m *Map) Put(k sorted.Key, v interface{}) *Map {
 	var nm, _ = m.Store(k, v)
 	return nm
 }
 
 // Store() inserts a new key:val pair and returns a new Map and a boolean
 // indicatiing if the key:val was added(true) or merely replaced(false).
-func (m *Map) Store(k MapKey, v interface{}) (*Map, bool) {
+func (m *Map) Store(k sorted.Key, v interface{}) (*Map, bool) {
 	var on, path = m.root.findNodeDupPath(k)
 	//path is duped and stiched, but not anchored to m.root
 
@@ -136,8 +140,8 @@ func (m *Map) Store(k MapKey, v interface{}) (*Map, bool) {
 // old value, then calls persist() on the *Map.
 //
 // replace() MUST be called on a new *Map.
-func (m *Map) replace(k MapKey, v interface{}, on *node, path *nodeStack) {
-	_ = assertOn && assert(cmp(on.key, k) == 0, "on.key != nn.key")
+func (m *Map) replace(k sorted.Key, v interface{}, on *node, path *nodeStack) {
+	_ = assertOn && assert(sorted.Cmp(on.key, k) == 0, "on.key != nn.key")
 
 	var nn = on.copy()
 	nn.val = v
@@ -151,7 +155,7 @@ func (m *Map) replace(k MapKey, v interface{}, on *node, path *nodeStack) {
 // path MUST be non-zero length.
 //
 // insert() MUST be called on a new *Map.
-func (m *Map) insert(k MapKey, v interface{}, path *nodeStack) {
+func (m *Map) insert(k sorted.Key, v interface{}, path *nodeStack) {
 	var on *node           // = nil
 	var nn = newNode(k, v) //nn.isRed ALWAYS!
 
@@ -173,7 +177,7 @@ func (m *Map) persist(on, nn *node, path *nodeStack) {
 
 	var parent = path.peek()
 	if on == nil {
-		if less(nn.key, parent.key) {
+		if sorted.Less(nn.key, parent.key) {
 			parent.ln = nn
 		} else {
 			parent.rn = nn
@@ -316,7 +320,7 @@ func (m *Map) insertCase3(on, nn *node, path *nodeStack) {
 	var ogp = path.pop() //gp means grandparent
 
 	var ouncle *node
-	if less(oparent.key, ogp.key) {
+	if sorted.Less(oparent.key, ogp.key) {
 		ouncle = ogp.rn
 	} else {
 		ouncle = ogp.ln
@@ -325,7 +329,7 @@ func (m *Map) insertCase3(on, nn *node, path *nodeStack) {
 	var nparent = oparent.copy() //new parent, cuz I am mutating it.
 	nparent.setBlack()
 
-	if less(nn.key, oparent.key) {
+	if sorted.Less(nn.key, oparent.key) {
 		nparent.ln = nn
 	} else {
 		nparent.rn = nn
@@ -338,7 +342,7 @@ func (m *Map) insertCase3(on, nn *node, path *nodeStack) {
 	ngp.setRed()
 
 	//if oparent.isLeftChildOf(ogp) {
-	if less(oparent.key, ogp.key) {
+	if sorted.Less(oparent.key, ogp.key) {
 		ngp.ln = nparent
 		ngp.rn = nuncle
 	} else {
@@ -357,8 +361,8 @@ func (m *Map) insertCase4(on, nn *node, path *nodeStack) {
 	// insertCase4.1: conditional prep-rotate
 	// We pre-rotate when nn is the inner child of the grandparent.
 	//if nn.isLeftChildOf(nparent) && oparent.isRightChildOf(ogp) {
-	//if less(nn.key, oparent.key) && less(ogp.key, oparent.key) {
-	if less(nn.key, parent.key) && parent.isRightChildOf(gp) {
+	//if sorted.Less(nn.key, oparent.key) && sorted.Less(ogp.key, oparent.key) {
+	if sorted.Less(nn.key, parent.key) && parent.isRightChildOf(gp) {
 		parent.ln = nn
 
 		parent, nn = m.rotateRight(parent, gp)
@@ -366,7 +370,7 @@ func (m *Map) insertCase4(on, nn *node, path *nodeStack) {
 		path.push(nn)
 
 		nn = nn.rn //nn.rn == parent
-	} else if less(parent.key, nn.key) && parent.isLeftChildOf(gp) {
+	} else if sorted.Less(parent.key, nn.key) && parent.isLeftChildOf(gp) {
 		parent.rn = nn
 
 		parent, nn = m.rotateLeft(parent, gp)
@@ -383,7 +387,7 @@ func (m *Map) insertCase4pt2(on, nn *node, path *nodeStack) {
 	var parent = path.pop()
 	var gp = path.pop()
 
-	if less(nn.key, parent.key) {
+	if sorted.Less(nn.key, parent.key) {
 		parent.ln = nn
 	} else {
 		parent.rn = nn
@@ -424,14 +428,14 @@ func (m *Map) insertCase4pt2(on, nn *node, path *nodeStack) {
 }
 
 // Del calls Remove() but only returns the modified *Map.
-func (m *Map) Del(k MapKey) *Map {
+func (m *Map) Del(k sorted.Key) *Map {
 	var nm, _, _ = m.Remove(k)
 	return nm
 }
 
-// Remove() eliminates the node pointed to by the MapKey argument (and
+// Remove() eliminates the node pointed to by the sorted.Key argument (and
 // rebalances) a persistent version of the given *Map.
-func (m *Map) Remove(k MapKey) (*Map, interface{}, bool) {
+func (m *Map) Remove(k sorted.Key) (*Map, interface{}, bool) {
 	var on, path = m.root.findNodeDupPath(k)
 
 	if on == nil {
@@ -565,7 +569,7 @@ func (m *Map) deleteCase2(on, nn *node, path *nodeStack) {
 
 	if osibling.isRed() {
 		nsibling = osibling.copy()
-		if nsibling.key.Less(parent.key) {
+		if sorted.Less(nsibling.key, parent.key) {
 			//parent.rn = nn
 			parent.ln = nsibling
 		} else {
@@ -634,7 +638,7 @@ func (m *Map) deleteCase4(on, nn *node, path *nodeStack) {
 		osibling.rn.isBlack() {
 
 		var nsibling = osibling.copy()
-		//if on.key.Less(parent.key) {
+		//if sorted.Less(on.key, parent.key) {
 		if on.isLeftChildOf(parent) {
 			parent.rn = nsibling
 		} else {
@@ -758,7 +762,10 @@ func (m *Map) deleteCase6(on, nn *node, path *nodeStack) {
 //sorted_map.InfKey(sign int). A call to sorted_map.InfKey(1) returns a key
 //greater than any other key. A call to sorted_map.InfKey(-1) returns a key less
 //than any other key.
-func (m *Map) RangeLimit(start, end MapKey, fn func(MapKey, interface{}) bool) {
+func (m *Map) RangeLimit(
+	start, end sorted.Key,
+	fn func(sorted.Key, interface{}) bool,
+) {
 	var it = m.IterLimit(start, end)
 
 	//walk it
@@ -771,14 +778,14 @@ func (m *Map) RangeLimit(start, end MapKey, fn func(MapKey, interface{}) bool) {
 
 //Range() executes the given function on every key, value pair in order. If the
 //function returns false the traversal of key, value pairs will stop.
-func (m *Map) Range(fn func(MapKey, interface{}) bool) {
-	m.RangeLimit(ninf, pinf, fn)
+func (m *Map) Range(fn func(sorted.Key, interface{}) bool) {
+	m.RangeLimit(sorted.InfKey(-1), sorted.InfKey(1), fn)
 }
 
-//func (m *Map) Keys() []MapKey {
-//	var keys = make([]MapKey, m.NumEntries())
+//func (m *Map) Keys() []sorted.Key {
+//	var keys = make([]sorted.Key, m.NumEntries())
 //	var i int
-//	var fn = func(k MapKey, v interface{}) bool {
+//	var fn = func(k sorted.Key, v interface{}) bool {
 //		keys[i] = k
 //		i++
 //		return true

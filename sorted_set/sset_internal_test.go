@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/lleo/go-functional-collections/sorted"
 )
 
 func TestValidPos(t *testing.T) {
@@ -89,7 +91,7 @@ func TestValidNegRedRed(t *testing.T) {
 
 func TestValidNegNumEntries(t *testing.T) {
 	var s = New()
-	s.root = newNode(IntKey(10))
+	s.root = newNode(sorted.IntKey(10))
 	//s.numEnts = 0
 
 	var err = s.valid()

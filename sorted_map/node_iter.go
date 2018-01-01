@@ -1,8 +1,12 @@
 package sorted_map
 
+import (
+	"github.com/lleo/go-functional-collections/sorted"
+)
+
 type Iter struct {
 	dir    bool // true == lower-to-higher; false == higher-to-lower
-	endKey MapKey
+	endKey sorted.Key
 	cur    *node
 	path   *nodeStack
 }
@@ -10,7 +14,7 @@ type Iter struct {
 func newNodeIter(
 	dir bool,
 	start *node,
-	endKey MapKey,
+	endKey sorted.Key,
 	path *nodeStack,
 ) *Iter {
 	var iter = new(Iter)
@@ -21,7 +25,7 @@ func newNodeIter(
 	return iter
 }
 
-func (it *Iter) Next() (MapKey, interface{}) {
+func (it *Iter) Next() (sorted.Key, interface{}) {
 	if it.dir {
 		return it.forw()
 	} else {
@@ -29,7 +33,7 @@ func (it *Iter) Next() (MapKey, interface{}) {
 	}
 }
 
-func (it *Iter) forw() (MapKey, interface{}) {
+func (it *Iter) forw() (sorted.Key, interface{}) {
 	if it.cur == nil {
 		//the iterator is over
 		return nil, nil
@@ -56,7 +60,7 @@ func (it *Iter) forw() (MapKey, interface{}) {
 	return retKey, retVal
 }
 
-func (it *Iter) back() (MapKey, interface{}) {
+func (it *Iter) back() (sorted.Key, interface{}) {
 	if it.cur == nil {
 		//the iterator is over
 		return nil, nil
@@ -86,9 +90,9 @@ func (it *Iter) back() (MapKey, interface{}) {
 func (it *Iter) toFar() bool {
 	if it.dir {
 		// lower to higher
-		return less(it.endKey, it.cur.key) // cur <= end
+		return sorted.Less(it.endKey, it.cur.key) // cur <= end
 	} else {
 		// higher to lower
-		return less(it.cur.key, it.endKey) // end <= cur
+		return sorted.Less(it.cur.key, it.endKey) // end <= cur
 	}
 }

@@ -3,6 +3,8 @@ package sorted_set
 import (
 	"log"
 	"testing"
+
+	"github.com/lleo/go-functional-collections/sorted"
 )
 
 func TestBasicIsSetPos(t *testing.T) {
@@ -11,10 +13,10 @@ func TestBasicIsSetPos(t *testing.T) {
 			mknod(10, red, nil, nil),
 			mknod(30, red, nil, nil)))
 
-	var isSet = s.IsSet(IntKey(20))
+	var isSet = s.IsSet(sorted.IntKey(20))
 
 	if !isSet {
-		t.Fatal("IsSet(IntKey(20)) returned false")
+		t.Fatal("IsSet(sorted.IntKey(20)) returned false")
 	}
 }
 
@@ -24,10 +26,10 @@ func TestBasicIsSetNeg(t *testing.T) {
 			mknod(10, red, nil, nil),
 			mknod(30, red, nil, nil)))
 
-	var isSet = s.IsSet(IntKey(40))
+	var isSet = s.IsSet(sorted.IntKey(40))
 
 	if isSet {
-		t.Fatal("s.IsSet(IntKey(40)) returned true")
+		t.Fatal("s.IsSet(sorted.IntKey(40)) returned true")
 	}
 }
 
@@ -40,7 +42,7 @@ func TestBasicAddReplace(t *testing.T) {
 	var origM0 = m0
 	var dupM0 = m0.dup()
 
-	var m1, added = m0.Add(IntKey(30))
+	var m1, added = m0.Add(sorted.IntKey(30))
 
 	if added {
 		t.Fatal("Add added new entry when it should not")
@@ -62,7 +64,7 @@ func TestBasicSetCase1(t *testing.T) {
 
 	//log.Printf("BEFORE Set s =\n%s", s.treeString())
 
-	s = s.Set(IntKey(10))
+	s = s.Set(sorted.IntKey(10))
 
 	//log.Printf("AFTER Set s =\n%s", s.treeString())
 
@@ -90,7 +92,7 @@ func TestBasicSetCase2(t *testing.T) {
 
 	//log.Printf("BEFORE Set s =\n%s", s.treeString())
 
-	s = s.Set(IntKey(30))
+	s = s.Set(sorted.IntKey(30))
 
 	//log.Printf("AFTER Set s =\n%s", s.treeString())
 
@@ -123,7 +125,7 @@ func TestBasicSetCase3(t *testing.T) {
 
 	//log.Printf("BEFORE Set s =\n%s", s.treeString())
 
-	s = s.Set(IntKey(60))
+	s = s.Set(sorted.IntKey(60))
 
 	//log.Printf("AFTER Set s =\n%s", s.treeString())
 
@@ -156,7 +158,7 @@ func TestBasicSetCase4(t *testing.T) {
 
 	//log.Printf("BEFORE Set s =\n%s", s.treeString())
 
-	s = s.Set(IntKey(30))
+	s = s.Set(sorted.IntKey(30))
 
 	//log.Printf("AFTER Set s =\n%s", s.treeString())
 
@@ -179,7 +181,7 @@ func TestBasicRemoveNeg(t *testing.T) {
 			mknod(10, red, nil, nil),
 			mknod(30, red, nil, nil)))
 
-	var m1, found = m0.Remove(IntKey(40))
+	var m1, found = m0.Remove(sorted.IntKey(40))
 
 	if found {
 		t.Fatal("found a key that does not exist")
@@ -197,7 +199,7 @@ func TestBasicUnsetCase1Tree0(t *testing.T) {
 	var then = m0.treeString()
 	//var dupM0 = m0.dup()
 
-	var m1 = m0.Unset(IntKey(10))
+	var m1 = m0.Unset(sorted.IntKey(10))
 
 	if m1.NumEntries() != 0 {
 		t.Fatal("s.NumEntries() != 0")
@@ -224,7 +226,7 @@ func TestBasicUnsetCase1Tree1(t *testing.T) {
 
 	var then = m0.treeString()
 
-	var m1 = m0.Unset(IntKey(10))
+	var m1 = m0.Unset(sorted.IntKey(10))
 
 	if m1.NumEntries() != 1 {
 		t.Fatal("s.NumEntries() != 1")
@@ -247,7 +249,7 @@ func TestBasicUnsetCase1Tree2(t *testing.T) {
 
 	var then = m0.treeString()
 
-	var m1 = m0.Unset(IntKey(20))
+	var m1 = m0.Unset(sorted.IntKey(20))
 
 	if m1.NumEntries() != 1 {
 		t.Fatal("s.NumEntries() != 1")
@@ -272,7 +274,7 @@ func TestBasicUnsetCase2Tree0(t *testing.T) {
 
 	//log.Printf("BEFORE REMOVE: Set s=\n%s", s.treeString())
 
-	s = s.Unset(IntKey(30))
+	s = s.Unset(sorted.IntKey(30))
 
 	//log.Printf("AFTER REMOVE Set s=\n%s", s.treeString())
 
@@ -302,7 +304,7 @@ func TestBasicUnsetCase2Tree1(t *testing.T) {
 
 	//log.Printf("BEFORE REMOVE: Set s=\n%s", s.treeString())
 
-	s = s.Unset(IntKey(10))
+	s = s.Unset(sorted.IntKey(10))
 
 	//log.Printf("AFTER REMOVE Set s=\n%s", s.treeString())
 
@@ -330,7 +332,7 @@ func TestBasicUnsetCase3Tree0(t *testing.T) {
 			mknod(30, black, nil, nil),
 		))
 
-	s = s.Unset(IntKey(30))
+	s = s.Unset(sorted.IntKey(30))
 	if s.NumEntries() != 2 {
 		t.Fatalf("s.NumEntries(),%d != 2", s.NumEntries())
 	}
@@ -364,7 +366,7 @@ func TestBasicUnsetCase6Tree0(t *testing.T) {
 
 	//log.Printf("origSetStr0 =\n%s", origSetStr0)
 
-	s = s.Unset(IntKey(30))
+	s = s.Unset(sorted.IntKey(30))
 
 	if s.NumEntries() != 5 {
 		t.Fatalf("s.NumEntries(),%d != 5", s.NumEntries())
@@ -391,13 +393,13 @@ func TestBasicUnsetTwoChildTree0(t *testing.T) {
 				mknod(50, black, nil, nil),
 				mknod(80, black, nil, nil))))
 
-	var shouldHaveKeys = []SetKey{
-		IntKey(10),
-		IntKey(30),
-		IntKey(40),
-		IntKey(50),
-		IntKey(70),
-		IntKey(80),
+	var shouldHaveKeys = []sorted.Key{
+		sorted.IntKey(10),
+		sorted.IntKey(30),
+		sorted.IntKey(40),
+		sorted.IntKey(50),
+		sorted.IntKey(70),
+		sorted.IntKey(80),
 	}
 
 	var origM = s
@@ -406,12 +408,12 @@ func TestBasicUnsetTwoChildTree0(t *testing.T) {
 
 	//log.Printf("BEFORE DEL s = \n%s", s.treeString())
 
-	s = s.Unset(IntKey(20))
+	s = s.Unset(sorted.IntKey(20))
 
 	//log.Printf("AFTER DEL s = \n%s", s.treeString())
 
 	if err := s.valid(); err != nil {
-		t.Fatalf("INVALID TREE AFTER Unset(IntKey(20)); err=%s\n", err)
+		t.Fatalf("INVALID TREE AFTER Unset(sorted.IntKey(20)); err=%s\n", err)
 	}
 
 	if s.NumEntries() != 6 {
@@ -451,12 +453,12 @@ func TestBasicUnsetTwoChildTree1(t *testing.T) {
 				mknod(80, black, nil, nil))))
 
 	//shouldHave after Unset(70)
-	var shouldHaveKeys = []SetKey{
-		IntKey(10),
-		IntKey(30),
-		IntKey(40),
-		IntKey(50),
-		IntKey(80),
+	var shouldHaveKeys = []sorted.Key{
+		sorted.IntKey(10),
+		sorted.IntKey(30),
+		sorted.IntKey(40),
+		sorted.IntKey(50),
+		sorted.IntKey(80),
 	}
 
 	var origM = s
@@ -465,12 +467,12 @@ func TestBasicUnsetTwoChildTree1(t *testing.T) {
 
 	//log.Printf("BEFORE DEL s = \n%s", s.treeString())
 
-	s = s.Unset(IntKey(70))
+	s = s.Unset(sorted.IntKey(70))
 
 	//log.Printf("AFTER DEL s = \n%s", s.treeString())
 
 	if err := s.valid(); err != nil {
-		t.Fatalf("INVALID TREE AFTER Del(IntKey(70)); err=%s\n", err)
+		t.Fatalf("INVALID TREE AFTER Del(sorted.IntKey(70)); err=%s\n", err)
 	}
 
 	if s.NumEntries() != 5 {
@@ -507,11 +509,11 @@ func TestBasicUnsetTwoChildTree2(t *testing.T) {
 				mknod(80, black, nil, nil))))
 
 	//shouldHave after Unset(70)
-	var shouldHaveKeys = []SetKey{
-		IntKey(10),
-		IntKey(50),
-		IntKey(70),
-		IntKey(80),
+	var shouldHaveKeys = []sorted.Key{
+		sorted.IntKey(10),
+		sorted.IntKey(50),
+		sorted.IntKey(70),
+		sorted.IntKey(80),
 	}
 
 	var origM = s
@@ -520,12 +522,12 @@ func TestBasicUnsetTwoChildTree2(t *testing.T) {
 
 	//log.Printf("BEFORE DEL s = \n%s", s.treeString())
 
-	s = s.Unset(IntKey(40))
+	s = s.Unset(sorted.IntKey(40))
 
 	//log.Printf("AFTER DEL s = \n%s", s.treeString())
 
 	if err := s.valid(); err != nil {
-		t.Fatalf("INVALID TREE AFTER Unset(IntKey(40)); err=%s\n", err)
+		t.Fatalf("INVALID TREE AFTER Unset(sorted.IntKey(40)); err=%s\n", err)
 	}
 
 	if s.NumEntries() != 4 {
@@ -564,12 +566,12 @@ func TestBasicUnsetTwoChildTree3(t *testing.T) {
 			mknod(80, black, nil, nil)))
 
 	//shouldHave after Unset(20)
-	var shouldHaveKeys = []SetKey{
-		IntKey(10),
-		IntKey(30),
-		IntKey(40),
-		IntKey(50),
-		IntKey(80),
+	var shouldHaveKeys = []sorted.Key{
+		sorted.IntKey(10),
+		sorted.IntKey(30),
+		sorted.IntKey(40),
+		sorted.IntKey(50),
+		sorted.IntKey(80),
 	}
 
 	var origM = s
@@ -578,12 +580,12 @@ func TestBasicUnsetTwoChildTree3(t *testing.T) {
 
 	//log.Printf("BEFORE DEL s = \n%s", s.treeString())
 
-	s = s.Unset(IntKey(20))
+	s = s.Unset(sorted.IntKey(20))
 
 	//log.Printf("AFTER DEL s = \n%s", s.treeString())
 
 	if err := s.valid(); err != nil {
-		t.Fatalf("INVALID TREE AFTER Unset(IntKey(20)); err=%s\n", err)
+		t.Fatalf("INVALID TREE AFTER Unset(sorted.IntKey(20)); err=%s\n", err)
 	}
 
 	if s.NumEntries() != 5 {
@@ -628,16 +630,16 @@ func TestBasicUnsetTwoChildTree4(t *testing.T) {
 	}
 
 	//shouldHave after Unset(80)
-	var shouldHaveKeys = []SetKey{
-		IntKey(10),
-		IntKey(20),
-		IntKey(30),
-		IntKey(40),
-		IntKey(50),
-		IntKey(60),
-		IntKey(70),
-		//IntKey(80),
-		IntKey(90),
+	var shouldHaveKeys = []sorted.Key{
+		sorted.IntKey(10),
+		sorted.IntKey(20),
+		sorted.IntKey(30),
+		sorted.IntKey(40),
+		sorted.IntKey(50),
+		sorted.IntKey(60),
+		sorted.IntKey(70),
+		//sorted.IntKey(80),
+		sorted.IntKey(90),
 	}
 
 	var origM = s
@@ -646,12 +648,12 @@ func TestBasicUnsetTwoChildTree4(t *testing.T) {
 
 	//log.Printf("BEFORE DEL s = \n%s", s.treeString())
 
-	s = s.Unset(IntKey(80))
+	s = s.Unset(sorted.IntKey(80))
 
 	//log.Printf("AFTER DEL s = \n%s", s.treeString())
 
 	if err := s.valid(); err != nil {
-		t.Fatalf("INVALID TREE AFTER Unset(IntKey(80)); err=%s\n", err)
+		t.Fatalf("INVALID TREE AFTER Unset(sorted.IntKey(80)); err=%s\n", err)
 	}
 
 	if s.NumEntries() != 8 {
@@ -699,28 +701,28 @@ func TestBasicRange(t *testing.T) {
 		t.Fatalf("INVALID TREE; err=%s\n", err)
 	}
 
-	var shouldHaveKeys = []SetKey{
-		IntKey(10),
-		IntKey(20),
-		IntKey(30),
-		IntKey(40),
-		IntKey(50),
-		IntKey(60),
-		IntKey(70),
-		IntKey(80),
-		IntKey(90),
-		IntKey(100),
-		IntKey(110),
-		IntKey(120),
-		IntKey(130),
+	var shouldHaveKeys = []sorted.Key{
+		sorted.IntKey(10),
+		sorted.IntKey(20),
+		sorted.IntKey(30),
+		sorted.IntKey(40),
+		sorted.IntKey(50),
+		sorted.IntKey(60),
+		sorted.IntKey(70),
+		sorted.IntKey(80),
+		sorted.IntKey(90),
+		sorted.IntKey(100),
+		sorted.IntKey(110),
+		sorted.IntKey(120),
+		sorted.IntKey(130),
 	}
 
 	var i int
-	var fn = func(k0 SetKey) bool {
+	var fn = func(k0 sorted.Key) bool {
 		var k1 = shouldHaveKeys[i]
 		//log.Printf("k0=%s;", k0)
 		//log.Printf("k1=%s;", k1)
-		if k0.Less(k1) || k1.Less(k0) {
+		if sorted.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		i++
@@ -749,36 +751,36 @@ func TestBasicRangeForwBeg(t *testing.T) {
 		t.Fatalf("INVALID TREE; err=%s\n", err)
 	}
 
-	var shouldHaveKeys = []SetKey{
-		IntKey(10),
-		IntKey(20),
-		IntKey(30),
-		IntKey(40),
-		IntKey(50),
-		IntKey(60),
-		IntKey(70),
-		IntKey(80),
-		IntKey(90),
-		IntKey(100),
-		IntKey(110),
-		IntKey(120),
-		IntKey(130),
+	var shouldHaveKeys = []sorted.Key{
+		sorted.IntKey(10),
+		sorted.IntKey(20),
+		sorted.IntKey(30),
+		sorted.IntKey(40),
+		sorted.IntKey(50),
+		sorted.IntKey(60),
+		sorted.IntKey(70),
+		sorted.IntKey(80),
+		sorted.IntKey(90),
+		sorted.IntKey(100),
+		sorted.IntKey(110),
+		sorted.IntKey(120),
+		sorted.IntKey(130),
 	}
 
 	//var numKeys = len(shouldHaveKeys)
 	var eltOffset = 3
-	var startKey = IntKey(eltOffset * 10)
-	var endKey = InfKey(1) //positive infinity
+	var startKey = sorted.IntKey(eltOffset * 10)
+	var endKey = sorted.InfKey(1) //positive infinity
 	var keyRange = shouldHaveKeys[eltOffset-1:]
 	var i = 0
-	var fn = func(k0 SetKey) bool {
+	var fn = func(k0 sorted.Key) bool {
 		if i >= len(keyRange) {
 			t.Fatalf("i,%d >= len(keyRange),%d", i, len(keyRange))
 		}
 		var k1 = keyRange[i]
 		//log.Printf("k0=%s;", k0)
 		//log.Printf("k1=%s;", k1)
-		if k0.Less(k1) || k1.Less(k0) {
+		if sorted.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		i++
@@ -810,36 +812,36 @@ func TestBasicRangeForwBegInexact(t *testing.T) {
 		t.Fatalf("INVALID TREE; err=%s\n", err)
 	}
 
-	var shouldHaveKeys = []SetKey{
-		IntKey(10),
-		IntKey(20),
-		IntKey(30),
-		IntKey(40),
-		IntKey(50),
-		IntKey(60),
-		IntKey(70),
-		IntKey(80),
-		IntKey(90),
-		IntKey(100),
-		IntKey(110),
-		IntKey(120),
-		IntKey(130),
+	var shouldHaveKeys = []sorted.Key{
+		sorted.IntKey(10),
+		sorted.IntKey(20),
+		sorted.IntKey(30),
+		sorted.IntKey(40),
+		sorted.IntKey(50),
+		sorted.IntKey(60),
+		sorted.IntKey(70),
+		sorted.IntKey(80),
+		sorted.IntKey(90),
+		sorted.IntKey(100),
+		sorted.IntKey(110),
+		sorted.IntKey(120),
+		sorted.IntKey(130),
 	}
 
 	//var numKeys = len(shouldHaveKeys)
 	var eltOffset = 2
-	var startKey = IntKey((eltOffset * 10) - 5) //IntKey(15)
-	var endKey = InfKey(1)                      //positive infinity
+	var startKey = sorted.IntKey((eltOffset * 10) - 5) //sorted.IntKey(15)
+	var endKey = sorted.InfKey(1)                      //positive infinity
 	var keyRange = shouldHaveKeys[eltOffset-1:]
 	var i = 0
-	var fn = func(k0 SetKey) bool {
+	var fn = func(k0 sorted.Key) bool {
 		if i >= len(keyRange) {
 			t.Fatalf("i,%d >= len(keyRange),%d", i, len(keyRange))
 		}
 		var k1 = keyRange[i]
 		//log.Printf("k0=%s;", k0)
 		//log.Printf("k1=%s;", k1)
-		if k0.Less(k1) || k1.Less(k0) {
+		if sorted.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		i++
@@ -871,36 +873,36 @@ func TestBasicRangeForwEnd(t *testing.T) {
 		t.Fatalf("INVALID TREE; err=%s\n", err)
 	}
 
-	var shouldHaveKeys = []SetKey{
-		IntKey(10),
-		IntKey(20),
-		IntKey(30),
-		IntKey(40),
-		IntKey(50),
-		IntKey(60),
-		IntKey(70),
-		IntKey(80),
-		IntKey(90),
-		IntKey(100),
-		IntKey(110),
-		IntKey(120),
-		IntKey(130),
+	var shouldHaveKeys = []sorted.Key{
+		sorted.IntKey(10),
+		sorted.IntKey(20),
+		sorted.IntKey(30),
+		sorted.IntKey(40),
+		sorted.IntKey(50),
+		sorted.IntKey(60),
+		sorted.IntKey(70),
+		sorted.IntKey(80),
+		sorted.IntKey(90),
+		sorted.IntKey(100),
+		sorted.IntKey(110),
+		sorted.IntKey(120),
+		sorted.IntKey(130),
 	}
 
 	var numKeys = len(shouldHaveKeys)
 	var eltOffset = 3
-	var startKey = InfKey(-1)                             //negative infinity
-	var endKey = IntKey((numKeys - eltOffset) * 10)       //IntKey(100)
-	var keyRange = shouldHaveKeys[:len(shouldHaveKeys)-3] //??
+	var startKey = sorted.InfKey(-1)                       //negative infinity
+	var endKey = sorted.IntKey((numKeys - eltOffset) * 10) //sorted.IntKey(100)
+	var keyRange = shouldHaveKeys[:len(shouldHaveKeys)-3]  //??
 	var i = 0
-	var fn = func(k0 SetKey) bool {
+	var fn = func(k0 sorted.Key) bool {
 		if i >= len(keyRange) {
 			t.Fatalf("i,%d >= len(keyRange),%d", i, len(keyRange))
 		}
 		var k1 = keyRange[i]
 		//log.Printf("k0=%s;", k0)
 		//log.Printf("k1=%s;", k1)
-		if k0.Less(k1) || k1.Less(k0) {
+		if sorted.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		i++
@@ -932,36 +934,36 @@ func TestBasicRangeForwEndInexact(t *testing.T) {
 		t.Fatalf("INVALID TREE; err=%s\n", err)
 	}
 
-	var shouldHaveKeys = []SetKey{
-		IntKey(10),
-		IntKey(20),
-		IntKey(30),
-		IntKey(40),
-		IntKey(50),
-		IntKey(60),
-		IntKey(70),
-		IntKey(80),
-		IntKey(90),
-		IntKey(100),
-		IntKey(110),
-		IntKey(120),
-		IntKey(130),
+	var shouldHaveKeys = []sorted.Key{
+		sorted.IntKey(10),
+		sorted.IntKey(20),
+		sorted.IntKey(30),
+		sorted.IntKey(40),
+		sorted.IntKey(50),
+		sorted.IntKey(60),
+		sorted.IntKey(70),
+		sorted.IntKey(80),
+		sorted.IntKey(90),
+		sorted.IntKey(100),
+		sorted.IntKey(110),
+		sorted.IntKey(120),
+		sorted.IntKey(130),
 	}
 
 	var numKeys = len(shouldHaveKeys)
 	var eltOffset = 3
-	var startKey = InfKey(-1)                             //negative infinity
-	var endKey = IntKey((numKeys-eltOffset)*10 + 5)       //IntKey(105)
-	var keyRange = shouldHaveKeys[:len(shouldHaveKeys)-3] //??
+	var startKey = sorted.InfKey(-1)                       //negative infinity
+	var endKey = sorted.IntKey((numKeys-eltOffset)*10 + 5) //sorted.IntKey(105)
+	var keyRange = shouldHaveKeys[:len(shouldHaveKeys)-3]  //??
 	var i = 0
-	var fn = func(k0 SetKey) bool {
+	var fn = func(k0 sorted.Key) bool {
 		if i >= len(keyRange) {
 			t.Fatalf("i,%d >= len(keyRange),%d", i, len(keyRange))
 		}
 		var k1 = keyRange[i]
 		//log.Printf("k0=%s;", k0)
 		//log.Printf("k1=%s;", k1)
-		if k0.Less(k1) || k1.Less(k0) {
+		if sorted.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		i++
@@ -993,36 +995,36 @@ func TestBasicRangeRevBeg(t *testing.T) {
 		t.Fatalf("INVALID TREE; err=%s\n", err)
 	}
 
-	var shouldHaveKeys = []SetKey{
-		IntKey(10),
-		IntKey(20),
-		IntKey(30),
-		IntKey(40),
-		IntKey(50),
-		IntKey(60),
-		IntKey(70),
-		IntKey(80),
-		IntKey(90),
-		IntKey(100),
-		IntKey(110),
-		IntKey(120),
-		IntKey(130),
+	var shouldHaveKeys = []sorted.Key{
+		sorted.IntKey(10),
+		sorted.IntKey(20),
+		sorted.IntKey(30),
+		sorted.IntKey(40),
+		sorted.IntKey(50),
+		sorted.IntKey(60),
+		sorted.IntKey(70),
+		sorted.IntKey(80),
+		sorted.IntKey(90),
+		sorted.IntKey(100),
+		sorted.IntKey(110),
+		sorted.IntKey(120),
+		sorted.IntKey(130),
 	}
 
 	var numKeys = len(shouldHaveKeys)
 	var eltOffset = 3
 	var keyRange = shouldHaveKeys[:numKeys-eltOffset]
-	var startKey = IntKey((numKeys - eltOffset) * 10) //IntKey(100)
-	var endKey = InfKey(-1)                           //negative infinity
+	var startKey = sorted.IntKey((numKeys - eltOffset) * 10) //sorted.IntKey(100)
+	var endKey = sorted.InfKey(-1)                           //negative infinity
 	var i = len(keyRange) - 1
-	var fn = func(k0 SetKey) bool {
+	var fn = func(k0 sorted.Key) bool {
 		if i < 0 {
 			t.Fatalf("i,%d < 0", i)
 		}
 		var k1 = keyRange[i]
 		//log.Printf("k0=%s;", k0)
 		//log.Printf("k1=%s;", k1)
-		if k0.Less(k1) || k1.Less(k0) {
+		if sorted.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		i--
@@ -1055,36 +1057,36 @@ func TestBasicRangeRevBegInexact(t *testing.T) {
 		t.Fatalf("INVALID TREE; err=%s\n", err)
 	}
 
-	var shouldHaveKeys = []SetKey{
-		IntKey(10),
-		IntKey(20),
-		IntKey(30),
-		IntKey(40),
-		IntKey(50),
-		IntKey(60),
-		IntKey(70),
-		IntKey(80),
-		IntKey(90),
-		IntKey(100),
-		IntKey(110),
-		IntKey(120),
-		IntKey(130),
+	var shouldHaveKeys = []sorted.Key{
+		sorted.IntKey(10),
+		sorted.IntKey(20),
+		sorted.IntKey(30),
+		sorted.IntKey(40),
+		sorted.IntKey(50),
+		sorted.IntKey(60),
+		sorted.IntKey(70),
+		sorted.IntKey(80),
+		sorted.IntKey(90),
+		sorted.IntKey(100),
+		sorted.IntKey(110),
+		sorted.IntKey(120),
+		sorted.IntKey(130),
 	}
 
 	var numKeys = len(shouldHaveKeys)
 	var eltOffset = 3
 	var keyRange = shouldHaveKeys[:numKeys-eltOffset]
-	var startKey = IntKey((numKeys-eltOffset)*10 + 5) //IntKey(105)
-	var endKey = InfKey(-1)                           //negative infinity
+	var startKey = sorted.IntKey((numKeys-eltOffset)*10 + 5) //sorted.IntKey(105)
+	var endKey = sorted.InfKey(-1)                           //negative infinity
 	var i = len(keyRange) - 1
-	var fn = func(k0 SetKey) bool {
+	var fn = func(k0 sorted.Key) bool {
 		if i < 0 {
 			t.Fatalf("i,%d < 0", i)
 		}
 		var k1 = keyRange[i]
 		//log.Printf("k0=%s;", k0)
 		//log.Printf("k1=%s;", k1)
-		if k0.Less(k1) || k1.Less(k0) {
+		if sorted.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		i--
@@ -1117,36 +1119,36 @@ func TestBasicRangeRevEnd(t *testing.T) {
 		t.Fatalf("INVALID TREE; err=%s\n", err)
 	}
 
-	var shouldHaveKeys = []SetKey{
-		IntKey(10),
-		IntKey(20),
-		IntKey(30),
-		IntKey(40),
-		IntKey(50),
-		IntKey(60),
-		IntKey(70),
-		IntKey(80),
-		IntKey(90),
-		IntKey(100),
-		IntKey(110),
-		IntKey(120),
-		IntKey(130),
+	var shouldHaveKeys = []sorted.Key{
+		sorted.IntKey(10),
+		sorted.IntKey(20),
+		sorted.IntKey(30),
+		sorted.IntKey(40),
+		sorted.IntKey(50),
+		sorted.IntKey(60),
+		sorted.IntKey(70),
+		sorted.IntKey(80),
+		sorted.IntKey(90),
+		sorted.IntKey(100),
+		sorted.IntKey(110),
+		sorted.IntKey(120),
+		sorted.IntKey(130),
 	}
 
 	//var numKeys = len(shouldHaveKeys)
 	var eltOffset = 3
-	var startKey = InfKey(1)                    //positive infinity
-	var endKey = IntKey(eltOffset * 10)         //IntKey(30)
+	var startKey = sorted.InfKey(1)             //positive infinity
+	var endKey = sorted.IntKey(eltOffset * 10)  //sorted.IntKey(30)
 	var keyRange = shouldHaveKeys[eltOffset-1:] //??
 	var i = len(keyRange) - 1
-	var fn = func(k0 SetKey) bool {
+	var fn = func(k0 sorted.Key) bool {
 		if i < 0 {
 			t.Fatalf("i,%d < 0", i)
 		}
 		var k1 = keyRange[i]
 		//log.Printf("k0=%s;", k0)
 		//log.Printf("k1=%s;", k1)
-		if k0.Less(k1) || k1.Less(k0) {
+		if sorted.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		i--
@@ -1178,36 +1180,36 @@ func TestBasicRangeRevEndInexact(t *testing.T) {
 		t.Fatalf("INVALID TREE; err=%s\n", err)
 	}
 
-	var shouldHaveKeys = []SetKey{
-		IntKey(10),
-		IntKey(20),
-		IntKey(30),
-		IntKey(40),
-		IntKey(50),
-		IntKey(60),
-		IntKey(70),
-		IntKey(80),
-		IntKey(90),
-		IntKey(100),
-		IntKey(110),
-		IntKey(120),
-		IntKey(130),
+	var shouldHaveKeys = []sorted.Key{
+		sorted.IntKey(10),
+		sorted.IntKey(20),
+		sorted.IntKey(30),
+		sorted.IntKey(40),
+		sorted.IntKey(50),
+		sorted.IntKey(60),
+		sorted.IntKey(70),
+		sorted.IntKey(80),
+		sorted.IntKey(90),
+		sorted.IntKey(100),
+		sorted.IntKey(110),
+		sorted.IntKey(120),
+		sorted.IntKey(130),
 	}
 
 	//var numKeys = len(shouldHaveKeys)
 	var eltOffset = 3
-	var startKey = InfKey(1)                    //positive infinity
-	var endKey = IntKey(eltOffset*10 - 5)       //IntKey(25)
-	var keyRange = shouldHaveKeys[eltOffset-1:] //??
+	var startKey = sorted.InfKey(1)              //positive infinity
+	var endKey = sorted.IntKey(eltOffset*10 - 5) //sorted.IntKey(25)
+	var keyRange = shouldHaveKeys[eltOffset-1:]  //??
 	var i = len(keyRange) - 1
-	var fn = func(k0 SetKey) bool {
+	var fn = func(k0 sorted.Key) bool {
 		if i < 0 {
 			t.Fatalf("i,%d < 0", i)
 		}
 		var k1 = keyRange[i]
 		//log.Printf("k0=%s;", k0)
 		//log.Printf("k1=%s;", k1)
-		if k0.Less(k1) || k1.Less(k0) {
+		if sorted.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		i--
@@ -1236,9 +1238,9 @@ func TestBasicRangeForwToSmall(t *testing.T) {
 					mknod(110, red, nil, nil),
 					mknod(130, red, nil, nil)))))
 
-	var startKey = IntKey(62)
-	var endKey = IntKey(68)
-	var fn = func(k SetKey) bool {
+	var startKey = sorted.IntKey(62)
+	var endKey = sorted.IntKey(68)
+	var fn = func(k sorted.Key) bool {
 		t.Fatalf("node found where no node should be found.k=%s;", k)
 		return true
 	}
@@ -1262,9 +1264,9 @@ func TestBasicRangeRevToSmall(t *testing.T) {
 					mknod(110, red, nil, nil),
 					mknod(130, red, nil, nil)))))
 
-	var startKey = IntKey(58)
-	var endKey = IntKey(52)
-	var fn = func(k SetKey) bool {
+	var startKey = sorted.IntKey(58)
+	var endKey = sorted.IntKey(52)
+	var fn = func(k sorted.Key) bool {
 		t.Fatalf("node found where no node should be found.k=%s;", k)
 		return true
 	}
@@ -1288,9 +1290,9 @@ func TestBasicRangeForwToFarAbove(t *testing.T) {
 					mknod(110, red, nil, nil),
 					mknod(130, red, nil, nil)))))
 
-	var startKey = IntKey(200)
-	var endKey = IntKey(300)
-	var fn = func(k SetKey) bool {
+	var startKey = sorted.IntKey(200)
+	var endKey = sorted.IntKey(300)
+	var fn = func(k sorted.Key) bool {
 		t.Fatalf("node found where no node should be found.k=%s;", k)
 		return true
 	}
@@ -1314,9 +1316,9 @@ func TestBasicRangeRevToFarAbove(t *testing.T) {
 					mknod(110, red, nil, nil),
 					mknod(130, red, nil, nil)))))
 
-	var startKey = IntKey(300)
-	var endKey = IntKey(200)
-	var fn = func(k SetKey) bool {
+	var startKey = sorted.IntKey(300)
+	var endKey = sorted.IntKey(200)
+	var fn = func(k sorted.Key) bool {
 		t.Fatalf("node found where no node should be found.k=%s;", k)
 		return true
 	}
@@ -1340,9 +1342,9 @@ func TestBasicRangeForwToFarBelow(t *testing.T) {
 					mknod(110, red, nil, nil),
 					mknod(130, red, nil, nil)))))
 
-	var startKey = IntKey(-100)
-	var endKey = IntKey(0)
-	var fn = func(k SetKey) bool {
+	var startKey = sorted.IntKey(-100)
+	var endKey = sorted.IntKey(0)
+	var fn = func(k sorted.Key) bool {
 		t.Fatalf("node found where no node should be found.k=%s;", k)
 		return true
 	}
@@ -1366,9 +1368,9 @@ func TestBasicRangeRevToFarBelow(t *testing.T) {
 					mknod(110, red, nil, nil),
 					mknod(130, red, nil, nil)))))
 
-	var startKey = IntKey(0)
-	var endKey = IntKey(-100)
-	var fn = func(k SetKey) bool {
+	var startKey = sorted.IntKey(0)
+	var endKey = sorted.IntKey(-100)
+	var fn = func(k sorted.Key) bool {
 		t.Fatalf("node found where no node should be found.k=%s;", k)
 		return true
 	}
@@ -1391,11 +1393,11 @@ func TestBasicRangeStop(t *testing.T) {
 					mknod(110, red, nil, nil),
 					mknod(130, red, nil, nil)))))
 
-	var fn = func(k SetKey) bool {
-		if cmp(k, IntKey(60)) == 0 {
+	var fn = func(k sorted.Key) bool {
+		if sorted.Cmp(k, sorted.IntKey(60)) == 0 {
 			return false
 		}
-		if less(IntKey(60), k) {
+		if sorted.Less(sorted.IntKey(60), k) {
 			t.Fatal("encountered a key higher that the stop condition")
 		}
 		return true
@@ -1432,25 +1434,25 @@ func TestBasicSetString(t *testing.T) {
 //					mknod(110, red, nil, nil),
 //					mknod(130, red, nil, nil)))))
 //
-//	var shouldHaveKeys = []SetKey{
-//		IntKey(10),
-//		IntKey(20),
-//		IntKey(30),
-//		IntKey(40),
-//		IntKey(50),
-//		IntKey(60),
-//		IntKey(70),
-//		IntKey(80),
-//		IntKey(90),
-//		IntKey(100),
-//		IntKey(110),
-//		IntKey(120),
-//		IntKey(130),
+//	var shouldHaveKeys = []sorted.Key{
+//		sorted.IntKey(10),
+//		sorted.IntKey(20),
+//		sorted.IntKey(30),
+//		sorted.IntKey(40),
+//		sorted.IntKey(50),
+//		sorted.IntKey(60),
+//		sorted.IntKey(70),
+//		sorted.IntKey(80),
+//		sorted.IntKey(90),
+//		sorted.IntKey(100),
+//		sorted.IntKey(110),
+//		sorted.IntKey(120),
+//		sorted.IntKey(130),
 //	}
 //
 //	var foundKeys = s.Keys()
 //	for i, key := range shouldHaveKeys {
-//		if cmp(key, foundKeys[i]) != 0 {
+//		if sorted.Cmp(key, foundKeys[i]) != 0 {
 //			t.Fatalf("key,%s != foundKeys[%d],%s", key, i, foundKeys[i])
 //		}
 //	}

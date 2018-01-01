@@ -19,6 +19,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/lleo/go-functional-collections/sorted"
 )
 
 type Set struct {
@@ -54,11 +56,11 @@ func (s *Set) copy() *Set {
 }
 
 func (s *Set) Iter() *Iter {
-	return s.IterLimit(ninf, pinf)
+	return s.IterLimit(sorted.InfKey(-1), sorted.InfKey(1))
 }
 
-func (s *Set) IterLimit(startKey, endKey SetKey) *Iter {
-	var dir = less(startKey, endKey)
+func (s *Set) IterLimit(startKey, endKey sorted.Key) *Iter {
+	var dir = sorted.Less(startKey, endKey)
 	var cur, path = s.root.findNodeIterPath(startKey, dir)
 	if cur == nil {
 		cur = path.pop()
@@ -66,19 +68,19 @@ func (s *Set) IterLimit(startKey, endKey SetKey) *Iter {
 	return newNodeIter(dir, cur, endKey, path)
 }
 
-func (s *Set) IsSet(k SetKey) bool {
+func (s *Set) IsSet(k sorted.Key) bool {
 	var n = s.root.findNode(k)
 	return n != nil
 }
 
-func (s *Set) Set(k SetKey) *Set {
+func (s *Set) Set(k sorted.Key) *Set {
 	var nm, _ = s.Add(k)
 	return nm
 }
 
 // Add() inserts a new key and returns a new Set and a boolean
 // indicatiing if the key was added(true) or merely replaced(false).
-func (s *Set) Add(k SetKey) (*Set, bool) {
+func (s *Set) Add(k sorted.Key) (*Set, bool) {
 	var on, path = s.root.findNodeDupPath(k)
 	//path is duped and stiched, but not anchored to s.root
 
@@ -98,7 +100,7 @@ func (s *Set) Add(k SetKey) (*Set, bool) {
 //path MUST be non-zero length.
 //
 //insert() MUST be called on a new *Set.
-func (s *Set) insert(k SetKey, path *nodeStack) {
+func (s *Set) insert(k sorted.Key, path *nodeStack) {
 	var on *node        // = nil
 	var nn = newNode(k) //nn.isRed ALWAYS!
 
@@ -120,7 +122,7 @@ func (s *Set) persist(on, nn *node, path *nodeStack) {
 
 	var parent = path.peek()
 	if on == nil {
-		if less(nn.key, parent.key) {
+		if sorted.Less(nn.key, parent.key) {
 			parent.ln = nn
 		} else {
 			parent.rn = nn
@@ -263,7 +265,7 @@ func (s *Set) insertCase3(on, nn *node, path *nodeStack) {
 	var ogp = path.pop() //gp means grandparent
 
 	var ouncle *node
-	if less(oparent.key, ogp.key) {
+	if sorted.Less(oparent.key, ogp.key) {
 		ouncle = ogp.rn
 	} else {
 		ouncle = ogp.ln
@@ -272,7 +274,7 @@ func (s *Set) insertCase3(on, nn *node, path *nodeStack) {
 	var nparent = oparent.copy() //new parent, cuz I am mutating it.
 	nparent.setBlack()
 
-	if less(nn.key, oparent.key) {
+	if sorted.Less(nn.key, oparent.key) {
 		nparent.ln = nn
 	} else {
 		nparent.rn = nn
@@ -285,7 +287,7 @@ func (s *Set) insertCase3(on, nn *node, path *nodeStack) {
 	ngp.setRed()
 
 	//if oparent.isLeftChildOf(ogp) {
-	if less(oparent.key, ogp.key) {
+	if sorted.Less(oparent.key, ogp.key) {
 		ngp.ln = nparent
 		ngp.rn = nuncle
 	} else {
@@ -304,8 +306,8 @@ func (s *Set) insertCase4(on, nn *node, path *nodeStack) {
 	// insertCase4.1: conditional prep-rotate
 	// We pre-rotate when nn is the inner child of the grandparent.
 	//if nn.isLeftChildOf(nparent) && oparent.isRightChildOf(ogp) {
-	//if less(nn.key, oparent.key) && less(ogp.key, oparent.key) {
-	if less(nn.key, parent.key) && parent.isRightChildOf(gp) {
+	//if sorted.Less(nn.key, oparent.key) && sorted.Less(ogp.key, oparent.key) {
+	if sorted.Less(nn.key, parent.key) && parent.isRightChildOf(gp) {
 		parent.ln = nn
 
 		parent, nn = s.rotateRight(parent, gp)
@@ -313,7 +315,7 @@ func (s *Set) insertCase4(on, nn *node, path *nodeStack) {
 		path.push(nn)
 
 		nn = nn.rn //nn.rn == parent
-	} else if less(parent.key, nn.key) && parent.isLeftChildOf(gp) {
+	} else if sorted.Less(parent.key, nn.key) && parent.isLeftChildOf(gp) {
 		parent.rn = nn
 
 		parent, nn = s.rotateLeft(parent, gp)
@@ -330,7 +332,7 @@ func (s *Set) insertCase4pt2(on, nn *node, path *nodeStack) {
 	var parent = path.pop()
 	var gp = path.pop()
 
-	if less(nn.key, parent.key) {
+	if sorted.Less(nn.key, parent.key) {
 		parent.ln = nn
 	} else {
 		parent.rn = nn
@@ -373,14 +375,14 @@ func (s *Set) insertCase4pt2(on, nn *node, path *nodeStack) {
 // Del() calls Remove() but only returns the modified *Set.
 //
 // I wonder if this is inlined as Delete() may have.
-func (s *Set) Unset(k SetKey) *Set {
+func (s *Set) Unset(k sorted.Key) *Set {
 	var nm, _ = s.Remove(k)
 	return nm
 }
 
-// Remove() eliminates the node pointed to by the SetKey argument (and
+// Remove() eliminates the node pointed to by the sorted.Key argument (and
 // rebalances) a persistent version of the given *Set.
-func (s *Set) Remove(k SetKey) (*Set, bool) {
+func (s *Set) Remove(k sorted.Key) (*Set, bool) {
 	var on, path = s.root.findNodeDupPath(k)
 
 	if on == nil {
@@ -512,7 +514,7 @@ func (s *Set) deleteCase2(on, nn *node, path *nodeStack) {
 
 	if osibling.isRed() {
 		nsibling = osibling.copy()
-		if nsibling.key.Less(parent.key) {
+		if sorted.Less(nsibling.key, parent.key) {
 			//parent.rn = nn
 			parent.ln = nsibling
 		} else {
@@ -581,7 +583,7 @@ func (s *Set) deleteCase4(on, nn *node, path *nodeStack) {
 		osibling.rn.isBlack() {
 
 		var nsibling = osibling.copy()
-		//if on.key.Less(parent.key) {
+		//if sorted.Less(on.key, parent.key) {
 		if on.isLeftChildOf(parent) {
 			parent.rn = nsibling
 		} else {
@@ -705,7 +707,7 @@ func (s *Set) deleteCase6(on, nn *node, path *nodeStack) {
 //sorted_set.InfKey(sign int). A call to sorted_set.InfKey(1) returns a key
 //greater than any other key. A call to sorted_set.InfKey(-1) returns a key less
 //than any other key.
-func (s *Set) RangeLimit(start, end SetKey, fn func(SetKey) bool) {
+func (s *Set) RangeLimit(start, end sorted.Key, fn func(sorted.Key) bool) {
 	var it = s.IterLimit(start, end)
 
 	//walk it
@@ -718,14 +720,14 @@ func (s *Set) RangeLimit(start, end SetKey, fn func(SetKey) bool) {
 
 //Range() executes the given function on every key, value pair in order. If the
 //function returns false the traversal of key, value pairs will stop.
-func (s *Set) Range(fn func(SetKey) bool) {
-	s.RangeLimit(ninf, pinf, fn)
+func (s *Set) Range(fn func(sorted.Key) bool) {
+	s.RangeLimit(sorted.InfKey(-1), sorted.InfKey(1), fn)
 }
 
-//func (s *Set) Keys() []SetKey {
-//	var keys = make([]SetKey, s.NumEntries())
+//func (s *Set) Keys() []sorted.Key {
+//	var keys = make([]sorted.Key, s.NumEntries())
 //	var i int
-//	var fn = func(k SetKey) bool {
+//	var fn = func(k sorted.Key) bool {
 //		keys[i] = k
 //		i++
 //		return true

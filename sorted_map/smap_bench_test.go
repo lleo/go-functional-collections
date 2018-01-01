@@ -5,11 +5,12 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/lleo/go-functional-collections/sorted"
 	"github.com/lleo/go-functional-collections/sorted_map"
 )
 
 type KeyVal struct {
-	Key sorted_map.MapKey
+	Key sorted.Key
 	Val interface{}
 }
 
@@ -17,7 +18,7 @@ func buildKvs(numMapKvs, numKvsXtra int) ([]KeyVal, []KeyVal) {
 	var kvs = make([]KeyVal, numMapKvs+numKvsXtra)
 
 	for i := 0; i < numMapKvs+numKvsXtra; i++ {
-		kvs[i] = KeyVal{sorted_map.IntKey(i), i}
+		kvs[i] = KeyVal{sorted.IntKey(i), i}
 	}
 
 	//randomize kvs

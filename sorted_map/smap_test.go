@@ -4,8 +4,8 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"strconv"
 
+	"github.com/lleo/go-functional-collections/sorted"
 	"github.com/pkg/errors"
 )
 
@@ -23,31 +23,17 @@ func init() {
 	//log.Println("TESTING HAS STARTED...")
 }
 
-type IntKey int
-
-func (ik IntKey) Less(o MapKey) bool {
-	var oik, ok = o.(IntKey)
-	if !ok {
-		panic("o is not a IntKey")
-	}
-	return ik < oik
-}
-
-func (ik IntKey) String() string {
-	return strconv.Itoa(int(ik))
-}
-
 func mkmap(r *node) *Map {
 	var num = uint(r.count())
 	return &Map{num, r}
 }
 
 func mknod(i int, c colorType, ln, rn *node) *node {
-	return &node{IntKey(i), i, c, ln, rn}
+	return &node{sorted.IntKey(i), i, c, ln, rn}
 }
 
 type KeyVal struct {
-	Key MapKey
+	Key sorted.Key
 	Val interface{}
 }
 
@@ -56,7 +42,7 @@ func genIntKeyVals(n int) []KeyVal {
 
 	for i := 0; i < n; i++ {
 		var x = (i + 1) * 10
-		var k = IntKey(x)
+		var k = sorted.IntKey(x)
 		var v = x
 		kvs[i] = KeyVal{k, v}
 	}
