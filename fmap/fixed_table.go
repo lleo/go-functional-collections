@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lleo/go-functional-collections/fmap/hash"
+	"github.com/lleo/go-functional-collections/hash"
 )
 
 type fixedTable struct {
 	nodes    [hash.IndexLimit]nodeI
 	depth    uint
 	numEnts  uint
-	hashPath hash.HashVal
+	hashPath hash.Val
 }
 
 func (t *fixedTable) copy() tableI {
@@ -85,7 +85,7 @@ func createFixedTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
 }
 
 func upgradeToFixedTable(
-	hashPath hash.HashVal,
+	hashPath hash.Val,
 	depth uint,
 	ents []tableEntry,
 ) *fixedTable {
@@ -104,7 +104,7 @@ func upgradeToFixedTable(
 
 // hash returns an incomplete hash of this table. Any levels past it's current
 // depth should be zero.
-func (t *fixedTable) hash() hash.HashVal {
+func (t *fixedTable) hash() hash.Val {
 	return t.hashPath
 }
 
@@ -115,9 +115,9 @@ func (t *fixedTable) String() string {
 		t.hashPath.HashPathString(t.depth), t.depth, t.numEntries())
 }
 
-// LongString returns a string representation of this table and all the tables
+// treeString returns a string representation of this table and all the tables
 // contained herein recursively.
-func (t *fixedTable) LongString(indent string, depth uint) string {
+func (t *fixedTable) treeString(indent string, depth uint) string {
 	var strs = make([]string, 3+t.numEntries())
 
 	strs[0] = indent + "fixedTable{"
@@ -129,7 +129,7 @@ func (t *fixedTable) LongString(indent string, depth uint) string {
 		if t.nodes[i] != nil {
 			if t, isTable := t.nodes[i].(tableI); isTable {
 				strs[2+j] = indent + fmt.Sprintf("\tnodes[%d]:\n", i) +
-					t.LongString(indent+"\t", depth+1)
+					t.treeString(indent+"\t", depth+1)
 			} else {
 				strs[2+j] = indent + fmt.Sprintf("\tnodes[%d]: %s", i, n)
 			}

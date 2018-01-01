@@ -2,12 +2,14 @@ package set
 
 import (
 	"fmt"
+
+	"github.com/lleo/go-functional-collections/hash"
 )
 
 // keyVal is a simple struct used to transfer lists ([]keyVal) from one
 // function to another.
 type keyVal struct {
-	Key SetKey
+	Key hash.Key
 	Val interface{}
 }
 

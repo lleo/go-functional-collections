@@ -2,12 +2,14 @@ package fmap
 
 import (
 	"fmt"
+
+	"github.com/lleo/go-functional-collections/hash"
 )
 
 // keyVal is a simple struct used to transfer lists ([]keyVal) from one
 // function to another.
 type keyVal struct {
-	Key MapKey
+	Key hash.Key
 	Val interface{}
 }
 

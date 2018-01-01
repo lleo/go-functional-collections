@@ -6,8 +6,8 @@ import (
 	"math/rand"
 	"os"
 
+	"github.com/lleo/go-functional-collections/hash"
 	"github.com/lleo/go-functional-collections/set"
-	"github.com/lleo/go-functional-collections/set/hash"
 	"github.com/lleo/stringutil"
 	"github.com/pkg/errors"
 )
@@ -27,11 +27,11 @@ var Inc = stringutil.Lower.Inc
 
 type StringKey string
 
-func (sk StringKey) Hash() hash.HashVal {
+func (sk StringKey) Hash() hash.Val {
 	return hash.CalcHash([]byte(sk))
 }
 
-func (sk StringKey) Equals(other set.SetKey) bool {
+func (sk StringKey) Equals(other hash.Key) bool {
 	var osk, ok = other.(StringKey)
 	if !ok {
 		return false
@@ -43,8 +43,8 @@ func (sk StringKey) String() string {
 	return string(sk)
 }
 
-func buildKeys(num int) []set.SetKey {
-	var keys = make([]set.SetKey, num)
+func buildKeys(num int) []hash.Key {
+	var keys = make([]hash.Key, num)
 
 	var keyStr = "a"
 	for i := 0; i < num; i++ {
@@ -67,8 +67,8 @@ func buildStrings(num int) []string {
 	return strs
 }
 
-func buildKeysFromStrings(strs []string) []set.SetKey {
-	var keys = make([]set.SetKey, len(strs))
+func buildKeysFromStrings(strs []string) []hash.Key {
+	var keys = make([]hash.Key, len(strs))
 
 	for i := 0; i < len(strs); i++ {
 		keys[i] = StringKey(strs[i])
@@ -77,8 +77,8 @@ func buildKeysFromStrings(strs []string) []set.SetKey {
 	return keys
 }
 
-func randomizeKeys(keys []set.SetKey) []set.SetKey {
-	var randKeys = make([]set.SetKey, len(keys))
+func randomizeKeys(keys []hash.Key) []hash.Key {
+	var randKeys = make([]hash.Key, len(keys))
 	copy(randKeys, keys)
 
 	//randomize keys
@@ -91,7 +91,7 @@ func randomizeKeys(keys []set.SetKey) []set.SetKey {
 	return randKeys
 }
 
-func buildSet(keys []set.SetKey) *set.Set {
+func buildSet(keys []hash.Key) *set.Set {
 	var m = set.New()
 	for _, key := range keys {
 		m = m.Set(key)

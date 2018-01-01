@@ -3,7 +3,7 @@ package set
 import (
 	"fmt"
 
-	"github.com/lleo/go-functional-collections/set/hash"
+	"github.com/lleo/go-functional-collections/hash"
 )
 
 type tableIterStack []tableIterFunc

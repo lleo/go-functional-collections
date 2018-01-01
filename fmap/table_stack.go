@@ -3,7 +3,7 @@ package fmap
 import (
 	"strings"
 
-	"github.com/lleo/go-functional-collections/fmap/hash"
+	"github.com/lleo/go-functional-collections/hash"
 )
 
 type tableStack []tableI

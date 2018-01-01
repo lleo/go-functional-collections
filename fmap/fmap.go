@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lleo/go-functional-collections/fmap/hash"
+	"github.com/lleo/go-functional-collections/hash"
 )
 
 // downgradeThreshold is the constant that sets the threshold for the size of a
@@ -42,12 +42,6 @@ type Map struct {
 	numEnts uint
 }
 
-type MapKey interface {
-	Hash() hash.HashVal
-	Equals(MapKey) bool
-	String() string
-}
-
 func New() *Map {
 	return new(Map)
 }
@@ -60,15 +54,15 @@ func (m *Map) copy() *Map {
 
 // Get loads the value stored for the given key. If the key doesn't exist in the
 // map a nil is returned.
-func (m *Map) Get(key MapKey) interface{} {
+func (m *Map) Get(key hash.Key) interface{} {
 	var v, _ = m.Load(key)
 	return v
 }
 
-// Load retrieves the value related to the MapKey in the Map data structure.
+// Load retrieves the value related to the hash.Key in the Map data structure.
 // It also return a bool to indicate the value was found. This allows you to
 // store nil values in the Map data structure.
-func (m *Map) Load(key MapKey) (interface{}, bool) {
+func (m *Map) Load(key hash.Key) (interface{}, bool) {
 	if m.NumEntries() == 0 {
 		return nil, false
 	}
@@ -99,10 +93,10 @@ DepthIter:
 	return val, found
 }
 
-// find() traverses the path defined by the given HashVal till it encounters
+// find() traverses the path defined by the given Val till it encounters
 // a leafI, then it returns the table path leading to the current table (also
 // returned) and the Index in the current table the leaf is at.
-func (m *Map) find(hv hash.HashVal) (*tableStack, leafI, uint) {
+func (m *Map) find(hv hash.Val) (*tableStack, leafI, uint) {
 	var curTable tableI = &m.root
 
 	var path = newTableStack()
@@ -175,7 +169,7 @@ func (m *Map) persist(oldTable, newTable tableI, path *tableStack) {
 // value was loaded, false if stored. Lastly, if the result was loaded the
 // returned map is the original *Map, if the val was stored the returned *Map
 // is the new persistent *Map.
-func (m *Map) LoadOrStore(key MapKey, val interface{}) (
+func (m *Map) LoadOrStore(key hash.Key, val interface{}) (
 	*Map, interface{}, bool,
 ) {
 	var hv = key.Hash()
@@ -260,7 +254,7 @@ func (m *Map) LoadOrStore(key MapKey, val interface{}) (
 
 // Put stores a new (key,value) pair in the Map. It returns a new persistent
 // *Map data structure.
-func (m *Map) Put(key MapKey, val interface{}) *Map {
+func (m *Map) Put(key hash.Key, val interface{}) *Map {
 	m, _ = m.Store(key, val)
 	return m
 }
@@ -268,7 +262,7 @@ func (m *Map) Put(key MapKey, val interface{}) *Map {
 // Store stores a new (key,value) pair in the Map. It returns a new persistent
 // *Map data structure and a bool indicating if a new pair was added (true)
 // or if the value merely replaced a prior value (false).
-func (m *Map) Store(key MapKey, val interface{}) (*Map, bool) {
+func (m *Map) Store(key hash.Key, val interface{}) (*Map, bool) {
 	var nm = m.copy()
 
 	var hv = key.Hash()
@@ -339,7 +333,7 @@ func (m *Map) Store(key MapKey, val interface{}) (*Map, bool) {
 // Del deletes any entry with the given key, but does not indicate if the key
 // existed or not. However, if the key did not exist the returned *Map will be
 // the original *Map.
-func (m *Map) Del(key MapKey) *Map {
+func (m *Map) Del(key hash.Key) *Map {
 	m, _, _ = m.Remove(key)
 	return m
 }
@@ -347,7 +341,7 @@ func (m *Map) Del(key MapKey) *Map {
 // Remove deletes any entry with the given key. It returns and new persisten
 // *Map data structure, the value that was stored with that key, and a boolean
 // idicating if the key was found and deleted.
-func (m *Map) Remove(key MapKey) (*Map, interface{}, bool) {
+func (m *Map) Remove(key hash.Key) (*Map, interface{}, bool) {
 	if m.numEnts == 0 {
 		return m, nil, false
 	}
@@ -460,7 +454,7 @@ LOOP:
 	return it
 }
 
-func (m *Map) Range(fn func(MapKey, interface{}) bool) {
+func (m *Map) Range(fn func(hash.Key, interface{}) bool) {
 	//var visitLeafs = func(n nodeI, depth uint) bool {
 	//	if leaf, ok := n.(leafI); ok {
 	//		for _, kv := range leaf.keyVals() {
@@ -489,7 +483,7 @@ func (m *Map) NumEntries() uint {
 func (m *Map) String() string {
 	var ents = make([]string, m.NumEntries())
 	var i int = 0
-	m.Range(func(k MapKey, v interface{}) bool {
+	m.Range(func(k hash.Key, v interface{}) bool {
 		//log.Printf("i=%d, k=%#v, v=%#v\n", i, k, v)
 		ents[i] = fmt.Sprintf("%#v:%#v", k, v)
 		i++
@@ -513,7 +507,7 @@ func (m *Map) treeString(indent string) string {
 
 //type Stats struct {
 //	DeepestKeys struct {
-//		Keys  []MapKey
+//		Keys  []hash.Key
 //		Depth uint
 //	}
 //

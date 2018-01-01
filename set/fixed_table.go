@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lleo/go-functional-collections/set/hash"
+	"github.com/lleo/go-functional-collections/hash"
 )
 
 type fixedTable struct {
 	nodes    [hash.IndexLimit]nodeI
 	depth    uint
 	numEnts  uint
-	hashPath hash.HashVal
+	hashPath hash.Val
 }
 
 func (t *fixedTable) copy() tableI {
@@ -85,7 +85,7 @@ func createFixedTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
 }
 
 func upgradeToFixedTable(
-	hashPath hash.HashVal,
+	hashPath hash.Val,
 	depth uint,
 	ents []tableEntry,
 ) *fixedTable {
@@ -104,7 +104,7 @@ func upgradeToFixedTable(
 
 // hash returns an incomplete hash of this table. Any levels past it's current
 // depth should be zero.
-func (t *fixedTable) hash() hash.HashVal {
+func (t *fixedTable) hash() hash.Val {
 	return t.hashPath
 }
 

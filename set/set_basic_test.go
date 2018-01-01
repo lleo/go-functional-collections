@@ -4,6 +4,7 @@ import (
 	"log"
 	"testing"
 
+	"github.com/lleo/go-functional-collections/hash"
 	"github.com/lleo/go-functional-collections/set"
 )
 
@@ -112,7 +113,7 @@ func TestBasicRemove(t *testing.T) {
 	}
 
 	var found bool
-	var key set.SetKey
+	var key hash.Key
 
 	key = StringKey("d")
 	s, found = s.Remove(key)

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lleo/go-functional-collections/fmap/hash"
+	"github.com/lleo/go-functional-collections/hash"
 )
 
 // sparseTableInitCap constant sets the default capacity of a new
@@ -14,7 +14,7 @@ const sparseTableInitCap int = 2
 type sparseTable struct {
 	nodes    []nodeI
 	depth    uint
-	hashPath hash.HashVal
+	hashPath hash.Val
 	nodeMap  bitmap
 }
 
@@ -98,7 +98,7 @@ func createSparseTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
 // The ents []tableEntry slice is guaranteed to be in order from lowest idx to
 // highest. tableI.entries() also adhears to this contract.
 func downgradeToSparseTable(
-	hashPath hash.HashVal,
+	hashPath hash.Val,
 	depth uint,
 	ents []tableEntry,
 ) *sparseTable {
@@ -118,7 +118,7 @@ func downgradeToSparseTable(
 
 // hash returns an incomplete hash of this table. Any levels past it's current
 // depth should be zero.
-func (t *sparseTable) hash() hash.HashVal {
+func (t *sparseTable) hash() hash.Val {
 	return t.hashPath
 }
 
@@ -129,9 +129,9 @@ func (t *sparseTable) String() string {
 		t.hashPath.HashPathString(t.depth), t.depth, t.numEntries())
 }
 
-// LongString returns a string representation of this table and all the tables
+// treeString returns a string representation of this table and all the tables
 // contained herein recursively.
-func (t *sparseTable) LongString(indent string, depth uint) string {
+func (t *sparseTable) treeString(indent string, depth uint) string {
 	var strs = make([]string, 3+len(t.nodes))
 
 	strs[0] = indent +
@@ -145,7 +145,7 @@ func (t *sparseTable) LongString(indent string, depth uint) string {
 		if t, isTable := n.(tableI); isTable {
 			strs[2+i] = indent +
 				fmt.Sprintf("\tt.nodes[%d]:\n%s",
-					idx, t.LongString(indent+"\t", depth+1))
+					idx, t.treeString(indent+"\t", depth+1))
 		} else {
 			strs[2+i] = indent + fmt.Sprintf("\tt.nodes[%d]: %s", idx, n)
 		}

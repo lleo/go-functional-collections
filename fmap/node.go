@@ -3,7 +3,7 @@ package fmap
 import (
 	"fmt"
 
-	"github.com/lleo/go-functional-collections/fmap/hash"
+	"github.com/lleo/go-functional-collections/hash"
 )
 
 // visitFn will be passed a value for every slot in the Hamt; this includes
@@ -14,7 +14,7 @@ import (
 type visitFn func(nodeI, uint) bool
 
 type nodeI interface {
-	hash() hash.HashVal
+	hash() hash.Val
 	visit(fn visitFn, depth uint) (error, bool)
 	String() string
 }
@@ -22,9 +22,9 @@ type nodeI interface {
 type leafI interface {
 	nodeI
 
-	get(key MapKey) (interface{}, bool)
-	put(key MapKey, val interface{}) (leafI, bool)
-	del(key MapKey) (leafI, interface{}, bool)
+	get(key hash.Key) (interface{}, bool)
+	put(key hash.Key, val interface{}) (leafI, bool)
+	del(key hash.Key) (leafI, interface{}, bool)
 	keyVals() []keyVal
 }
 

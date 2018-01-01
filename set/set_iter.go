@@ -2,6 +2,8 @@ package set
 
 import (
 	"fmt"
+
+	"github.com/lleo/go-functional-collections/hash"
 )
 
 type Iter struct {
@@ -20,9 +22,9 @@ func newIter(root tableI) *Iter {
 	return it
 }
 
-func (it *Iter) Next() SetKey {
+func (it *Iter) Next() hash.Key {
 	//log.Printf("it.Next: called. it=%s", it)
-	var key SetKey
+	var key hash.Key
 
 LOOP:
 	for {

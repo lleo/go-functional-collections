@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lleo/go-functional-collections/set/hash"
+	"github.com/lleo/go-functional-collections/hash"
 )
 
 // downgradeThreshold is the constant that sets the threshold for the size of a
@@ -41,12 +41,6 @@ type Set struct {
 	numEnts uint
 }
 
-type SetKey interface {
-	Hash() hash.HashVal
-	Equals(SetKey) bool
-	String() string
-}
-
 func New() *Set {
 	return new(Set)
 }
@@ -57,10 +51,10 @@ func (s *Set) copy() *Set {
 	return s
 }
 
-// IsSet retrieves the value related to the SetKey in the Set data structure.
+// IsSet retrieves the value related to the hash.Key in the Set data structure.
 // It also return a bool to indicate the value was found. This allows you to
 // store nil values in the Set data structure.
-func (s *Set) IsSet(key SetKey) bool {
+func (s *Set) IsSet(key hash.Key) bool {
 	if s.NumEntries() == 0 {
 		return false
 	}
@@ -90,11 +84,11 @@ DepthIter:
 	return found
 }
 
-// find() traverses the path defined by the given HashVal till it encounters
+// find() traverses the path defined by the given ash.Val till it encounters
 // a leafI, then it returns the table path leading to the current table (also
 // returned) and the Index in the current table the leaf is at.
-//func (m *Set) find(hv HashVal) (*tableStack, tableI, uint) {
-func (s *Set) find(hv hash.HashVal) (*tableStack, leafI, uint) {
+//func (m *Set) find(hv hash.Val) (*tableStack, tableI, uint) {
+func (s *Set) find(hv hash.Val) (*tableStack, leafI, uint) {
 	var curTable tableI = &s.root
 
 	var path = newTableStack()
@@ -162,14 +156,14 @@ func (s *Set) persist(oldTable, newTable tableI, path *tableStack) {
 	return
 }
 
-func (s *Set) Set(key SetKey) *Set {
+func (s *Set) Set(key hash.Key) *Set {
 	s, _ = s.Add(key)
 	return s
 }
 
 // Add adds a new key to the Set data structure. It returns the
 // new *Set data structure and a bool indicating if a new key was added.
-func (s *Set) Add(key SetKey) (*Set, bool) {
+func (s *Set) Add(key hash.Key) (*Set, bool) {
 	var ns = s.copy()
 
 	var hv = key.Hash()
@@ -237,12 +231,12 @@ func (s *Set) Add(key SetKey) (*Set, bool) {
 	return ns, added
 }
 
-func (s *Set) Unset(key SetKey) *Set {
+func (s *Set) Unset(key hash.Key) *Set {
 	s, _ = s.Remove(key)
 	return s
 }
 
-func (s *Set) Remove(key SetKey) (*Set, bool) {
+func (s *Set) Remove(key hash.Key) (*Set, bool) {
 	if s.numEnts == 0 {
 		return s, false
 	}
@@ -355,7 +349,7 @@ LOOP:
 	return it
 }
 
-func (s *Set) Range(fn func(SetKey) bool) {
+func (s *Set) Range(fn func(hash.Key) bool) {
 	//var visitLeafs = func(n nodeI, depth uint) bool {
 	//	if leaf, ok := n.(leafI); ok {
 	//		for _, key := range leaf.keys() {
@@ -384,7 +378,7 @@ func (s *Set) NumEntries() uint {
 func (s *Set) String() string {
 	var ents = make([]string, s.NumEntries())
 	var i int = 0
-	s.Range(func(k SetKey) bool {
+	s.Range(func(k hash.Key) bool {
 		//log.Printf("i=%d, k=%#v\n", i, k)
 		ents[i] = fmt.Sprintf("%#v", k)
 		i++
@@ -408,7 +402,7 @@ func (s *Set) LongString(indent string) string {
 
 type Stats struct {
 	DeepestKeys struct {
-		Keys  []SetKey
+		Keys  []hash.Key
 		Depth uint
 	}
 

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/lleo/go-functional-collections/hash"
 	"github.com/lleo/go-functional-collections/set"
 )
 
@@ -53,7 +54,7 @@ func TestIntensiveDestroySetBig(t *testing.T) {
 
 //findAndRemove is just here to demonstrate how slow array O(n) remove is versus
 //HAMT O(log16(n)) remove is.
-func findAndRemove(k set.SetKey, keys *[]set.SetKey) bool {
+func findAndRemove(k hash.Key, keys *[]hash.Key) bool {
 	for i := 0; i < len(*keys); i++ {
 		if k.Equals((*keys)[i]) {
 			(*keys)[i] = (*keys)[len(*keys)-1]

@@ -8,5 +8,4 @@ if [ $basecwd != "hash" ]; then
 fi
 
 
-ln -sf hashval.go-32 hashval.go
-
+ln -sf val.go-32 val.go

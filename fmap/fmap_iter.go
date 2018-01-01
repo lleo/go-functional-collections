@@ -2,6 +2,8 @@ package fmap
 
 import (
 	"fmt"
+
+	"github.com/lleo/go-functional-collections/hash"
 )
 
 type Iter struct {
@@ -20,9 +22,9 @@ func newIter(root tableI) *Iter {
 	return it
 }
 
-func (it *Iter) Next() (MapKey, interface{}) {
+func (it *Iter) Next() (hash.Key, interface{}) {
 	//log.Printf("it.Next: called. it=%s", it)
-	var key MapKey
+	var key hash.Key
 	var val interface{}
 
 LOOP:

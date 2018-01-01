@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/lleo/go-functional-collections/fmap"
+	"github.com/lleo/go-functional-collections/hash"
 )
 
 var sizeBig = 1000000
@@ -15,7 +16,7 @@ func TestIntensiveButildMapBig(t *testing.T) {
 
 	var s = "a"
 	for i := 0; i < sizeBig; i++ {
-		m = m.Put(StringKey(s), i)
+		m = m.Put(hash.StringKey(s), i)
 		s = Inc(s)
 	}
 }
@@ -31,7 +32,7 @@ func TestIntensiveDestroyMapBig(t *testing.T) {
 	var s = "a"
 	for i := 0; i < sizeBig; i++ {
 		data[s] = i
-		m = m.Put(StringKey(s), i)
+		m = m.Put(hash.StringKey(s), i)
 		s = Inc(s)
 	}
 
@@ -39,7 +40,7 @@ func TestIntensiveDestroyMapBig(t *testing.T) {
 	var val interface{}
 	var deleted bool
 	for k, v := range data {
-		m, val, deleted = m.Remove(StringKey(k))
+		m, val, deleted = m.Remove(hash.StringKey(k))
 		if !deleted {
 			t.Fatalf("Failed to delete key=%q\n", k)
 		}
@@ -56,7 +57,7 @@ func TestIntensiveDestroyMapBig(t *testing.T) {
 
 //findAndRemove is just here to demonstrate how slow array O(n) remove is versus
 //HAMT O(log16(n)) remove is.
-func findAndRemove(k fmap.MapKey, kvs *[]keyVal) bool {
+func findAndRemove(k hash.Key, kvs *[]keyVal) bool {
 	for i := 0; i < len(*kvs); i++ {
 		if k.Equals((*kvs)[i].Key) {
 			//BTW this is the fast non-order preserving element deletion

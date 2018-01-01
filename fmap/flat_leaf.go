@@ -3,22 +3,22 @@ package fmap
 import (
 	"fmt"
 
-	"github.com/lleo/go-functional-collections/fmap/hash"
+	"github.com/lleo/go-functional-collections/hash"
 )
 
 type flatLeaf struct {
-	key MapKey
+	key hash.Key
 	val interface{}
 }
 
-func newFlatLeaf(key MapKey, val interface{}) *flatLeaf {
+func newFlatLeaf(key hash.Key, val interface{}) *flatLeaf {
 	var fl = new(flatLeaf)
 	fl.key = key
 	fl.val = val
 	return fl
 }
 
-func (l *flatLeaf) hash() hash.HashVal {
+func (l *flatLeaf) hash() hash.Val {
 	return l.key.Hash()
 }
 
@@ -26,7 +26,7 @@ func (l *flatLeaf) String() string {
 	return fmt.Sprintf("flatLeaf{key: %s, val: %v}", l.key, l.val)
 }
 
-func (l *flatLeaf) get(key MapKey) (interface{}, bool) {
+func (l *flatLeaf) get(key hash.Key) (interface{}, bool) {
 	if l.key.Equals(key) {
 		return l.val, true
 	}
@@ -38,7 +38,7 @@ func (l *flatLeaf) get(key MapKey) (interface{}, bool) {
 // indicating if the key,val was added ontop of the current leaf key,val or if
 // the val mearly replaced the current key's val (either way a new leafI is
 // allocated and returned).
-func (l *flatLeaf) put(key MapKey, val interface{}) (leafI, bool) {
+func (l *flatLeaf) put(key hash.Key, val interface{}) (leafI, bool) {
 	var nl leafI
 
 	if l.key.Equals(key) {
@@ -51,7 +51,7 @@ func (l *flatLeaf) put(key MapKey, val interface{}) (leafI, bool) {
 	return nl, true // key,val was added
 }
 
-func (l *flatLeaf) del(key MapKey) (leafI, interface{}, bool) {
+func (l *flatLeaf) del(key hash.Key) (leafI, interface{}, bool) {
 	if l.key.Equals(key) {
 		return nil, l.val, true //found
 	}

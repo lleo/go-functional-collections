@@ -1,0 +1,7 @@
+hash_test.go:20: NumIndexBits = 4
+hash_test.go:21: hashSize     = 64
+hash_test.go:22: remainder    = 0
+hash_test.go:23: DepthLimit   = 16
+hash_test.go:24: MaxDepth     = 15
+hash_test.go:25: IndexLimit   = 16
+hash_test.go:26: MaxIndex     = 15

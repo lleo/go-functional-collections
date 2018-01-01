@@ -7,6 +7,7 @@ if [ $basecwd != "hash" ]; then
 	exit 1
 fi
 
+cp val.go-32 val.go-64
+perl -pi -e 's/32/64/g' val.go-64
 
-ln -sf hashval.go-32 hashval.go
-
+ln -sf val.go-64 val.go

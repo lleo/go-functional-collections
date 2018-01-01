@@ -5,14 +5,15 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/lleo/go-functional-collections/hash"
 	"github.com/lleo/go-functional-collections/set"
 )
 
-func buildKeysBench(numSetKeys, numKeysXtra int) ([]set.SetKey, []set.SetKey) {
-	var keys = make([]set.SetKey, numSetKeys+numKeysXtra)
+func buildKeysBench(numKeys, numKeysXtra int) ([]hash.Key, []hash.Key) {
+	var keys = make([]hash.Key, numKeys+numKeysXtra)
 
 	var s = "a"
-	for i := 0; i < numSetKeys+numKeysXtra; i++ {
+	for i := 0; i < numKeys+numKeysXtra; i++ {
 		keys[i] = StringKey(s)
 		s = Inc(s)
 	}
@@ -54,19 +55,19 @@ var Set100M *set.Set
 var Set1MM *set.Set
 var Set10MM *set.Set
 
-var XtraKeys10 []set.SetKey
-var XtraKeys100 []set.SetKey
-var XtraKeys1M []set.SetKey
-var XtraKeys10M []set.SetKey
-var XtraKeys100M []set.SetKey
-var XtraKeys1MM []set.SetKey
-var XtraKeys10MM []set.SetKey
+var XtraKeys10 []hash.Key
+var XtraKeys100 []hash.Key
+var XtraKeys1M []hash.Key
+var XtraKeys10M []hash.Key
+var XtraKeys100M []hash.Key
+var XtraKeys1MM []hash.Key
+var XtraKeys10MM []hash.Key
 
 func BenchmarkSetOne10(b *testing.B) {
 	var xtra = XtraKeys10
 	var m = Set10
 	if m == nil {
-		var keys []set.SetKey
+		var keys []hash.Key
 		keys, xtra = buildKeysBench(NumKeys10, NumKeysExtra10)
 		m = buildSet(keys)
 		XtraKeys10 = xtra
@@ -86,7 +87,7 @@ func BenchmarkSetOne100(b *testing.B) {
 	var xtra = XtraKeys100
 	var m = Set100
 	if m == nil {
-		var keys []set.SetKey
+		var keys []hash.Key
 		keys, xtra = buildKeysBench(NumKeys100, NumKeysExtra100)
 		m = buildSet(keys)
 		XtraKeys100 = xtra
@@ -106,7 +107,7 @@ func BenchmarkSetOne1M(b *testing.B) {
 	var xtra = XtraKeys1M
 	var m = Set1M
 	if m == nil {
-		var keys []set.SetKey
+		var keys []hash.Key
 		keys, xtra = buildKeysBench(NumKeys1M, NumKeysExtra1M)
 		m = buildSet(keys)
 		XtraKeys1M = xtra
@@ -126,7 +127,7 @@ func BenchmarkSetOne10M(b *testing.B) {
 	var xtra = XtraKeys10M
 	var m = Set10M
 	if m == nil {
-		var keys []set.SetKey
+		var keys []hash.Key
 		keys, xtra = buildKeysBench(NumKeys10M, NumKeysExtra10M)
 		m = buildSet(keys)
 		XtraKeys10M = xtra
@@ -146,7 +147,7 @@ func BenchmarkSetOne100M(b *testing.B) {
 	var xtra = XtraKeys100M
 	var m = Set100M
 	if m == nil {
-		var keys []set.SetKey
+		var keys []hash.Key
 		keys, xtra = buildKeysBench(NumKeys100M, NumKeysExtra100M)
 		m = buildSet(keys)
 		XtraKeys100M = xtra
@@ -166,7 +167,7 @@ func BenchmarkSetOne1MM(b *testing.B) {
 	var xtra = XtraKeys1MM
 	var m = Set1MM
 	if m == nil {
-		var keys []set.SetKey
+		var keys []hash.Key
 		keys, xtra = buildKeysBench(NumKeys1MM, NumKeysExtra1MM)
 		m = buildSet(keys)
 		XtraKeys1MM = xtra
@@ -186,7 +187,7 @@ func BenchmarkSetOne10MM(b *testing.B) {
 	var xtra = XtraKeys10MM
 	var m = Set10MM
 	if m == nil {
-		var keys []set.SetKey
+		var keys []hash.Key
 		keys, xtra = buildKeysBench(NumKeys10MM, NumKeysExtra10MM)
 		m = buildSet(keys)
 		XtraKeys10MM = xtra

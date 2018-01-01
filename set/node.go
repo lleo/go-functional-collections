@@ -3,7 +3,7 @@ package set
 import (
 	"fmt"
 
-	"github.com/lleo/go-functional-collections/set/hash"
+	"github.com/lleo/go-functional-collections/hash"
 )
 
 // visitFn will be passed a value for every slot in the Hamt; this includes
@@ -14,7 +14,7 @@ import (
 type visitFn func(nodeI, uint) bool
 
 type nodeI interface {
-	hash() hash.HashVal
+	hash() hash.Val
 	visit(fn visitFn, depth uint) (error, bool)
 	String() string
 }
@@ -22,10 +22,10 @@ type nodeI interface {
 type leafI interface {
 	nodeI
 
-	get(key SetKey) bool
-	put(key SetKey) (leafI, bool)
-	del(key SetKey) (leafI, bool)
-	keys() []SetKey
+	get(key hash.Key) bool
+	put(key hash.Key) (leafI, bool)
+	del(key hash.Key) (leafI, bool)
+	keys() []hash.Key
 }
 
 type tableIterFunc func() nodeI

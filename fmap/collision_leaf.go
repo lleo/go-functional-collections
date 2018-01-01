@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lleo/go-functional-collections/fmap/hash"
+	"github.com/lleo/go-functional-collections/hash"
 )
 
 // implements nodeI
@@ -28,7 +28,7 @@ func (l *collisionLeaf) copy() *collisionLeaf {
 	return nl
 }
 
-func (l *collisionLeaf) hash() hash.HashVal {
+func (l *collisionLeaf) hash() hash.Val {
 	return l.kvs[0].Key.Hash()
 }
 
@@ -43,7 +43,7 @@ func (l *collisionLeaf) String() string {
 		l.kvs[0].Key.Hash(), jkvstr)
 }
 
-func (l *collisionLeaf) get(key MapKey) (interface{}, bool) {
+func (l *collisionLeaf) get(key hash.Key) (interface{}, bool) {
 	for _, kv := range l.kvs {
 		if kv.Key.Equals(key) {
 			return kv.Val, true
@@ -52,7 +52,7 @@ func (l *collisionLeaf) get(key MapKey) (interface{}, bool) {
 	return nil, false
 }
 
-func (l *collisionLeaf) put(key MapKey, val interface{}) (leafI, bool) {
+func (l *collisionLeaf) put(key hash.Key, val interface{}) (leafI, bool) {
 	for i, kv := range l.kvs {
 		if kv.Key.Equals(key) {
 			var nl = l.copy()
@@ -71,7 +71,7 @@ func (l *collisionLeaf) put(key MapKey, val interface{}) (leafI, bool) {
 	return nl, true // k,v was added
 }
 
-func (l *collisionLeaf) del(key MapKey) (leafI, interface{}, bool) {
+func (l *collisionLeaf) del(key hash.Key) (leafI, interface{}, bool) {
 	for i, kv := range l.kvs {
 		if kv.Key.Equals(key) {
 			var nl leafI
