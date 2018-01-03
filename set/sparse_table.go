@@ -129,9 +129,9 @@ func (t *sparseTable) String() string {
 		t.hashPath.HashPathString(t.depth), t.depth, t.numEntries())
 }
 
-// LongString returns a string representation of this table and all the tables
+// treeString returns a string representation of this table and all the tables
 // contained herein recursively.
-func (t *sparseTable) LongString(indent string, depth uint) string {
+func (t *sparseTable) treeString(indent string, depth uint) string {
 	var strs = make([]string, 3+len(t.nodes))
 
 	strs[0] = indent +
@@ -145,7 +145,7 @@ func (t *sparseTable) LongString(indent string, depth uint) string {
 		if t, isTable := n.(tableI); isTable {
 			strs[2+i] = indent +
 				fmt.Sprintf("\tt.nodes[%d]:\n%s",
-					idx, t.LongString(indent+"\t", depth+1))
+					idx, t.treeString(indent+"\t", depth+1))
 		} else {
 			strs[2+i] = indent + fmt.Sprintf("\tt.nodes[%d]: %s", idx, n)
 		}

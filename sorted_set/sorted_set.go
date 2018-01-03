@@ -707,6 +707,14 @@ func (s *Set) deleteCase6(on, nn *node, path *nodeStack) {
 //sorted_set.InfKey(sign int). A call to sorted_set.InfKey(1) returns a key
 //greater than any other key. A call to sorted_set.InfKey(-1) returns a key less
 //than any other key.
+//
+// Example:
+//
+//     var s = sorted_set.New()
+//     s.Add(sorted.StringKey("a"))
+//     s.Add(sorted.StringKey("b"))
+//     s.Add(sorted.StringKey("c"))
+//
 func (s *Set) RangeLimit(start, end sorted.Key, fn func(sorted.Key) bool) {
 	var it = s.IterLimit(start, end)
 

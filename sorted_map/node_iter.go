@@ -4,6 +4,7 @@ import (
 	"github.com/lleo/go-functional-collections/sorted"
 )
 
+// Iter struct mmaintins the current state for walking the *Set data structure.
 type Iter struct {
 	dir    bool // true == lower-to-higher; false == higher-to-lower
 	endKey sorted.Key
@@ -25,6 +26,8 @@ func newNodeIter(
 	return iter
 }
 
+// Next returns each sucessive key in the *Set. When all entries have been
+// returned it will return a nil sorted.Key
 func (it *Iter) Next() (sorted.Key, interface{}) {
 	if it.dir {
 		return it.forw()

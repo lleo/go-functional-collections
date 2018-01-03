@@ -6,6 +6,7 @@ import (
 	"github.com/lleo/go-functional-collections/hash"
 )
 
+// Iter struct maintains the current state for walking the *Map data structure.
 type Iter struct {
 	kvIdx       int
 	curLeaf     leafI
@@ -22,6 +23,8 @@ func newIter(root tableI) *Iter {
 	return it
 }
 
+// Next returns each sucessive key/value mapping in the *Map. When all enrties
+// have been returned it will return a nil hash.Key.
 func (it *Iter) Next() (hash.Key, interface{}) {
 	//log.Printf("it.Next: called. it=%s", it)
 	var key hash.Key

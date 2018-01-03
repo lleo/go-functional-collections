@@ -115,9 +115,9 @@ func (t *fixedTable) String() string {
 		t.hashPath.HashPathString(t.depth), t.depth, t.numEntries())
 }
 
-// LongString returns a string representation of this table and all the tables
+// treeString returns a string representation of this table and all the tables
 // contained herein recursively.
-func (t *fixedTable) LongString(indent string, depth uint) string {
+func (t *fixedTable) treeString(indent string, depth uint) string {
 	var strs = make([]string, 3+t.numEntries())
 
 	strs[0] = indent + "fixedTable{"
@@ -129,7 +129,7 @@ func (t *fixedTable) LongString(indent string, depth uint) string {
 		if t.nodes[i] != nil {
 			if t, isTable := t.nodes[i].(tableI); isTable {
 				strs[2+j] = indent + fmt.Sprintf("\tnodes[%d]:\n", i) +
-					t.LongString(indent+"\t", depth+1)
+					t.treeString(indent+"\t", depth+1)
 			} else {
 				strs[2+j] = indent + fmt.Sprintf("\tnodes[%d]: %s", i, n)
 			}

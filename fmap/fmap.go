@@ -1,7 +1,7 @@
 // Package fmap implements a functional Map data structure; mapping a key to a
 // value. The package name cannot be map because that is a reserved keyword in
 // Golang, so "fmap" was used instead. The internal data structure of fmap is a
-// [Hashed Array Mapped Trie](https://en.wikipedia.org/wiki/Hash_array_mapped_trie)
+// Hashed Array Mapped Trie (see https://en.wikipedia.org/wiki/Hash_array_mapped_trie).
 //
 // Functional means that each data structure is immutable and persistent.
 // The Map is immutable because you never modify a Map in place, but rather
@@ -9,11 +9,18 @@
 // modification. This is not as inefficient as it sounds like it would be. Each
 // modification only changes the smallest  branch of the data structure it needs
 // to in order to effect the new mapping. Otherwise, the new data structure
-// shares the majority of the previous data structure. That is the Persistent
+// shares the majority of the previous data structure. That is the persistent
 // property.
 //
 // Each method call that potentially modifies the Map, returns a new Map data
 // structure in addition to the other pertinent return values.
+//
+// Every key in the key/value mapping must implement the hash.Key interface.
+//
+// Any value can be stored in the key/value mapping, because values are treated
+// and returned at interface{} values. That means the values returned from
+// methods Get, Load, and LoadOrStore, must be type asserted back to their
+// original type by the user of this library.
 package fmap
 
 import (
@@ -37,15 +44,19 @@ const downgradeThreshold uint = hash.IndexLimit / 2
 // upgradeThreshold = 20 for hash.numIndexBits=5 aka hash.IndexLimit=32
 const upgradeThreshold uint = hash.IndexLimit * 5 / 8
 
+// The Map struct maintains a immutable collection of key/value mappings.
 type Map struct {
 	root    fixedTable
 	numEnts uint
 }
 
+// New return a properly initialize pointer to a Map struct.
 func New() *Map {
 	return new(Map)
 }
 
+// copy creates a shallow copy of the Map data structure and returns a pointer
+// to that shallow copy.
 func (m *Map) copy() *Map {
 	var nm = new(Map)
 	*nm = *m
@@ -53,7 +64,9 @@ func (m *Map) copy() *Map {
 }
 
 // Get loads the value stored for the given key. If the key doesn't exist in the
-// map a nil is returned.
+// Map a nil is returned. If you need to store nil values and want to
+// distinguish between a found existing mapping of the key to nil and a
+// non-existent mapping for the key, you must use the Load method.
 func (m *Map) Get(key hash.Key) interface{} {
 	var v, _ = m.Load(key)
 	return v
@@ -61,7 +74,8 @@ func (m *Map) Get(key hash.Key) interface{} {
 
 // Load retrieves the value related to the hash.Key in the Map data structure.
 // It also return a bool to indicate the value was found. This allows you to
-// store nil values in the Map data structure.
+// store nil values in the Map data structure and distinguish between a found
+// nil key/value mapping and a non-existant key/value mapping.
 func (m *Map) Load(key hash.Key) (interface{}, bool) {
 	if m.NumEntries() == 0 {
 		return nil, false
@@ -165,10 +179,11 @@ func (m *Map) persist(oldTable, newTable tableI, path *tableStack) {
 }
 
 // LoadOrStore returns the existing value for the key if present. Otherwise,
-// it stores and returns the given value. The loaded result is true if the
-// value was loaded, false if stored. Lastly, if the result was loaded the
-// returned map is the original *Map, if the val was stored the returned *Map
-// is the new persistent *Map.
+// it stores a new key/value mapping and returns the given value. The loaded
+// result is true if the key/value was loaded, false if a new key/value mapping
+// was created. Lastly, if an existing key/value mapping was loaded then the
+// returned map is the original *Map, if the a new key/value mapping was
+// created returned *Map is a new persistent *Map.
 func (m *Map) LoadOrStore(key hash.Key, val interface{}) (
 	*Map, interface{}, bool,
 ) {
@@ -252,16 +267,18 @@ func (m *Map) LoadOrStore(key hash.Key, val interface{}) (
 	return nm, nil, false // result for a Stored value
 }
 
-// Put stores a new (key,value) pair in the Map. It returns a new persistent
-// *Map data structure.
+// Put stores a new key/value mapping. It returns a new persistent *Map data
+// structure.
 func (m *Map) Put(key hash.Key, val interface{}) *Map {
 	m, _ = m.Store(key, val)
 	return m
 }
 
-// Store stores a new (key,value) pair in the Map. It returns a new persistent
+// Store stores a new key/value mapping. It returns a new persistent
 // *Map data structure and a bool indicating if a new pair was added (true)
-// or if the value merely replaced a prior value (false).
+// or if the value merely replaced a prior value (false). Regardless of
+// whether a new key/value mapping was created or mearly replaced, a new
+// *Map is created.
 func (m *Map) Store(key hash.Key, val interface{}) (*Map, bool) {
 	var nm = m.copy()
 
@@ -338,9 +355,10 @@ func (m *Map) Del(key hash.Key) *Map {
 	return m
 }
 
-// Remove deletes any entry with the given key. It returns and new persisten
-// *Map data structure, the value that was stored with that key, and a boolean
-// idicating if the key was found and deleted.
+// Remove deletes any key/value mapping for the given key. It returns a
+// *Map data structure, the possible value that was stored for that key,
+// and a boolean idicating if the key was found and deleted. If the key didn't
+// exist, then the value is set nil, and the original *Map is returned.
 func (m *Map) Remove(key hash.Key) (*Map, interface{}, bool) {
 	if m.numEnts == 0 {
 		return m, nil, false
@@ -398,31 +416,18 @@ func (m *Map) Remove(key hash.Key) (*Map, interface{}, bool) {
 	return nm, val, deleted
 }
 
-func (m *Map) walk(fn visitFn) bool {
-	var err, keepOn = m.root.visit(fn, 0)
-	if err != nil {
-		panic(err)
-	}
-	return keepOn
-}
-
-//func (m *Map) walk(fn visitFn) error {
-//	var curTable tableI = &m.root
-//
-//	for idx := uint(0); idx < hash.IndexLimit; idx++ {
-//		var n = curTable.get(idx)
-//
-//		switch x := n.(type) {
-//		case nil:
-//
-//		case leafI:
-//
-//		case tableI:
-//
-//		}
+//func (m *Map) walk(fn visitFn) bool {
+//	var err, keepOn = m.root.visit(fn, 0)
+//	if err != nil {
+//		panic(err)
 //	}
+//	return keepOn
 //}
 
+// Iter returns a *Iter structure. You can call the Next() method on the *Iter
+// structure sucessively until it return a nil key value, to walk the key/value
+// mappings in the Map data structure. This is safe under any usage of the *Map
+// because the Map is immutable.
 func (m *Map) Iter() *Iter {
 	if m.NumEntries() == 0 {
 		return nil
@@ -454,6 +459,9 @@ LOOP:
 	return it
 }
 
+// Range applies the given function for every key/value mapping in the *Map
+// data structure. Given that the *Map is immutable there is no danger with
+// concurrent use of the *Map while the Range method is executing.
 func (m *Map) Range(fn func(hash.Key, interface{}) bool) {
 	//var visitLeafs = func(n nodeI, depth uint) bool {
 	//	if leaf, ok := n.(leafI); ok {
@@ -474,12 +482,16 @@ func (m *Map) Range(fn func(hash.Key, interface{}) bool) {
 	}
 }
 
+// NumEntries() returns the number of key/value entries in the *Map. This
+// operation is O(1), because a current count of the number of entries is
+// maintained at the top level of the *Map data structure, so walking the data
+// structure is not required to get the current count of key/value entries.
 func (m *Map) NumEntries() uint {
 	return m.numEnts
 }
 
-// String prints a string representation of the Map. It is intended to be
-// simmilar to fmt.Printf("%#v") of a golang map[].
+// String prints a string list all the key/value mappings in the *Map. It is
+// intended to be simmilar to fmt.Printf("%#v") of a golang builtin map.
 func (m *Map) String() string {
 	var ents = make([]string, m.NumEntries())
 	var i int = 0

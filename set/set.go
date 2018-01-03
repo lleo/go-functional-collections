@@ -1,6 +1,5 @@
 // Package set implements a functional Set data structure. The internal data
-// structure of set is a
-// [Hashed Array Mapped Trie](https://en.wikipedia.org/wiki/Hash_array_mapped_trie)
+// structure of set is a Hashed Array Mapped Trie (see https://en.wikipedia.org/wiki/Hash_array_mapped_trie).
 //
 // Functional means that each data structure is immutable and persistent.
 // The Set is immutable because you never modify a Set in place, but rather
@@ -8,11 +7,13 @@
 // modification. This is not as inefficient as it sounds like it would be. Each
 // modification only changes the smallest  branch of the data structure it needs
 // to in order to effect the new set. Otherwise, the new data structure
-// shares the majority of the previous data structure. That is the Persistent
+// shares the majority of the previous data structure. That is the persistent
 // property.
 //
 // Each method call that potentially modifies the Set, returns a new Set data
 // structure in addition to the other pertinent return values.
+//
+// The unique values stored in a Set must implement the hash.Key interface.
 package set
 
 import (
@@ -36,24 +37,28 @@ const downgradeThreshold uint = hash.IndexLimit / 2
 // upgradeThreshold = 20 for hash.numIndexBits=5 aka hash.IndexLimit=32
 const upgradeThreshold uint = hash.IndexLimit * 5 / 8
 
+// The Key struct mainains an immutable collection of hash.Key entries.
 type Set struct {
 	root    fixedTable
 	numEnts uint
 }
 
+// New returns a properly initialized pointer to a Set struct.
 func New() *Set {
 	return new(Set)
 }
 
+// copy creates a shallow copy of the Set data structure and returns a pointer
+// to that shallow copy.
 func (s *Set) copy() *Set {
 	var ns = new(Set)
 	*ns = *s
 	return s
 }
 
-// IsSet retrieves the value related to the hash.Key in the Set data structure.
-// It also return a bool to indicate the value was found. This allows you to
-// store nil values in the Set data structure.
+// IsSet searches the Set for a hash.Key value where the given key (k) matches
+// a key in the Set (k0) such that k.Equals(k0) returns true. If the given
+// key is found IsSet return true, otherwise it returns false.
 func (s *Set) IsSet(key hash.Key) bool {
 	if s.NumEntries() == 0 {
 		return false
@@ -84,7 +89,7 @@ DepthIter:
 	return found
 }
 
-// find() traverses the path defined by the given ash.Val till it encounters
+// find() traverses the path defined by the given hash.Val till it encounters
 // a leafI, then it returns the table path leading to the current table (also
 // returned) and the Index in the current table the leaf is at.
 //func (m *Set) find(hv hash.Val) (*tableStack, tableI, uint) {
@@ -156,13 +161,25 @@ func (s *Set) persist(oldTable, newTable tableI, path *tableStack) {
 	return
 }
 
+// Set inserts the give hash.Key into the Set and returns a new *Set. If an
+// equivalent key exists in the receiver *Set nothing is done to the *Set and
+// the original receiver *Set is returned.
+//
+// Equivalentcy of keys is determined by k.Equals(k0) where k is the given
+// hash.Key and k0 is the hash.Key already stored in the *Set.
 func (s *Set) Set(key hash.Key) *Set {
 	s, _ = s.Add(key)
 	return s
 }
 
-// Add adds a new key to the Set data structure. It returns the
-// new *Set data structure and a bool indicating if a new key was added.
+// Add inserts a new key to the *Set data structure. It returns the
+// new *Set data structure and a bool indicating if the given key was added. If
+// the *Set already contains and equivalent key the *Set is not modified and
+// the original *Set is returned along with a false value. The false value
+// indicates that the given key was not added.
+//
+// Equivalentcy of keys is determined by k.Equals(k0) where k is the given
+// hash.Key and k0 is the hash.Key already stored in the *Set.
 func (s *Set) Add(key hash.Key) (*Set, bool) {
 	var ns = s.copy()
 
@@ -231,11 +248,18 @@ func (s *Set) Add(key hash.Key) (*Set, bool) {
 	return ns, added
 }
 
+// Unset removes the any hash.Key that is equivalent to the given hash.Key and
+// returns the new *Set. If the hash.Key does not exist in the *Set, then
+// nothing will occur and the original *Set will be returned.
 func (s *Set) Unset(key hash.Key) *Set {
 	s, _ = s.Remove(key)
 	return s
 }
 
+// Remove deletes the given hash.Key, if it exists and returns a new *Set
+// reflecting that change and a true value indicating the hash.Key was found.
+// If the hash.Key does not exist in the *Set then the original *Set is returned
+// with a false value indicating that the hash.Key was not found.
 func (s *Set) Remove(key hash.Key) (*Set, bool) {
 	if s.numEnts == 0 {
 		return s, false
@@ -293,37 +317,24 @@ func (s *Set) Remove(key hash.Key) (*Set, bool) {
 	return ns, deleted
 }
 
-func (s *Set) walk(fn visitFn) bool {
-	var err, keepOn = s.root.visit(fn, 0)
-	if err != nil {
-		panic(err)
-	}
-	return keepOn
-}
-
-//func (s *Set) walk(fn visitFn) error {
-//	var curTable tableI = &m.root
-//
-//	for idx := uint(0); idx < hash.IndexLimit; idx++ {
-//		var n = curTable.get(idx)
-//
-//		switch x := n.(type) {
-//		case nil:
-//
-//		case leafI:
-//
-//		case tableI:
-//
-//		}
+//func (s *Set) walk(fn visitFn) bool {
+//	var err, keepOn = s.root.visit(fn, 0)
+//	if err != nil {
+//		panic(err)
 //	}
+//	return keepOn
 //}
 
+// Iter returns an *Iter structure. You can call the Next() method on the *Iter
+// structure sucessively until it returns a nil key value to walk the keys in
+// the Set data structure. This is safe under any usage of the *Set because the
+// Set is immutable.
 func (s *Set) Iter() *Iter {
 	if s.NumEntries() == 0 {
 		return nil
 	}
 
-	//log.Printf("s.Iter: s=\n%s", s.LongString(""))
+	//log.Printf("s.Iter: s=\n%s", s.treeString(""))
 	var it = newIter(&s.root)
 
 	//find left-most leaf
@@ -349,6 +360,8 @@ LOOP:
 	return it
 }
 
+// Range applies the given function to every hash.Key in the *Set. If the
+// function returns false the Range operation stops.
 func (s *Set) Range(fn func(hash.Key) bool) {
 	//var visitLeafs = func(n nodeI, depth uint) bool {
 	//	if leaf, ok := n.(leafI); ok {
@@ -369,6 +382,9 @@ func (s *Set) Range(fn func(hash.Key) bool) {
 	}
 }
 
+// NumEntries returns the number of hash.Keys in the *Set. This operation is
+// O(1) because the count is maintained at the top level for the *Set and does
+// not require a walk of the *Set data structure to return the count.
 func (s *Set) NumEntries() uint {
 	return s.numEnts
 }
@@ -387,115 +403,115 @@ func (s *Set) String() string {
 	return "Set{" + strings.Join(ents, ",") + "}"
 }
 
-// LongString returns a (potentially very large) string that represets the
+// treeString returns a (potentially very large) string that represets the
 // entire Set data structure.
-func (s *Set) LongString(indent string) string {
+func (s *Set) treeString(indent string) string {
 	var str string
 
 	str = indent +
 		fmt.Sprintf("Set{ numEnts: %d, root:\n", s.numEnts)
-	str += indent + s.root.LongString(indent, 0)
+	str += indent + s.root.treeString(indent, 0)
 	str += indent + "}"
 
 	return str
 }
 
-type Stats struct {
-	DeepestKeys struct {
-		Keys  []hash.Key
-		Depth uint
-	}
-
-	// Depth of deepest table
-	MaxDepth uint
-
-	// TableCountsByNumEntries is a Hash table of the number of tables with each
-	// given number of entries in the tatble. There are slots for
-	// [0..IndexLimit] inclusive (so there are IndexLimit+1 slots). Technically,
-	// there should never be a table with zero entries, but I allow counting
-	// tables with zero entries just to catch those errors.
-	// [0..IndexLimit] inclusive
-	TableCountsByNumEntries [hash.IndexLimit + 1]uint
-
-	// TableCountsByDepth is a Hash table of the number of tables at a given
-	// depth. There are slots for [0..DepthLimit).
-	// [0..DepthLimit)
-	TableCountsByDepth [hash.DepthLimit]uint
-
-	// Nils is the total count of allocated slots that are unused in the Set.
-	Nils uint
-
-	// Nodes is the total count of nodeI capable structs in the Set.
-	Nodes uint
-
-	// Tables is the total count of tableI capable structs in the Set.
-	Tables uint
-
-	// Leafs is the total count of leafI capable structs in the Set.
-	Leafs uint
-
-	// FixedTables is the total count of fixedTable structs in the Set.
-	FixedTables uint
-
-	// SparseTables is the total count of sparseTable structs in the Set.
-	SparseTables uint
-
-	// FlatLeafs is the total count of flatLeaf structs in the Set.
-	FlatLeafs uint
-
-	// CollisionLeafs is the total count of collisionLeaf structs in the Set.
-	CollisionLeafs uint
-
-	// Keys is the total number of Keys in the Set.
-	Keys uint
-}
-
-// Stats walks the Hamt in a pre-order traversal and populates a Stats data
-// struture which it returns.
-func (s *Set) Stats() *Stats {
-	var stats = new(Stats)
-
-	// statFn closes over the stats variable
-	var statFn = func(n nodeI, depth uint) bool {
-		var keepOn = true
-		switch x := n.(type) {
-		case nil:
-			stats.Nils++
-			keepOn = false
-		case *fixedTable:
-			stats.Nodes++
-			stats.Tables++
-			stats.FixedTables++
-			stats.TableCountsByNumEntries[x.numEntries()]++
-			stats.TableCountsByDepth[x.depth]++
-			if x.depth > stats.MaxDepth {
-				stats.MaxDepth = x.depth
-			}
-		case *sparseTable:
-			stats.Nodes++
-			stats.Tables++
-			stats.SparseTables++
-			stats.TableCountsByNumEntries[x.numEntries()]++
-			stats.TableCountsByDepth[x.depth]++
-			if x.depth > stats.MaxDepth {
-				stats.MaxDepth = x.depth
-			}
-		case *flatLeaf:
-			stats.Nodes++
-			stats.Leafs++
-			stats.FlatLeafs++
-			stats.Keys += 1
-			keepOn = false
-		case *collisionLeaf:
-			stats.Nodes++
-			stats.Leafs++
-			stats.CollisionLeafs++
-			stats.Keys += uint(len(x.keys_))
-			keepOn = false
-		}
-		return keepOn
-	}
-
-	s.walk(statFn)
-	return stats
-}
+//type Stats struct {
+//	DeepestKeys struct {
+//		Keys  []hash.Key
+//		Depth uint
+//	}
+//
+//	// Depth of deepest table
+//	MaxDepth uint
+//
+//	// TableCountsByNumEntries is a Hash table of the number of tables with each
+//	// given number of entries in the tatble. There are slots for
+//	// [0..IndexLimit] inclusive (so there are IndexLimit+1 slots). Technically,
+//	// there should never be a table with zero entries, but I allow counting
+//	// tables with zero entries just to catch those errors.
+//	// [0..IndexLimit] inclusive
+//	TableCountsByNumEntries [hash.IndexLimit + 1]uint
+//
+//	// TableCountsByDepth is a Hash table of the number of tables at a given
+//	// depth. There are slots for [0..DepthLimit).
+//	// [0..DepthLimit)
+//	TableCountsByDepth [hash.DepthLimit]uint
+//
+//	// Nils is the total count of allocated slots that are unused in the Set.
+//	Nils uint
+//
+//	// Nodes is the total count of nodeI capable structs in the Set.
+//	Nodes uint
+//
+//	// Tables is the total count of tableI capable structs in the Set.
+//	Tables uint
+//
+//	// Leafs is the total count of leafI capable structs in the Set.
+//	Leafs uint
+//
+//	// FixedTables is the total count of fixedTable structs in the Set.
+//	FixedTables uint
+//
+//	// SparseTables is the total count of sparseTable structs in the Set.
+//	SparseTables uint
+//
+//	// FlatLeafs is the total count of flatLeaf structs in the Set.
+//	FlatLeafs uint
+//
+//	// CollisionLeafs is the total count of collisionLeaf structs in the Set.
+//	CollisionLeafs uint
+//
+//	// Keys is the total number of Keys in the Set.
+//	Keys uint
+//}
+//
+//// Stats walks the Hamt in a pre-order traversal and populates a Stats data
+//// struture which it returns.
+//func (s *Set) Stats() *Stats {
+//	var stats = new(Stats)
+//
+//	// statFn closes over the stats variable
+//	var statFn = func(n nodeI, depth uint) bool {
+//		var keepOn = true
+//		switch x := n.(type) {
+//		case nil:
+//			stats.Nils++
+//			keepOn = false
+//		case *fixedTable:
+//			stats.Nodes++
+//			stats.Tables++
+//			stats.FixedTables++
+//			stats.TableCountsByNumEntries[x.numEntries()]++
+//			stats.TableCountsByDepth[x.depth]++
+//			if x.depth > stats.MaxDepth {
+//				stats.MaxDepth = x.depth
+//			}
+//		case *sparseTable:
+//			stats.Nodes++
+//			stats.Tables++
+//			stats.SparseTables++
+//			stats.TableCountsByNumEntries[x.numEntries()]++
+//			stats.TableCountsByDepth[x.depth]++
+//			if x.depth > stats.MaxDepth {
+//				stats.MaxDepth = x.depth
+//			}
+//		case *flatLeaf:
+//			stats.Nodes++
+//			stats.Leafs++
+//			stats.FlatLeafs++
+//			stats.Keys += 1
+//			keepOn = false
+//		case *collisionLeaf:
+//			stats.Nodes++
+//			stats.Leafs++
+//			stats.CollisionLeafs++
+//			stats.Keys += uint(len(x.keys_))
+//			keepOn = false
+//		}
+//		return keepOn
+//	}
+//
+//	s.walk(statFn)
+//	return stats
+//}
