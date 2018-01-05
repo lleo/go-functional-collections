@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/lleo/go-functional-collections/fmap/string_fmap"
+	"github.com/lleo/go-functional-collections/fmap/string_keyed_fmap"
 )
 
 func TestButildSimpleMap(t *testing.T) {
