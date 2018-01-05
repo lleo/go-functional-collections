@@ -495,12 +495,19 @@ func (m *Map) NumEntries() uint {
 func (m *Map) String() string {
 	var ents = make([]string, m.NumEntries())
 	var i int = 0
-	m.Range(func(k hash.Key, v interface{}) bool {
-		//log.Printf("i=%d, k=%#v, v=%#v\n", i, k, v)
+
+	var it = m.Iter()
+	for k, v := it.Next(); k != nil; k, v = it.Next() {
 		ents[i] = fmt.Sprintf("%#v:%#v", k, v)
 		i++
-		return true
-	})
+	}
+
+	//m.Range(func(k hash.Key, v interface{}) bool {
+	//	ents[i] = fmt.Sprintf("%#v:%#v", k, v)
+	//	i++
+	//	return true
+	//})
+
 	return "Map{" + strings.Join(ents, ",") + "}"
 }
 
