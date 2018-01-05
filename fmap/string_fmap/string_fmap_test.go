@@ -1,13 +1,15 @@
-package string_keyed_map_test
+package string_keyed_fmap_test
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
-	"github.com/lleo/go-functional-collections/fmap/string_keyed_map"
+	"github.com/lleo/go-functional-collections/fmap/string_fmap"
 )
 
 func TestButildSimpleMap(t *testing.T) {
-	var m = string_keyed_map.New()
+	var m = string_keyed_fmap.New()
 	m = m.
 		Put("a", 1).
 		Put("b", 2).
@@ -27,7 +29,7 @@ func TestButildSimpleMap(t *testing.T) {
 }
 
 func TestLoad(t *testing.T) {
-	var m = string_keyed_map.New()
+	var m = string_keyed_fmap.New()
 	m = m.Put("a", nil)
 
 	var val interface{}
@@ -53,7 +55,7 @@ func TestLoad(t *testing.T) {
 }
 
 func TestLoadOrStore(t *testing.T) {
-	var m = string_keyed_map.New()
+	var m = string_keyed_fmap.New()
 	m = m.Put("a", 1)
 
 	var val interface{}
@@ -84,7 +86,7 @@ func TestLoadOrStore(t *testing.T) {
 }
 
 func TestStore(t *testing.T) {
-	var m = string_keyed_map.New()
+	var m = string_keyed_fmap.New()
 
 	var added bool
 	m, added = m.Store("a", 1)
@@ -107,8 +109,8 @@ func TestStore(t *testing.T) {
 	}
 }
 
-func TestDelete(t *testing.T) {
-	var m = string_keyed_map.New()
+func TestDel(t *testing.T) {
+	var m = string_keyed_fmap.New()
 
 	if m.NumEntries() != 0 {
 		t.Fatal("m.NumEntries() != 0")
@@ -142,5 +144,130 @@ func TestDelete(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
+	var m = string_keyed_fmap.New()
 
+	if m.NumEntries() != 0 {
+		t.Fatal("m.NumEntries() != 0")
+	}
+
+	m = m.
+		Put("a", 1).
+		Put("b", 2).
+		Put("c", 3)
+
+	if m.NumEntries() != 3 {
+		t.Fatal("m.NumEntries() != 3")
+	}
+
+	var found bool
+	var val interface{}
+	m, val, found = m.Remove("b")
+
+	if !found {
+		t.Fatal("m.Remove(\"b\") not found")
+	}
+
+	if val != 2 {
+		t.Fatal("val != 2")
+	}
+
+	if m.NumEntries() != 2 {
+		t.Fatal("m.NumEntries() != 2")
+	}
+
+	_, found = m.Load("b")
+	if found {
+		t.Fatal("found \"b\" after m.Del(\"b\")")
+	}
+}
+
+func TestIter(t *testing.T) {
+	var m = string_keyed_fmap.New()
+
+	if m.NumEntries() != 0 {
+		t.Fatal("m.NumEntries() != 0")
+	}
+
+	m = m.
+		Put("a", 1).
+		Put("b", 2).
+		Put("c", 3)
+
+	if m.NumEntries() != 3 {
+		t.Fatal("m.NumEntries() != 3")
+	}
+
+	var it = m.Iter()
+	var k, v = it.Next()
+	if k == "" {
+		t.Fatal("k == \"\"")
+	}
+	if k != "c" {
+		t.Fatal("k != \"c\"")
+	}
+	if v != 3 {
+		t.Fatal("v != 3")
+	}
+
+	k, v = it.Next()
+	if k == "" {
+		t.Fatal("k == \"\"")
+	}
+	if k != "b" {
+		t.Fatal("k != \"b\"")
+	}
+	if v != 2 {
+		t.Fatal("v != 2")
+	}
+
+	k, v = it.Next()
+	if k == "" {
+		t.Fatal("k == \"\"")
+	}
+	if k != "a" {
+		t.Fatal("k != \"a\"")
+	}
+	if v != 1 {
+		t.Fatal("v != 1")
+	}
+
+	k, _ = it.Next()
+	if k != "" {
+		t.Fatal("k != \"\"")
+	}
+}
+
+func TestRange(t *testing.T) {
+	var m = string_keyed_fmap.New().
+		Put("a", 1).
+		Put("b", 2).
+		Put("c", 3)
+
+	var ents = make([]string, m.NumEntries())
+
+	var i int = 0
+	m.Range(func(k string, v interface{}) bool {
+		ents[i] = fmt.Sprintf("%q:%#v", k, v)
+		i++
+		return true
+	})
+
+	var str = strings.Join(ents, ",")
+	var expected_str = "\"c\":3,\"b\":2,\"a\":1"
+	if str != expected_str {
+		t.Fatalf("str,%s != expected_str,%s", str, expected_str)
+	}
+}
+
+func TestString(t *testing.T) {
+	var m = string_keyed_fmap.New().
+		Put("a", 1).
+		Put("b", 2).
+		Put("c", 3)
+
+	var str = m.String()
+	var expected_str = "StringKeyedMap{\"c\":3,\"b\":2,\"a\":1}"
+	if str != expected_str {
+		t.Fatalf("str,%s != expected_str,%s", str, expected_str)
+	}
 }
