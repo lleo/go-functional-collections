@@ -1,4 +1,4 @@
-package sorted_set
+package sortedSet
 
 import "fmt"
 

@@ -1,14 +1,14 @@
-package sorted_set_test
+package sortedSet_test
 
 import (
 	"fmt"
 
 	"github.com/lleo/go-functional-collections/sorted"
-	"github.com/lleo/go-functional-collections/sorted_set"
+	"github.com/lleo/go-functional-collections/sortedSet"
 )
 
 func ExampleRange() {
-	var s = sorted_set.New().
+	var s = sortedSet.New().
 		Set(sorted.StringKey("a")).
 		Set(sorted.StringKey("b")).
 		Set(sorted.StringKey("c"))
@@ -26,7 +26,7 @@ func ExampleRange() {
 }
 
 func ExampleRangeLimit() {
-	var s = sorted_set.New().
+	var s = sortedSet.New().
 		Set(sorted.StringKey("a")).
 		Set(sorted.StringKey("b")).
 		Set(sorted.StringKey("c")).

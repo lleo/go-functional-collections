@@ -1,5 +1,5 @@
-// Package sorted_set implements a functional Set data structure that preserves
-// the ordering of the keys. The internal data structure of the sorted_set is
+// Package sortedSet implements a functional Set data structure that preserves
+// the ordering of the keys. The internal data structure of the sortedSet is
 // a regular Red-Black Tree (as opposed to a Left-Leaning Red-Black Tree).
 //
 // Functional means that each data structure is immutable and persistent.
@@ -13,7 +13,7 @@
 //
 // Each method call that potentially modifies the Set, returns a new Set data
 // structure in addition to the other pertinent return values.
-package sorted_set
+package sortedSet
 
 import (
 	"errors"
@@ -704,13 +704,13 @@ func (s *Set) deleteCase6(on, nn *node, path *nodeStack) {
 //
 //If you want to indicate a "key greater than any key" or a "key less than any
 //other key", you can use the infinitely positive or negetive key, by calling
-//sorted_set.InfKey(sign int). A call to sorted_set.InfKey(1) returns a key
-//greater than any other key. A call to sorted_set.InfKey(-1) returns a key less
+//sorted.InfKey(sign int). A call to sorted.InfKey(1) returns a key
+//greater than any other key. A call to sorted.InfKey(-1) returns a key less
 //than any other key.
 //
 // Example:
 //
-//     var s = sorted_set.New()
+//     var s = sortedSet.New()
 //     s.Add(sorted.StringKey("a"))
 //     s.Add(sorted.StringKey("b"))
 //     s.Add(sorted.StringKey("c"))

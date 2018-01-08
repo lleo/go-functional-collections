@@ -1,11 +1,11 @@
-package sorted_set_test
+package sortedSet_test
 
 import (
 	"math/rand"
 	"testing"
 
 	"github.com/lleo/go-functional-collections/sorted"
-	"github.com/lleo/go-functional-collections/sorted_set"
+	"github.com/lleo/go-functional-collections/sortedSet"
 )
 
 func buildKeys(numKeys, numKeysXtra int) ([]sorted.Key, []sorted.Key) {
@@ -27,8 +27,8 @@ func buildKeys(numKeys, numKeysXtra int) ([]sorted.Key, []sorted.Key) {
 	return keys, xtra
 }
 
-func buildSet(keys []sorted.Key) *sorted_set.Set {
-	var s = sorted_set.New()
+func buildSet(keys []sorted.Key) *sortedSet.Set {
+	var s = sortedSet.New()
 	for _, key := range keys {
 		s = s.Set(key)
 	}
@@ -51,13 +51,13 @@ const NumKeysExtra100M = 20 * (NumKeys100M / 10)
 const NumKeysExtra1MM = 20 * (NumKeys1MM / 10)
 const NumKeysExtra10MM = 20 * (NumKeys10MM / 10)
 
-var SSet10 *sorted_set.Set
-var SSet100 *sorted_set.Set
-var SSet1M *sorted_set.Set
-var SSet10M *sorted_set.Set
-var SSet100M *sorted_set.Set
-var SSet1MM *sorted_set.Set
-var SSet10MM *sorted_set.Set
+var SSet10 *sortedSet.Set
+var SSet100 *sortedSet.Set
+var SSet1M *sortedSet.Set
+var SSet10M *sortedSet.Set
+var SSet100M *sortedSet.Set
+var SSet1MM *sortedSet.Set
+var SSet10MM *sortedSet.Set
 
 var XtraKeys10 []sorted.Key
 var XtraKeys100 []sorted.Key
