@@ -1,6 +1,16 @@
 (temporary) Questions about the API design
 ==========================================
 
+Note: several of the API choices were meant to follow the sync.Map design. For
+example, LoadOrStore & Range. Other choices were to allow chained calls.
+
+Example of chained calls:
+
+    var m = fmap.New().
+      Put(hash.StringKey("a"), 1).
+      Put(hash.StringKey("b"), 2).
+      Put(hash.StringKey("c"), 3)
+
 0. Anything you would like to comment on.
 1. Should the ``NumEntries()`` method on the collections be renamed? Possibly
    ``Count()``? My thought is that ``Count()`` seems to idicate an action which
