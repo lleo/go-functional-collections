@@ -19,7 +19,9 @@ Example of chained calls:
 2. Should we keep the ``Iter()`` and/or ``Range()`` methods? ``Range()`` is
    implemented in terms of ``Iter()`` anyhow. Or just keep both for choice and
    because they are already implemented.
-3. ... 
+3. Should ``NumEntries()`` or ``Count()`` return uint or int? I made it uint
+   because it should never return a negative number. Is that a good enough
+   reason?
 
 Functional Collections Library for the Go Language
 ==================================================
