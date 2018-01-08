@@ -62,6 +62,6 @@ func (l *flatLeaf) keyVals() []keyVal {
 	return []keyVal{{l.key, l.val}}
 }
 
-func (l *flatLeaf) visit(fn visitFn, depth uint) (error, bool) {
-	return nil, fn(l, depth)
+func (l *flatLeaf) visit(fn visitFn, depth uint) (bool, error) {
+	return fn(l, depth), nil
 }

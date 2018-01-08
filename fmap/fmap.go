@@ -1,7 +1,8 @@
 // Package fmap implements a functional Map data structure; mapping a key to a
 // value. The package name cannot be map because that is a reserved keyword in
 // Golang, so "fmap" was used instead. The internal data structure of fmap is a
-// Hashed Array Mapped Trie (see https://en.wikipedia.org/wiki/Hash_array_mapped_trie).
+// Hashed Array Mapped Trie
+// (see https://en.wikipedia.org/wiki/Hash_array_mapped_trie).
 //
 // Functional means that each data structure is immutable and persistent.
 // The Map is immutable because you never modify a Map in place, but rather
@@ -50,7 +51,7 @@ type Map struct {
 	numEnts uint
 }
 
-// New return a properly initialize pointer to a Map struct.
+// New returns a properly initialize pointer to a fmap.Map struct.
 func New() *Map {
 	return new(Map)
 }
@@ -417,14 +418,14 @@ func (m *Map) Remove(key hash.Key) (*Map, interface{}, bool) {
 }
 
 //func (m *Map) walk(fn visitFn) bool {
-//	var err, keepOn = m.root.visit(fn, 0)
+//	var keepOn, err = m.root.visit(fn, 0)
 //	if err != nil {
 //		panic(err)
 //	}
 //	return keepOn
 //}
 
-// Iter returns a *Iter structure. You can call the Next() method on the *Iter
+// Iter returns an *Iter structure. You can call the Next() method on the *Iter
 // structure sucessively until it return a nil key value, to walk the key/value
 // mappings in the Map data structure. This is safe under any usage of the *Map
 // because the Map is immutable.
@@ -482,7 +483,7 @@ func (m *Map) Range(fn func(hash.Key, interface{}) bool) {
 	}
 }
 
-// NumEntries() returns the number of key/value entries in the *Map. This
+// NumEntries returns the number of key/value entries in the *Map. This
 // operation is O(1), because a current count of the number of entries is
 // maintained at the top level of the *Map data structure, so walking the data
 // structure is not required to get the current count of key/value entries.
@@ -494,7 +495,7 @@ func (m *Map) NumEntries() uint {
 // intended to be simmilar to fmt.Printf("%#v") of a golang builtin map.
 func (m *Map) String() string {
 	var ents = make([]string, m.NumEntries())
-	var i int = 0
+	var i int
 
 	var it = m.Iter()
 	for k, v := it.Next(); k != nil; k, v = it.Next() {

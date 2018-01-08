@@ -232,34 +232,34 @@ func (t *sparseTable) remove(idx uint) {
 // a given node, slot visit calls the visitFn on nil.
 //
 // The traversal stops if the visitFn function returns false.
-func (t *sparseTable) visit(fn visitFn, depth uint) (error, bool) {
+func (t *sparseTable) visit(fn visitFn, depth uint) (bool, error) {
 	if depth != t.depth {
 		var err = fmt.Errorf("depth,%d != t.depth=%d; t=%s", depth, t.depth, t)
-		return err, false
+		return false, err
 	}
 
 	depth++
 
 	if !fn(t, depth) {
-		return nil, false
+		return false, nil
 	}
 
 	for idx := uint(0); idx < hash.IndexLimit; idx++ {
 		var n = t.get(idx)
 		if n == nil {
 			if !fn(n, depth) {
-				return nil, false
+				return false, nil
 			}
-		} else if err, keepOn := n.visit(fn, depth); !keepOn || err != nil {
-			return err, keepOn
+		} else if keepOn, err := n.visit(fn, depth); !keepOn || err != nil {
+			return keepOn, err
 		}
 	}
 
-	return nil, true
+	return true, nil
 }
 
 func (t *sparseTable) iter() tableIterFunc {
-	var j int = -1
+	var j = -1
 
 	return func() nodeI {
 		if j < len(t.nodes)-1 {

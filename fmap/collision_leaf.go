@@ -98,6 +98,6 @@ func (l *collisionLeaf) keyVals() []keyVal {
 	//return l.kvs
 }
 
-func (l *collisionLeaf) visit(fn visitFn, depth uint) (error, bool) {
-	return nil, fn(l, depth)
+func (l *collisionLeaf) visit(fn visitFn, depth uint) (bool, error) {
+	return fn(l, depth), nil
 }
