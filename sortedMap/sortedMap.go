@@ -1,5 +1,5 @@
-// Package sorted_map implements a functional Map data structure that preserves
-// the ordering of the keys. The internal data structure of the sorted_map is
+// Package sortedMap implements a functional Map data structure that preserves
+// the ordering of the keys. The internal data structure of the sortedMap is
 // a regular Red-Black Tree (as opposed to a Left-Leaning Red-Black Tree).
 //
 // Functional means that each data structure is immutable and persistent.
@@ -13,7 +13,7 @@
 //
 // Each method call that potentially modifies the Map, returns a new Map data
 // structure in addition to the other pertinent return values.
-package sorted_map
+package sortedMap
 
 import (
 	"errors"
@@ -23,11 +23,14 @@ import (
 	"github.com/lleo/go-functional-collections/sorted"
 )
 
+// The Map struct maintains the immutable collection of sorted key/value
+// mappings.
 type Map struct {
 	numEnts uint
 	root    *node
 }
 
+// New returns a properly initialized pointer to a sortedMap.Map struct.
 func New() *Map {
 	var m = new(Map)
 	return m
@@ -45,6 +48,10 @@ func (m *Map) valid() error {
 	return nil
 }
 
+// NumEntries returns the number of key/value entries in the *Map. This
+// operation is O(1), because a current count of the number of entries is
+// maintained at the top level of the *Map data structure, so walking the data
+// structure is not required to get the current count of key/value entries.
 func (m *Map) NumEntries() uint {
 	return m.numEnts
 }
@@ -55,10 +62,19 @@ func (m *Map) copy() *Map {
 	return nm
 }
 
+// Iter returns an *Iter structure. You can call the Next() method on the *Iter
+// structure sucessively until it return a nil key value, to walk the key/value
+// mappings in the Map data structure. This is safe under any usage of the *Map
+// because the Map is immutable.
 func (m *Map) Iter() *Iter {
 	return m.IterLimit(sorted.InfKey(-1), sorted.InfKey(1))
 }
 
+// IterLimit returns an *Iter structure. The first time the Next() method on
+// the *Iter structure returns the key/value pair that is sorted at or just
+// after startKey. The Next() method will return each key/value mapping up to
+// and potentially including endKey. After that the Next() method will return
+// nil for the key.
 func (m *Map) IterLimit(startKey, endKey sorted.Key) *Iter {
 	var dir = sorted.Less(startKey, endKey)
 	var cur, path = m.root.findNodeIterPath(startKey, dir)
@@ -68,11 +84,19 @@ func (m *Map) IterLimit(startKey, endKey sorted.Key) *Iter {
 	return newNodeIter(dir, cur, endKey, path)
 }
 
+// Get loads the value stored for the given key. If the key doesn't exist in the
+// Map a nil is returned. If you need to store nil values and want to
+// distinguish between a found existing mapping of the key to nil and a
+// non-existent mapping for the key, you must use the Load method.
 func (m *Map) Get(k sorted.Key) interface{} {
 	var v, _ = m.Load(k)
 	return v
 }
 
+// Load retrieves the value related to the hash.Key in the Map data structure.
+// It also return a bool to indicate the value was found. This allows you to
+// store nil values in the Map data structure and distinguish between a found
+// nil key/value mapping and a non-existant key/value mapping.
 func (m *Map) Load(k sorted.Key) (interface{}, bool) {
 	var n = m.root.findNode(k)
 
@@ -83,7 +107,7 @@ func (m *Map) Load(k sorted.Key) (interface{}, bool) {
 	return n.val, true
 }
 
-// LoadOrStore() finds the value for a given key. If the key is found then
+// LoadOrStore finds the value for a given key. If the key is found then
 // it simply return the current map, the value found, and a true value
 // indicating is was found. If the key is NOT found then it stores the
 // new key:value pair and returns the new map value, a nil for the previous
@@ -113,12 +137,14 @@ func (m *Map) LoadOrStore(k sorted.Key, v interface{}) (
 
 }
 
+// Put stores a new key/value mapping. It returns a new persistent *Map data
+// structure.
 func (m *Map) Put(k sorted.Key, v interface{}) *Map {
 	var nm, _ = m.Store(k, v)
 	return nm
 }
 
-// Store() inserts a new key:val pair and returns a new Map and a boolean
+// Store inserts a new key:val pair and returns a new Map and a boolean
 // indicatiing if the key:val was added(true) or merely replaced(false).
 func (m *Map) Store(k sorted.Key, v interface{}) (*Map, bool) {
 	var on, path = m.root.findNodeDupPath(k)
@@ -136,10 +162,10 @@ func (m *Map) Store(k sorted.Key, v interface{}) (*Map, bool) {
 	return nm, true
 }
 
-// replace() simply replaces the value on a copy of the node that contains the
+// replace simply replaces the value on a copy of the node that contains the
 // old value, then calls persist() on the *Map.
 //
-// replace() MUST be called on a new *Map.
+// replace MUST be called on a new *Map.
 func (m *Map) replace(k sorted.Key, v interface{}, on *node, path *nodeStack) {
 	_ = assertOn && assert(sorted.Cmp(on.key, k) == 0, "on.key != nn.key")
 
@@ -149,12 +175,12 @@ func (m *Map) replace(k sorted.Key, v interface{}, on *node, path *nodeStack) {
 	m.persist(on, nn, path)
 }
 
-// insert() inserts a new node, create from a key-value pair,  into the tip of
+// insert inserts a new node, create from a key-value pair,  into the tip of
 // the path, then balances and persists the *Map.
 //
 // path MUST be non-zero length.
 //
-// insert() MUST be called on a new *Map.
+// insert MUST be called on a new *Map.
 func (m *Map) insert(k sorted.Key, v interface{}, path *nodeStack) {
 	var on *node           // = nil
 	var nn = newNode(k, v) //nn.isRed ALWAYS!
@@ -163,7 +189,7 @@ func (m *Map) insert(k sorted.Key, v interface{}, path *nodeStack) {
 	m.numEnts++
 }
 
-//persist() takes a duped path and sets the first element of the path to the
+//persist takes a duped path and sets the first element of the path to the
 //map's root and stitches the new node in to the last element of the path. In
 //the case where the path is empty, it simply sets the map's root to the new
 //node.
@@ -191,7 +217,7 @@ func (m *Map) persist(on, nn *node, path *nodeStack) {
 	}
 }
 
-// rotateLeft() takes the target node(n) and its parent(p). We are rotating on
+// rotateLeft takes the target node(n) and its parent(p). We are rotating on
 // target node(n) left. We assume that all arguments are mutable. We return
 // the original n and it's new parent.
 //
@@ -228,7 +254,7 @@ func (m *Map) rotateLeft(n, p *node) (*node, *node) {
 	return n, r
 }
 
-// rotateRight() takes the target node(n) and its parent(p). We are rotating on
+// rotateRight takes the target node(n) and its parent(p). We are rotating on
 // target node(n) right. We assume that all arguments are mutable. We return
 // the original n and it's new parent.
 //
@@ -265,7 +291,7 @@ func (m *Map) rotateRight(n, p *node) (*node, *node) {
 	return n, l
 }
 
-// insertRepair() MUST be called on a new *Map.
+// insertRepair MUST be called on a new *Map.
 func (m *Map) insertRepair(on, nn *node, path *nodeStack) {
 	_ = assertOn && assert(nn != nil, "nn == nil")
 
@@ -301,7 +327,7 @@ func (m *Map) insertRepair(on, nn *node, path *nodeStack) {
 	}
 }
 
-// insertCase1() MUST be called on a new *Map.
+// insertCase1 MUST be called on a new *Map.
 func (m *Map) insertCase1(on, nn *node, path *nodeStack) {
 	_ = assertOn && assert(path.len() == 0, "path.peek()==nil BUT path.len() != 0")
 
@@ -309,12 +335,12 @@ func (m *Map) insertCase1(on, nn *node, path *nodeStack) {
 	m.persist(on, nn, path)
 }
 
-// insertCase2() MUST be called on a new *Map.
+// insertCase2 MUST be called on a new *Map.
 func (m *Map) insertCase2(on, nn *node, path *nodeStack) {
 	m.persist(on, nn, path)
 }
 
-// insertCase3() MUST be called on a new *Map.
+// insertCase3 MUST be called on a new *Map.
 func (m *Map) insertCase3(on, nn *node, path *nodeStack) {
 	var oparent = path.pop()
 	var ogp = path.pop() //gp means grandparent
@@ -353,7 +379,7 @@ func (m *Map) insertCase3(on, nn *node, path *nodeStack) {
 	m.insertRepair(ogp, ngp, path)
 }
 
-// insertCase4() MUST be called on a new *Map.
+// insertCase4 MUST be called on a new *Map.
 func (m *Map) insertCase4(on, nn *node, path *nodeStack) {
 	var parent = path.peek()
 	var gp = path.peekN(1) //ogp means grandparent
@@ -427,14 +453,18 @@ func (m *Map) insertCase4pt2(on, nn *node, path *nodeStack) {
 	m.persist(gp, gp, path)
 }
 
-// Del calls Remove() but only returns the modified *Map.
+// Del deletes any entry with the given key, but does not indicate if the key
+// existed or not. However, if the key did not exist the returned *Map will be
+// the original *Map.
 func (m *Map) Del(k sorted.Key) *Map {
 	var nm, _, _ = m.Remove(k)
 	return nm
 }
 
-// Remove() eliminates the node pointed to by the sorted.Key argument (and
-// rebalances) a persistent version of the given *Map.
+// Remove deletes any key/value mapping for the given key. It returns a
+// *Map data structure, the possible value that was stored for that key,
+// and a boolean idicating if the key was found and deleted. If the key didn't
+// exist, then the value is set nil, and the original *Map is returned.
 func (m *Map) Remove(k sorted.Key) (*Map, interface{}, bool) {
 	var on, path = m.root.findNodeDupPath(k)
 
@@ -494,12 +524,12 @@ func (m *Map) Remove(k sorted.Key) (*Map, interface{}, bool) {
 	return nm, retVal, true
 }
 
-//removeNodeWithZeroOrOneChild() deletes a node that has only on child.
-//Basically, we reparent the child to the parent of the deleted node, then
-//balance the tree. The deleteCase?() methods are the balancing methods, but
-//the deletion occurs here in removeNodeWithZeroOrOneChild().
+// removeNodeWithZeroOrOneChild deletes a node that has only on child.
+// Basically, we reparent the child to the parent of the deleted node, then
+// balance the tree. The deleteCase?() methods are the balancing methods, but
+// the deletion occurs here in removeNodeWithZeroOrOneChild().
 //
-//Was removeOneChild() but that was confusingly wrong name, just shorter.
+// Was removeOneChild but that was confusingly wrong name, just shorter.
 func (m *Map) removeNodeWithZeroOrOneChild(on *node, path *nodeStack) {
 	//find the child of the node to be deleted.
 	var ochild *node
@@ -551,7 +581,7 @@ func (m *Map) deleteCase1(on, nn *node, path *nodeStack) {
 	m.deleteCase2(on, nn, path)
 }
 
-// deleteCase2() ...
+// deleteCase2 ...
 //
 // when sibling is Red we rotate away from it. My fuzzy understanding is that
 // the sibling side is longer and we are trying to shorten the target side,
@@ -693,8 +723,8 @@ func (m *Map) deleteCase5(on, nn *node, path *nodeStack) {
 	m.deleteCase6(on, nn, path)
 }
 
-//deleteCase6()
-//We know:
+// deleteCase6
+// We know:
 //  path.len() > 0 aka oparent != nil && oparent.isRed
 //  osibling != nil
 //  if on.isLeftChild
@@ -749,19 +779,19 @@ func (m *Map) deleteCase6(on, nn *node, path *nodeStack) {
 	m.persist(on, nn, path)
 }
 
-//RangeLimit() executes the given function starting with the start key (if
-//it exists), or the first key after the start key. It then stops at the end key
-//(if it exists), or the last key before the end key. The traversal will stop
-//immediately if the function returns false.
+// RangeLimit executes the given function starting with the start key (if
+// it exists), or the first key after the start key. It then stops at the end
+// key (if it exists), or the last key before the end key. The traversal will
+// stop immediately if the function returns false.
 //
-//If the start key is greater than the end key, then the traversal will be in
-//reverse order.
+// If the start key is greater than the end key, then the traversal will be in
+// reverse order.
 //
-//If you want to indicate a "key greater than any key" or a "key less than any
-//other key", you can use the infinitely positive or negetive key, by calling
-//sorted_map.InfKey(sign int). A call to sorted_map.InfKey(1) returns a key
-//greater than any other key. A call to sorted_map.InfKey(-1) returns a key less
-//than any other key.
+// If you want to indicate a "key greater than any key" or a "key less than any
+// other key", you can use the infinitely positive or negetive key, by calling
+// sorted.InfKey(sign int). A call to sorted.InfKey(1) returns a key
+// greater than any other key. A call to sorted.InfKey(-1) returns a key less
+// than any other key.
 func (m *Map) RangeLimit(
 	start, end sorted.Key,
 	fn func(sorted.Key, interface{}) bool,
@@ -776,8 +806,8 @@ func (m *Map) RangeLimit(
 	}
 }
 
-//Range() executes the given function on every key, value pair in order. If the
-//function returns false the traversal of key, value pairs will stop.
+// Range executes the given function on every key, value pair in order. If the
+// function returns false the traversal of key, value pairs will stop.
 func (m *Map) Range(fn func(sorted.Key, interface{}) bool) {
 	m.RangeLimit(sorted.InfKey(-1), sorted.InfKey(1), fn)
 }
@@ -810,7 +840,7 @@ func (m *Map) Range(fn func(sorted.Key, interface{}) bool) {
 //	return true
 //}
 
-//dup() is for testing only. It is a recusive copy.
+// dup is for testing only. It is a recusive copy.
 func (m *Map) dup() *Map {
 	var nm = &Map{
 		numEnts: m.numEnts,
@@ -821,7 +851,7 @@ func (m *Map) dup() *Map {
 	return nm
 }
 
-//equiv() is for testing only. It is a equal-by-value method.
+// equiv is for testing only. It is a equal-by-value method.
 func (m *Map) equiv(m0 *Map) bool {
 	return m.numEnts == m0.numEnts && m.root.equiv(m0.root)
 }

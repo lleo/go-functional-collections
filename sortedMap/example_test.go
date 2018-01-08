@@ -1,14 +1,14 @@
-package sorted_map_test
+package sortedMap_test
 
 import (
 	"fmt"
 
 	"github.com/lleo/go-functional-collections/sorted"
-	"github.com/lleo/go-functional-collections/sorted_map"
+	"github.com/lleo/go-functional-collections/sortedMap"
 )
 
 func ExampleRange() {
-	var s = sorted_map.New().
+	var s = sortedMap.New().
 		Put(sorted.StringKey("a"), 1).
 		Put(sorted.StringKey("b"), 2).
 		Put(sorted.StringKey("c"), 3)
@@ -26,7 +26,7 @@ func ExampleRange() {
 }
 
 func ExampleRangeLimit() {
-	var s = sorted_map.New().
+	var s = sortedMap.New().
 		Put(sorted.StringKey("a"), 1).
 		Put(sorted.StringKey("b"), 2).
 		Put(sorted.StringKey("c"), 3).

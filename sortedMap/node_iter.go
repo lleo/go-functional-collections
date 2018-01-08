@@ -1,4 +1,4 @@
-package sorted_map
+package sortedMap
 
 import (
 	"github.com/lleo/go-functional-collections/sorted"
@@ -31,9 +31,8 @@ func newNodeIter(
 func (it *Iter) Next() (sorted.Key, interface{}) {
 	if it.dir {
 		return it.forw()
-	} else {
-		return it.back()
 	}
+	return it.back()
 }
 
 func (it *Iter) forw() (sorted.Key, interface{}) {
@@ -94,8 +93,7 @@ func (it *Iter) toFar() bool {
 	if it.dir {
 		// lower to higher
 		return sorted.Less(it.endKey, it.cur.key) // cur <= end
-	} else {
-		// higher to lower
-		return sorted.Less(it.cur.key, it.endKey) // end <= cur
 	}
+	// higher to lower
+	return sorted.Less(it.cur.key, it.endKey) // end <= cur
 }

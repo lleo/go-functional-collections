@@ -1,4 +1,4 @@
-package sorted_map_test
+package sortedMap_test
 
 import (
 	"log"
@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/lleo/go-functional-collections/sorted"
-	"github.com/lleo/go-functional-collections/sorted_map"
+	"github.com/lleo/go-functional-collections/sortedMap"
 )
 
 type KeyVal struct {
@@ -34,9 +34,9 @@ func buildKvs(numMapKvs, numKvsXtra int) ([]KeyVal, []KeyVal) {
 	return kvs, xtra
 }
 
-func buildMap(kvs []KeyVal) *sorted_map.Map {
+func buildMap(kvs []KeyVal) *sortedMap.Map {
 	log.Printf("buildMap: len(kvs)=%d;\n", len(kvs))
-	var m = sorted_map.New()
+	var m = sortedMap.New()
 	for _, kv := range kvs {
 		m = m.Put(kv.Key, kv.Val)
 	}
@@ -59,13 +59,13 @@ const NumKvsExtra100M = 20 * (NumKvs100M / 10)
 const NumKvsExtra1MM = 20 * (NumKvs1MM / 10)
 const NumKvsExtra10MM = 20 * (NumKvs10MM / 10)
 
-var SMap10 *sorted_map.Map
-var SMap100 *sorted_map.Map
-var SMap1M *sorted_map.Map
-var SMap10M *sorted_map.Map
-var SMap100M *sorted_map.Map
-var SMap1MM *sorted_map.Map
-var SMap10MM *sorted_map.Map
+var SMap10 *sortedMap.Map
+var SMap100 *sortedMap.Map
+var SMap1M *sortedMap.Map
+var SMap10M *sortedMap.Map
+var SMap100M *sortedMap.Map
+var SMap1MM *sortedMap.Map
+var SMap10MM *sortedMap.Map
 
 var XtraKvs10 []KeyVal
 var XtraKvs100 []KeyVal

@@ -1,4 +1,4 @@
-package sorted_map
+package sortedMap
 
 import (
 	"strings"

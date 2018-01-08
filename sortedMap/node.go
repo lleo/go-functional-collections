@@ -1,4 +1,4 @@
-package sorted_map
+package sortedMap
 
 import (
 	"errors"
@@ -92,7 +92,7 @@ func (n *node) valid() (int, error) {
 	//RBT#3
 	if n.isRed() {
 		if n.ln.isRed() || n.rn.isRed() {
-			return -1, errors.New("red-red violation.")
+			return -1, errors.New("red-red violation")
 		}
 	} else {
 		lcount++
@@ -394,10 +394,10 @@ const toStrFmt3 = "%s}\n"
 // it's left and write children. Finnaly, if d < 0 it will print the entire
 // tree starting at the given node.
 func (n *node) treeString() string {
-	return n.treeString_(-1, "")
+	return n.treeString2(-1, "")
 }
 
-func (n *node) treeString_(d int, indent string) string {
+func (n *node) treeString2(d int, indent string) string {
 	if n == nil {
 		return "<nil>"
 	}
@@ -408,8 +408,8 @@ func (n *node) treeString_(d int, indent string) string {
 		return n.String()
 	}
 	return fmt.Sprintf(toStrFmt0, n, n.key, n.val, n.color) +
-		fmt.Sprintf(toStrFmt1, indent, n.ln.treeString_(d-1, indent+"  ")) +
-		fmt.Sprintf(toStrFmt2, indent, n.rn.treeString_(d-1, indent+"  ")) +
+		fmt.Sprintf(toStrFmt1, indent, n.ln.treeString2(d-1, indent+"  ")) +
+		fmt.Sprintf(toStrFmt2, indent, n.rn.treeString2(d-1, indent+"  ")) +
 		indent + "}"
 }
 
