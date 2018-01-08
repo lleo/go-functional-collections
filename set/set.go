@@ -1,5 +1,6 @@
 // Package set implements a functional Set data structure. The internal data
-// structure of set is a Hashed Array Mapped Trie (see https://en.wikipedia.org/wiki/Hash_array_mapped_trie).
+// structure of set is a Hashed Array Mapped Trie
+// (see https://en.wikipedia.org/wiki/Hash_array_mapped_trie).
 //
 // Functional means that each data structure is immutable and persistent.
 // The Set is immutable because you never modify a Set in place, but rather
@@ -37,7 +38,7 @@ const downgradeThreshold uint = hash.IndexLimit / 2
 // upgradeThreshold = 20 for hash.numIndexBits=5 aka hash.IndexLimit=32
 const upgradeThreshold uint = hash.IndexLimit * 5 / 8
 
-// The Key struct mainains an immutable collection of hash.Key entries.
+// Set struct mainains an immutable collection of hash.Key entries.
 type Set struct {
 	root    fixedTable
 	numEnts uint
@@ -318,7 +319,7 @@ func (s *Set) Remove(key hash.Key) (*Set, bool) {
 }
 
 //func (s *Set) walk(fn visitFn) bool {
-//	var err, keepOn = s.root.visit(fn, 0)
+//	var keepOn, err = s.root.visit(fn, 0)
 //	if err != nil {
 //		panic(err)
 //	}
@@ -393,7 +394,7 @@ func (s *Set) NumEntries() uint {
 // simmilar to fmt.Printf("%#v") of a golang set[].
 func (s *Set) String() string {
 	var ents = make([]string, s.NumEntries())
-	var i int = 0
+	var i int
 	s.Range(func(k hash.Key) bool {
 		//log.Printf("i=%d, k=%#v\n", i, k)
 		ents[i] = fmt.Sprintf("%#v", k)

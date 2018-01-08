@@ -44,14 +44,14 @@ LOOP:
 			//}
 			break LOOP
 		case *collisionLeaf:
-			if it.keyIdx >= len(x.keys_) {
+			if it.keyIdx >= len(x.ks) {
 				it.setNextNode() //ignore return false == the end
 				//if !it.setNextNode() {
 				//	log.Printf("it.Next: case *collisionLeaf: it.setNextNode()==false")
 				//}
 				continue LOOP
 			}
-			key = x.keys_[it.keyIdx]
+			key = x.ks[it.keyIdx]
 			it.keyIdx++
 			break LOOP
 		default:

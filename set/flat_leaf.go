@@ -61,6 +61,6 @@ func (l *flatLeaf) keys() []hash.Key {
 	return []hash.Key{l.key}
 }
 
-func (l *flatLeaf) visit(fn visitFn, depth uint) (error, bool) {
-	return nil, fn(l, depth)
+func (l *flatLeaf) visit(fn visitFn, depth uint) (bool, error) {
+	return fn(l, depth), nil
 }

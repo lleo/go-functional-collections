@@ -15,7 +15,7 @@ type visitFn func(nodeI, uint) bool
 
 type nodeI interface {
 	hash() hash.Val
-	visit(fn visitFn, depth uint) (error, bool)
+	visit(fn visitFn, depth uint) (bool, error)
 	String() string
 }
 
