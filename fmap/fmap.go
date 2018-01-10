@@ -48,7 +48,7 @@ const upgradeThreshold uint = hash.IndexLimit * 5 / 8
 // The Map struct maintains a immutable collection of key/value mappings.
 type Map struct {
 	root    fixedTable
-	numEnts uint
+	numEnts int
 }
 
 // New returns a properly initialize pointer to a fmap.Map struct.
@@ -285,6 +285,8 @@ func (m *Map) Store(key hash.Key, val interface{}) (*Map, bool) {
 
 	var hv = key.Hash()
 
+	//IDEA: build the hamt branch during lookup
+	//var nm, curTable, idx = m.findBuildPath(hv)
 	var path, leaf, idx = m.find(hv)
 	var curTable = path.pop()
 
@@ -384,6 +386,9 @@ func (m *Map) Remove(key hash.Key) (*Map, interface{}, bool) {
 	var nm = m.copy()
 
 	nm.numEnts--
+	if nm.numEnts < 0 {
+		panic("WTF!?! new map.numEnts < 0")
+	}
 
 	if curTable == &m.root {
 		//copying all m.root into nm.root already done in *nm = *m
@@ -487,7 +492,7 @@ func (m *Map) Range(fn func(hash.Key, interface{}) bool) {
 // operation is O(1), because a current count of the number of entries is
 // maintained at the top level of the *Map data structure, so walking the data
 // structure is not required to get the current count of key/value entries.
-func (m *Map) NumEntries() uint {
+func (m *Map) NumEntries() int {
 	return m.numEnts
 }
 

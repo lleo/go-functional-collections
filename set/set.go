@@ -41,7 +41,7 @@ const upgradeThreshold uint = hash.IndexLimit * 5 / 8
 // Set struct mainains an immutable collection of hash.Key entries.
 type Set struct {
 	root    fixedTable
-	numEnts uint
+	numEnts int
 }
 
 // New returns a properly initialized pointer to a Set struct.
@@ -386,7 +386,7 @@ func (s *Set) Range(fn func(hash.Key) bool) {
 // NumEntries returns the number of hash.Keys in the *Set. This operation is
 // O(1) because the count is maintained at the top level for the *Set and does
 // not require a walk of the *Set data structure to return the count.
-func (s *Set) NumEntries() uint {
+func (s *Set) NumEntries() int {
 	return s.numEnts
 }
 

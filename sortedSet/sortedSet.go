@@ -24,7 +24,7 @@ import (
 )
 
 type Set struct {
-	numEnts uint
+	numEnts int
 	root    *node
 }
 
@@ -39,13 +39,16 @@ func (s *Set) valid() error {
 		return err
 	}
 	var count = s.root.count()
-	if uint(count) != s.numEnts {
+	if count != s.numEnts {
 		return errors.New("enumerated count of subnodes != s.NumEntries()")
 	}
 	return nil
 }
 
-func (s *Set) NumEntries() uint {
+// NumEntries returns the number of sorted.Keys in the *Set. This operation is
+// O(1) because the count is maintained at the top level for the *Set and does
+// not require a walk of the *Set data structure to return the count.
+func (s *Set) NumEntries() int {
 	return s.numEnts
 }
 

@@ -24,7 +24,7 @@ func init() {
 }
 
 func mkset(r *node) *Set {
-	var num = uint(r.count())
+	var num = r.count()
 	return &Set{num, r}
 }
 

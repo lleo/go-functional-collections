@@ -24,7 +24,7 @@ func init() {
 }
 
 func mkmap(r *node) *Map {
-	var num = uint(r.count())
+	var num = r.count()
 	return &Map{num, r}
 }
 

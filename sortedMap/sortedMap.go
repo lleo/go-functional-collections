@@ -26,7 +26,7 @@ import (
 // The Map struct maintains the immutable collection of sorted key/value
 // mappings.
 type Map struct {
-	numEnts uint
+	numEnts int
 	root    *node
 }
 
@@ -42,7 +42,7 @@ func (m *Map) valid() error {
 		return err
 	}
 	var count = m.root.count()
-	if uint(count) != m.numEnts {
+	if count != m.numEnts {
 		return errors.New("enumerated count of subnodes != m.NumEntries()")
 	}
 	return nil
@@ -52,7 +52,7 @@ func (m *Map) valid() error {
 // operation is O(1), because a current count of the number of entries is
 // maintained at the top level of the *Map data structure, so walking the data
 // structure is not required to get the current count of key/value entries.
-func (m *Map) NumEntries() uint {
+func (m *Map) NumEntries() int {
 	return m.numEnts
 }
 

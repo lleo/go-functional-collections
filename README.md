@@ -21,7 +21,9 @@ Example of chained calls:
    because they are already implemented.
 3. Should ``NumEntries()`` or ``Count()`` return uint or int? I made it uint
    because it should never return a negative number. Is that a good enough
-   reason?
+   reason? Currently, I am switching to ``int`` instead of the original
+   ``uint``, because getting the number of key/value pairs in a golang
+   ``map[]`` is ``len(mymap)`` and that returns an ``int``.
 
 Functional Collections Library for the Go Language
 ==================================================
