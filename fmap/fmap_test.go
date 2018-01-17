@@ -25,24 +25,6 @@ func init() {
 
 var Inc = stringutil.Lower.Inc
 
-//type StringKey string
-//
-//func (sk StringKey) Hash() hash.Val {
-//	return hash.CalcHash([]byte(sk))
-//}
-//
-//func (sk StringKey) Equals(other hash.Key) bool {
-//	var osk, ok = other.(StringKey)
-//	if !ok {
-//		return false
-//	}
-//	return sk == osk
-//}
-//
-//func (sk StringKey) String() string {
-//	return string(sk)
-//}
-
 type keyVal struct {
 	Key hash.Key
 	Val interface{}

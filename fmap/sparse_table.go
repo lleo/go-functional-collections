@@ -18,6 +18,12 @@ type sparseTable struct {
 	nodeMap  bitmap
 }
 
+func newSparseTable() *sparseTable {
+	var t = new(sparseTable)
+	t.nodes = make([]nodeI, 0, sparseTableInitCap)
+	return t
+}
+
 func (t *sparseTable) copy() tableI {
 	var nt = new(sparseTable)
 	nt.hashPath = t.hashPath
@@ -37,23 +43,30 @@ func (t *sparseTable) deepCopy() tableI {
 	nt.nodeMap = t.nodeMap
 
 	nt.nodes = make([]nodeI, len(t.nodes), cap(t.nodes))
-	for i := 0; i < len(t.nodes); i++ {
-		if table, isTable := t.nodes[i].(tableI); isTable {
-			nt.nodes[i] = table.deepCopy()
-		} else {
-			//leafI's are functional, so no need to copy them.
-			//nils can be copied just fine; duh!
-			nt.nodes[i] = t.nodes[i]
-		}
-	}
-	//for i, n := range t.nodes {
-	//	switch x := n.(type) {
-	//	case tableI:
-	//		nt.nodes[i] = x.deepCopy()
-	//	default:
-	//		nt.nodes[i] = x
+	//for i := 0; i < len(t.nodes); i++ {
+	//	if table, isTable := t.nodes[i].(tableI); isTable {
+	//		nt.nodes[i] = table.deepCopy()
+	//	} else {
+	//		//leafI's are functional, so no need to copy them.
+	//		//nils can be copied just fine; duh!
+	//		nt.nodes[i] = t.nodes[i]
 	//	}
 	//}
+	for i, n := range t.nodes {
+		switch x := n.(type) {
+		case tableI:
+			nt.nodes[i] = x.deepCopy()
+		case leafI:
+			//leafI's are functional, so no need to copy them.
+			nt.nodes[i] = x
+		case nil:
+			panic("found a nil entry in sparseTable")
+			//nils can be copied just fine; duh!
+			nt.nodes[i] = x
+		default:
+			panic("unknown entry in table")
+		}
+	}
 
 	return nt
 }
@@ -67,11 +80,9 @@ func createSparseTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
 			leaf2.hash().HashPath(depth))
 	}
 
-	var retTable = new(sparseTable)
+	var retTable = newSparseTable()
 	retTable.hashPath = leaf1.hash().HashPath(depth)
 	retTable.depth = depth
-	//retTable.nodeMap = 0
-	retTable.nodes = make([]nodeI, 0, sparseTableInitCap)
 
 	var idx1 = leaf1.hash().Index(depth)
 	var idx2 = leaf2.hash().Index(depth)
@@ -125,8 +136,8 @@ func (t *sparseTable) hash() hash.Val {
 // String return a string representation of this table including the hashPath,
 // depth, and number of entries.
 func (t *sparseTable) String() string {
-	return fmt.Sprintf("sparseTable{hashPath:%s, depth=%d, numEntries()=%d}",
-		t.hashPath.HashPathString(t.depth), t.depth, t.numEntries())
+	return fmt.Sprintf("sparseTable{hashPath:%s, depth=%d, slotsUsed()=%d}",
+		t.hashPath.HashPathString(t.depth), t.depth, t.slotsUsed())
 }
 
 // treeString returns a string representation of this table and all the tables
@@ -135,8 +146,8 @@ func (t *sparseTable) treeString(indent string, depth uint) string {
 	var strs = make([]string, 3+len(t.nodes))
 
 	strs[0] = indent +
-		fmt.Sprintf("sparseTable{hashPath=%s, depth=%d, numEntries()=%d,",
-			t.hashPath.HashPathString(depth), t.depth, t.numEntries())
+		fmt.Sprintf("sparseTable{hashPath=%s, depth=%d, slotsUsed()=%d,",
+			t.hashPath.HashPathString(depth), t.depth, t.slotsUsed())
 
 	strs[1] = indent + "\tnodeMap=" + t.nodeMap.String() + ","
 
@@ -156,13 +167,13 @@ func (t *sparseTable) treeString(indent string, depth uint) string {
 	return strings.Join(strs, "\n")
 }
 
-func (t *sparseTable) numEntries() uint {
+func (t *sparseTable) slotsUsed() uint {
 	return uint(len(t.nodes))
 	//return t.nodeMap.count(hash.IndexLimit)
 }
 
 func (t *sparseTable) entries() []tableEntry {
-	var n = t.numEntries()
+	var n = t.slotsUsed()
 	var ents = make([]tableEntry, n)
 
 	for j := uint(0); j < n; j++ {

@@ -47,13 +47,15 @@ const upgradeThreshold uint = hash.IndexLimit * 5 / 8
 
 // The Map struct maintains a immutable collection of key/value mappings.
 type Map struct {
-	root    fixedTable
+	root    tableI
 	numEnts int
 }
 
 // New returns a properly initialize pointer to a fmap.Map struct.
 func New() *Map {
-	return new(Map)
+	var m = new(Map)
+	m.root = newFixedTable()
+	return m
 }
 
 // copy creates a shallow copy of the Map data structure and returns a pointer
@@ -83,7 +85,7 @@ func (m *Map) Load(key hash.Key) (interface{}, bool) {
 	}
 
 	var hv = key.Hash()
-	var curTable tableI = &m.root
+	var curTable tableI = m.root
 
 	var val interface{}
 	var found bool
@@ -112,7 +114,7 @@ DepthIter:
 // a leafI, then it returns the table path leading to the current table (also
 // returned) and the Index in the current table the leaf is at.
 func (m *Map) find(hv hash.Val) (*tableStack, leafI, uint) {
-	var curTable tableI = &m.root
+	var curTable tableI = m.root
 
 	var path = newTableStack()
 	var leaf leafI
@@ -142,12 +144,11 @@ DepthIter:
 // persist() is ONLY called on a fresh copy of the current Hamt.
 // Hence, modifying it is allowed.
 func (m *Map) persist(oldTable, newTable tableI, path *tableStack) {
-	// Removed the case where path.len() == 0 on the first call to nh.perist(),
-	// because that case is handled in Put & Del now. It is handled in Put & Del
-	// because otherwise we were allocating an extraneous fixedTable for the
-	// old m.root.
-	_ = assertOn && assert(path.len() != 0,
-		"path.len()==0; This case should be handled directly in Put & Del.")
+	assert(m.root != nil, "m.root == nil")
+	if m.root == oldTable {
+		m.root = newTable
+		return
+	}
 
 	var depth = uint(path.len()) //guaranteed depth > 0
 	var parentDepth = depth - 1
@@ -155,16 +156,7 @@ func (m *Map) persist(oldTable, newTable tableI, path *tableStack) {
 	var parentIdx = oldTable.hash().Index(parentDepth)
 
 	var oldParent = path.pop()
-
-	var newParent tableI
-	if path.len() == 0 {
-		// This condition and the last if path.len() > 0; shaves off one call
-		// to persist and one fixed table allocation (via oldParent.copy()).
-		m.root = *oldParent.(*fixedTable)
-		newParent = &m.root
-	} else {
-		newParent = oldParent.copy()
-	}
+	var newParent = oldParent.copy()
 
 	if newTable == nil {
 		newParent.remove(parentIdx)
@@ -172,10 +164,7 @@ func (m *Map) persist(oldTable, newTable tableI, path *tableStack) {
 		newParent.replace(parentIdx, newTable)
 	}
 
-	if path.len() > 0 {
-		m.persist(oldParent, newParent, path)
-	}
-
+	m.persist(oldParent, newParent, path)
 	return
 }
 
@@ -201,7 +190,7 @@ func (m *Map) LoadOrStore(key hash.Key, val interface{}) (
 
 	var nm *Map
 
-	if curTable == &m.root {
+	if curTable == m.root {
 		if leaf == nil {
 			nm = m.copy()
 
@@ -228,7 +217,7 @@ func (m *Map) LoadOrStore(key hash.Key, val interface{}) (
 		var newTable tableI
 
 		if leaf == nil {
-			if (curTable.numEntries() + 1) == upgradeThreshold {
+			if (curTable.slotsUsed() + 1) == upgradeThreshold {
 				newTable = upgradeToFixedTable(
 					curTable.hash(), depth, curTable.entries())
 			} else {
@@ -287,61 +276,44 @@ func (m *Map) Store(key hash.Key, val interface{}) (*Map, bool) {
 
 	//IDEA: build the hamt branch during lookup
 	//var nm, curTable, idx = m.findBuildPath(hv)
-	var path, leaf, idx = m.find(hv)
+	if nm.root == nil {
+		nm.root = newSparseTable()
+	}
+	var path, leaf, idx = nm.find(hv)
 	var curTable = path.pop()
 
 	var depth = uint(path.len())
 
 	var added bool
 
-	if curTable == &m.root {
-		// Special handling of root table.
-		// 1) It is never upgraded.
-		// 2) It doesn't need to be copied, cuz the new Map has a fixed root.
-		if leaf == nil {
-			// if curTable.get(idx) is slot is empty
-			nm.root.insert(idx, newFlatLeaf(key, val))
-			added = true
-		} else {
-			var node nodeI
-			if leaf.hash() == hv {
-				node, added = leaf.put(key, val)
-			} else {
-				node = createSparseTable(depth+1, leaf, newFlatLeaf(key, val))
-				added = true
-			}
-			nm.root.replace(idx, node)
-		}
-	} else {
-		var newTable tableI
+	var newTable tableI
 
-		if leaf == nil {
-			// if curTable.get(idx) slot is empty
-			if (curTable.numEntries() + 1) == upgradeThreshold {
-				newTable = upgradeToFixedTable(
-					curTable.hash(), depth, curTable.entries())
-			} else {
-				newTable = curTable.copy()
-			}
-
-			newTable.insert(idx, newFlatLeaf(key, val))
-			added = true
+	if leaf == nil {
+		// if curTable.get(idx) slot is empty
+		if (curTable.slotsUsed() + 1) == upgradeThreshold {
+			newTable = upgradeToFixedTable(
+				curTable.hash(), depth, curTable.entries())
 		} else {
 			newTable = curTable.copy()
-
-			var node nodeI
-			if leaf.hash() == hv {
-				node, added = leaf.put(key, val)
-			} else {
-				node = createSparseTable(depth+1, leaf, newFlatLeaf(key, val))
-				added = true
-			}
-
-			newTable.replace(idx, node)
 		}
 
-		nm.persist(curTable, newTable, path)
+		newTable.insert(idx, newFlatLeaf(key, val))
+		added = true
+	} else {
+		newTable = curTable.copy()
+
+		var node nodeI
+		if leaf.hash() == hv { //collision; *very* rare when depth <= MaxDepth
+			node, added = leaf.put(key, val)
+		} else { //common case
+			node = createSparseTable(depth+1, leaf, newFlatLeaf(key, val))
+			added = true
+		}
+
+		newTable.replace(idx, node)
 	}
+
+	nm.persist(curTable, newTable, path)
 
 	if added {
 		nm.numEnts++
@@ -390,34 +362,28 @@ func (m *Map) Remove(key hash.Key) (*Map, interface{}, bool) {
 		panic("WTF!?! new map.numEnts < 0")
 	}
 
-	if curTable == &m.root {
-		//copying all m.root into nm.root already done in *nm = *m
-		if newLeaf == nil { //leaf was a FlatLeaf
-			nm.root.remove(idx)
-		} else { //leaf was a CollisionLeaf
-			nm.root.replace(idx, newLeaf)
-		}
-	} else {
-		var newTable = curTable.copy()
+	var newTable = curTable.copy()
 
-		if newLeaf == nil { //leaf was a FlatLeaf
-			newTable.remove(idx)
+	if newLeaf == nil { //leaf was a FlatLeaf
+		newTable.remove(idx)
 
-			// Side-Effects of removing a KeyVal from the table
-			var nents = newTable.numEntries()
+		// Side-Effects of removing a KeyVal from the table
+		var used = newTable.slotsUsed()
+		if depth > 0 {
+			// do not remove nor downgrade root table
 			switch {
-			case nents == 0:
+			case used == 0:
 				newTable = nil
-			case nents == downgradeThreshold:
+			case used == downgradeThreshold:
 				newTable = downgradeToSparseTable(
 					newTable.hash(), depth, newTable.entries())
 			}
-		} else { //leaf was a CollisionLeaf
-			newTable.replace(idx, newLeaf)
 		}
-
-		nm.persist(curTable, newTable, path)
+	} else { //leaf was a CollisionLeaf
+		newTable.replace(idx, newLeaf)
 	}
+
+	nm.persist(curTable, newTable, path)
 
 	return nm, val, deleted
 }
@@ -440,7 +406,8 @@ func (m *Map) Iter() *Iter {
 	}
 
 	//log.Printf("m.Iter: m=\n%s", m.treeString(""))
-	var it = newIter(&m.root)
+	//var it = newIter(&m.root)
+	var it = newIter(m.root)
 
 	//find left-most leaf
 LOOP:
@@ -596,7 +563,7 @@ func (m *Map) treeString(indent string) string {
 //			stats.Nodes++
 //			stats.Tables++
 //			stats.FixedTables++
-//			stats.TableCountsByNumEntries[x.numEntries()]++
+//			stats.TableCountsByNumEntries[x.slotsUsed()]++
 //			stats.TableCountsByDepth[x.depth]++
 //			if x.depth > stats.MaxDepth {
 //				stats.MaxDepth = x.depth
@@ -605,7 +572,7 @@ func (m *Map) treeString(indent string) string {
 //			stats.Nodes++
 //			stats.Tables++
 //			stats.SparseTables++
-//			stats.TableCountsByNumEntries[x.numEntries()]++
+//			stats.TableCountsByNumEntries[x.slotsUsed()]++
 //			stats.TableCountsByDepth[x.depth]++
 //			if x.depth > stats.MaxDepth {
 //				stats.MaxDepth = x.depth
