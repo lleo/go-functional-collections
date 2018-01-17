@@ -8,10 +8,15 @@ import (
 )
 
 type fixedTable struct {
-	nodes    [hash.IndexLimit]nodeI
-	depth    uint
-	numEnts  uint
-	hashPath hash.Val
+	nodes     [hash.IndexLimit]nodeI
+	depth     uint
+	usedSlots uint
+	hashPath  hash.Val
+}
+
+func newFixedTable() tableI {
+	var t = new(fixedTable)
+	return t
 }
 
 func (t *fixedTable) copy() tableI {
@@ -25,7 +30,7 @@ func (t *fixedTable) deepCopy() tableI {
 
 	nt.hashPath = t.hashPath
 	nt.depth = t.depth
-	nt.numEnts = t.numEnts
+	nt.usedSlots = t.usedSlots
 
 	for i := 0; i < len(t.nodes); i++ {
 		if table, isTable := t.nodes[i].(tableI); isTable {
@@ -46,7 +51,7 @@ func (t *fixedTable) deepCopy() tableI {
 //	var ft = new(fixedTable)
 //	//ft.hashPath = 0
 //	//ft.depth = 0
-//	//ft.numEnts = 0
+//	//ft.usedSlots = 0
 //	ft.insert(idx, lf)
 //
 //	return ft
@@ -93,7 +98,7 @@ func upgradeToFixedTable(
 
 	ft.hashPath = hashPath
 	ft.depth = depth
-	ft.numEnts = uint(len(ents))
+	ft.usedSlots = uint(len(ents))
 
 	for _, ent := range ents {
 		ft.nodes[ent.idx] = ent.node
@@ -111,18 +116,18 @@ func (t *fixedTable) hash() hash.Val {
 // String return a string representation of this table including the hashPath,
 // depth, and number of entries.
 func (t *fixedTable) String() string {
-	return fmt.Sprintf("fixedTable{hashPath=%s, depth=%d, numEntries()=%d}",
-		t.hashPath.HashPathString(t.depth), t.depth, t.numEntries())
+	return fmt.Sprintf("fixedTable{hashPath=%s, depth=%d, slotsUsed()=%d}",
+		t.hashPath.HashPathString(t.depth), t.depth, t.slotsUsed())
 }
 
 // treeString returns a string representation of this table and all the tables
 // contained herein recursively.
 func (t *fixedTable) treeString(indent string, depth uint) string {
-	var strs = make([]string, 3+t.numEntries())
+	var strs = make([]string, 3+t.slotsUsed())
 
 	strs[0] = indent + "fixedTable{"
-	strs[1] = indent + fmt.Sprintf("\thashPath=%s, depth=%d, numEntries()=%d,",
-		t.hashPath.HashPathString(depth), t.depth, t.numEntries())
+	strs[1] = indent + fmt.Sprintf("\thashPath=%s, depth=%d, slotsUsed()=%d,",
+		t.hashPath.HashPathString(depth), t.depth, t.slotsUsed())
 
 	var j = 0
 	for i, n := range t.nodes {
@@ -142,12 +147,12 @@ func (t *fixedTable) treeString(indent string, depth uint) string {
 	return strings.Join(strs, "\n")
 }
 
-func (t *fixedTable) numEntries() uint {
-	return t.numEnts
+func (t *fixedTable) slotsUsed() uint {
+	return t.usedSlots
 }
 
 func (t *fixedTable) entries() []tableEntry {
-	var n = t.numEntries()
+	var n = t.slotsUsed()
 	var ents = make([]tableEntry, n)
 	var i, j uint
 	for i, j = 0, 0; j < n && i < hash.IndexLimit; i++ {
@@ -168,7 +173,7 @@ func (t *fixedTable) insert(idx uint, n nodeI) {
 		"t.insert(idx, n) where idx slot is NOT empty; this should be a replace")
 
 	t.nodes[idx] = n
-	t.numEnts++
+	t.usedSlots++
 }
 
 func (t *fixedTable) replace(idx uint, n nodeI) {
@@ -183,7 +188,7 @@ func (t *fixedTable) remove(idx uint) {
 		"t.remove(idx) where idx slot is already empty")
 
 	t.nodes[idx] = nil
-	t.numEnts--
+	t.usedSlots--
 }
 
 // visit executes the visitFn in pre-order traversal. If there is no node for

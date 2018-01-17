@@ -36,7 +36,7 @@ type tableI interface {
 	copy() tableI
 	deepCopy() tableI
 
-	numEntries() uint
+	slotsUsed() uint //numEntries() uint
 	entries() []tableEntry
 
 	get(idx uint) nodeI

@@ -18,6 +18,12 @@ type sparseTable struct {
 	nodeMap  bitmap
 }
 
+func newSparseTable() *sparseTable {
+	var t = new(sparseTable)
+	t.nodes = make([]nodeI, 0, sparseTableInitCap)
+	return t
+}
+
 func (t *sparseTable) copy() tableI {
 	var nt = new(sparseTable)
 	nt.hashPath = t.hashPath
@@ -67,11 +73,9 @@ func createSparseTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
 			leaf2.hash().HashPath(depth))
 	}
 
-	var retTable = new(sparseTable)
+	var retTable = newSparseTable()
 	retTable.hashPath = leaf1.hash().HashPath(depth)
 	retTable.depth = depth
-	//retTable.nodeMap = 0
-	retTable.nodes = make([]nodeI, 0, sparseTableInitCap)
 
 	var idx1 = leaf1.hash().Index(depth)
 	var idx2 = leaf2.hash().Index(depth)
@@ -125,8 +129,8 @@ func (t *sparseTable) hash() hash.Val {
 // String return a string representation of this table including the hashPath,
 // depth, and number of entries.
 func (t *sparseTable) String() string {
-	return fmt.Sprintf("sparseTable{hashPath:%s, depth=%d, numEntries()=%d}",
-		t.hashPath.HashPathString(t.depth), t.depth, t.numEntries())
+	return fmt.Sprintf("sparseTable{hashPath:%s, depth=%d, slotsUsed()=%d}",
+		t.hashPath.HashPathString(t.depth), t.depth, t.slotsUsed())
 }
 
 // treeString returns a string representation of this table and all the tables
@@ -135,8 +139,8 @@ func (t *sparseTable) treeString(indent string, depth uint) string {
 	var strs = make([]string, 3+len(t.nodes))
 
 	strs[0] = indent +
-		fmt.Sprintf("sparseTable{hashPath=%s, depth=%d, numEntries()=%d,",
-			t.hashPath.HashPathString(depth), t.depth, t.numEntries())
+		fmt.Sprintf("sparseTable{hashPath=%s, depth=%d, slotsUsed()=%d,",
+			t.hashPath.HashPathString(depth), t.depth, t.slotsUsed())
 
 	strs[1] = indent + "\tnodeMap=" + t.nodeMap.String() + ","
 
@@ -156,13 +160,13 @@ func (t *sparseTable) treeString(indent string, depth uint) string {
 	return strings.Join(strs, "\n")
 }
 
-func (t *sparseTable) numEntries() uint {
+func (t *sparseTable) slotsUsed() uint {
 	return uint(len(t.nodes))
 	//return t.nodeMap.count(hash.IndexLimit)
 }
 
 func (t *sparseTable) entries() []tableEntry {
-	var n = t.numEntries()
+	var n = t.slotsUsed()
 	var ents = make([]tableEntry, n)
 
 	for j := uint(0); j < n; j++ {
