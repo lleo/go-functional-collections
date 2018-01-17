@@ -276,9 +276,6 @@ func (m *Map) Store(key hash.Key, val interface{}) (*Map, bool) {
 
 	//IDEA: build the hamt branch during lookup
 	//var nm, curTable, idx = m.findBuildPath(hv)
-	if nm.root == nil {
-		nm.root = newSparseTable()
-	}
 	var path, leaf, idx = nm.find(hv)
 	var curTable = path.pop()
 
