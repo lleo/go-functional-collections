@@ -402,8 +402,6 @@ func (m *Map) Iter() *Iter {
 		return nil
 	}
 
-	//log.Printf("m.Iter: m=\n%s", m.treeString(""))
-	//var it = newIter(&m.root)
 	var it = newIter(m.root)
 
 	//find left-most leaf
