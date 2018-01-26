@@ -187,7 +187,6 @@ func TestBasicString(t *testing.T) {
 		Put(hash.StringKey("b"), 2).
 		Put(hash.StringKey("c"), 3)
 
-	log.Println(m.TreeString(""))
 	var str = m.String()
 	log.Printf("m.String()=%s\n", str)
 
