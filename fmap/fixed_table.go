@@ -2,6 +2,7 @@ package fmap
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/lleo/go-functional-collections/hash"
@@ -14,8 +15,10 @@ type fixedTable struct {
 	hashPath  hash.Val
 }
 
-func newFixedTable() tableI {
+func newFixedTable(depth uint, hashVal hash.Val) *fixedTable {
 	var t = new(fixedTable)
+	t.depth = depth
+	t.hashPath = hashVal.HashPath(depth)
 	return t
 }
 
@@ -68,16 +71,13 @@ func createFixedTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
 			leaf2.hash().HashPath(depth))
 	}
 
-	var retTable = new(fixedTable)
-
-	retTable.hashPath = leaf1.hash().HashPath(depth)
-	retTable.depth = depth
+	var retTable = newFixedTable(depth, leaf1.hash())
 
 	var idx1 = leaf1.hash().Index(depth)
 	var idx2 = leaf2.hash().Index(depth)
 	if idx1 != idx2 {
-		retTable.insert(idx1, leaf1)
-		retTable.insert(idx2, leaf2)
+		retTable.insertInplace(idx1, leaf1)
+		retTable.insertInplace(idx2, leaf2)
 	} else { //idx1 == idx2
 		var node nodeI
 		if depth == hash.MaxDepth {
@@ -85,7 +85,7 @@ func createFixedTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
 		} else {
 			node = createFixedTable(depth+1, leaf1, leaf2)
 		}
-		retTable.insert(idx1, node)
+		retTable.insertInplace(idx1, node)
 	}
 
 	return retTable
@@ -150,6 +150,10 @@ func (t *fixedTable) treeString(indent string, depth uint) string {
 }
 
 func (t *fixedTable) slotsUsed() uint {
+	if t == nil {
+		log.Printf("t,%#p.slotsUsed()=0", t)
+		return 0
+	}
 	return t.usedSlots
 }
 
@@ -170,27 +174,58 @@ func (t *fixedTable) get(idx uint) nodeI {
 	return t.nodes[idx]
 }
 
-func (t *fixedTable) insert(idx uint, n nodeI) {
-	_ = assertOn && assert(t.nodes[idx] == nil,
-		"t.insert(idx, n) where idx slot is NOT empty; this should be a replace")
-
+func (t *fixedTable) insertInplace(idx uint, n nodeI) {
 	t.nodes[idx] = n
 	t.usedSlots++
 }
 
-func (t *fixedTable) replace(idx uint, n nodeI) {
+func (t *fixedTable) insert(idx uint, n nodeI) tableI {
+	_ = assertOn && assert(t.nodes[idx] == nil,
+		"t.insert(idx, n) where idx slot is NOT empty; this should be a replace")
+
+	var nt = t.copy().(*fixedTable)
+	nt.nodes[idx] = n
+	nt.usedSlots++
+	return nt
+}
+
+func (t *fixedTable) replace(idx uint, n nodeI) tableI {
 	_ = assertOn && assert(t.nodes[idx] != nil,
 		"t.replace(idx, n) where idx slot is empty; this should be an insert")
 
-	t.nodes[idx] = n
+	var nt = t.copy().(*fixedTable)
+	nt.nodes[idx] = n
+	return nt
 }
 
-func (t *fixedTable) remove(idx uint) {
+func (t *fixedTable) remove(idx uint) tableI {
 	_ = assertOn && assert(t.nodes[idx] != nil,
 		"t.remove(idx) where idx slot is already empty")
 
-	t.nodes[idx] = nil
-	t.usedSlots--
+	if t.depth > 0 {
+		if t.slotsUsed() == 1 {
+			return nil
+		}
+
+		if t.slotsUsed()-1 == downgradeThreshold {
+			var nt = newSparseTable(t.depth, t.hashPath)
+			var j uint
+			for i := uint(0); i < hash.IndexLimit; i++ {
+				if t.nodes[i] != nil && i != idx {
+					//nt.insertInplace(i, t.nodes[i])
+					nt.nodes = append(nt.nodes, t.nodes[i])
+					nt.nodeMap.set(i)
+					j++
+				}
+			}
+			return nt
+		}
+	}
+
+	var nt = t.copy().(*fixedTable)
+	nt.nodes[idx] = nil
+	nt.usedSlots--
+	return nt
 }
 
 // visit executes the visitFn in pre-order traversal. If there is no node for

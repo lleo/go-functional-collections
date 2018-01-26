@@ -206,7 +206,7 @@ func BenchmarkPutOne10MM(b *testing.B) {
 	}
 }
 
-func BenchmarkPutOne100MM(b *testing.B) {
+func xBenchmarkPutOne100MM(b *testing.B) {
 	log.Printf("BenchmarkPutOne100MM: b.N=%d\n", b.N)
 	var xtra = XtraKvs100MM
 	var m = FMap100MM

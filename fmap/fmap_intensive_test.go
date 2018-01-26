@@ -25,24 +25,32 @@ func TestIntensiveButildMapBig(t *testing.T) {
 // 10,000: 2nd level collisions "gug","crr","akc","ert","dri","fkp","ipv"
 // 10,000: 3rd level collisions "ktx","qk"
 
+type strVal struct {
+	Str string
+	Val interface{}
+}
+
 func TestIntensiveDestroyMapBig(t *testing.T) {
 	var m = fmap.New()
-	var data = make(map[string]int, sizeBig)
+	var data = make([]keyVal, sizeBig)
 
 	var s = "a"
 	for i := 0; i < sizeBig; i++ {
-		data[s] = i
-		m = m.Put(hash.StringKey(s), i)
+		var k = hash.StringKey(s)
+		data[i] = keyVal{k, i}
+		m = m.Put(k, i)
 		s = Inc(s)
 	}
 
 	//destroy data
 	var val interface{}
 	var deleted bool
-	for k, v := range data {
-		m, val, deleted = m.Remove(hash.StringKey(k))
+	for _, kv := range data {
+		var k = kv.Key
+		var v = kv.Val
+		m, val, deleted = m.Remove(k)
 		if !deleted {
-			t.Fatalf("Failed to delete key=%q\n", k)
+			t.Fatalf("Failed to delete k=%q v=%d k.Hash()=%s\n", k, v, k.Hash())
 		}
 		if val != v {
 			t.Fatalf("For key=%q, Value stored val=%d != expected v=%d\n",

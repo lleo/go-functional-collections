@@ -2,6 +2,7 @@ package fmap
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/lleo/go-functional-collections/hash"
@@ -18,9 +19,11 @@ type sparseTable struct {
 	nodeMap  bitmap
 }
 
-func newSparseTable() *sparseTable {
+func newSparseTable(depth uint, hashVal hash.Val) *sparseTable {
 	var t = new(sparseTable)
 	t.nodes = make([]nodeI, 0, sparseTableInitCap)
+	t.depth = depth
+	t.hashPath = hashVal.HashPath(depth)
 	return t
 }
 
@@ -80,15 +83,13 @@ func createSparseTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
 			leaf2.hash().HashPath(depth))
 	}
 
-	var retTable = newSparseTable()
-	retTable.hashPath = leaf1.hash().HashPath(depth)
-	retTable.depth = depth
+	var retTable = newSparseTable(depth, leaf1.hash())
 
 	var idx1 = leaf1.hash().Index(depth)
 	var idx2 = leaf2.hash().Index(depth)
 	if idx1 != idx2 {
-		retTable.insert(idx1, leaf1)
-		retTable.insert(idx2, leaf2)
+		retTable.insertInplace(idx1, leaf1)
+		retTable.insertInplace(idx2, leaf2)
 	} else { //idx1 == idx2
 		var node nodeI
 		if depth == hash.MaxDepth {
@@ -96,7 +97,7 @@ func createSparseTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
 		} else {
 			node = createSparseTable(depth+1, leaf1, leaf2)
 		}
-		retTable.insert(idx1, node)
+		retTable.insertInplace(idx1, node)
 	}
 
 	return retTable
@@ -168,6 +169,10 @@ func (t *sparseTable) treeString(indent string, depth uint) string {
 }
 
 func (t *sparseTable) slotsUsed() uint {
+	if t == nil {
+		log.Printf("t,%#p.slotsUsed()=0", t)
+		return 0
+	}
 	return uint(len(t.nodes))
 	//return t.nodeMap.count(hash.IndexLimit)
 }
@@ -194,49 +199,74 @@ func (t *sparseTable) get(idx uint) nodeI {
 	return t.nodes[j]
 }
 
-func (t *sparseTable) insert(idx uint, n nodeI) {
-	_ = assertOn && assert(!t.nodeMap.isSet(idx),
-		"t.insert(idx, n) where idx slot is NOT empty; this should be a replace")
-
+func (t *sparseTable) insertInplace(idx uint, n nodeI) {
+	if t.slotsUsed()+1 == upgradeThreshold {
+		panic("sparseTable.insertInplace: t.slotsUsed()+1 == upgradeThreshold")
+	}
 	var j = int(t.nodeMap.count(idx))
 	if j == len(t.nodes) {
 		t.nodes = append(t.nodes, n)
 	} else {
-		// Second code is significantly faster
-		// Also I believe the second code is more understandable.
-
+		// slower and more obscure method
 		//t.nodes = append(t.nodes[:j], append([]nodeI{n}, t.nodes[j:]...)...)
 
+		// faster and more understandable method
 		t.nodes = append(t.nodes, nodeI(nil))
 		copy(t.nodes[j+1:], t.nodes[j:])
 		t.nodes[j] = n
 	}
-
 	t.nodeMap.set(idx)
 }
 
-func (t *sparseTable) replace(idx uint, n nodeI) {
+func (t *sparseTable) insert(idx uint, n nodeI) tableI {
+	_ = assertOn && assert(!t.nodeMap.isSet(idx),
+		"t.insert(idx, n) where idx slot is NOT empty; this should be a replace")
+
+	if t.slotsUsed()+1 == upgradeThreshold {
+		var nt0 = newFixedTable(t.depth, t.hashPath)
+		var slots = t.slotsUsed()
+		for j := uint(0); j < slots; j++ {
+			var idx0 = t.nodes[j].hash().Index(t.depth)
+			nt0.insertInplace(idx0, t.nodes[j])
+		}
+		nt0.insertInplace(idx, n)
+		return nt0
+	}
+
+	var nt = t.copy()
+	nt.insertInplace(idx, n)
+	return nt
+}
+
+func (t *sparseTable) replace(idx uint, n nodeI) tableI {
 	_ = assertOn && assert(t.nodeMap.isSet(idx),
 		"t.replace(idx, n) where idx slot is empty; this should be an insert")
 
-	var j = t.nodeMap.count(idx)
-	t.nodes[j] = n
+	var nt = t.copy().(*sparseTable)
+	var j = nt.nodeMap.count(idx)
+	nt.nodes[j] = n
+	return nt
 }
 
-func (t *sparseTable) remove(idx uint) {
+func (t *sparseTable) remove(idx uint) tableI {
 	_ = assertOn && assert(t.nodeMap.isSet(idx),
 		"t.remove(idx) where idx slot is already empty")
 
-	var j = int(t.nodeMap.count(idx))
-	if j == len(t.nodes)-1 {
-		t.nodes = t.nodes[:j]
-	} else {
-		// No obvious performance difference, but append code is more obvious
-		t.nodes = append(t.nodes[:j], t.nodes[j+1:]...)
-		//t.nodes = t.nodes[:j+copy(t.nodes[j:], t.nodes[j+1:])]
+	if t.depth > 0 && t.slotsUsed() == 1 {
+		return nil
 	}
 
-	t.nodeMap.unset(idx)
+	var nt = t.copy().(*sparseTable)
+	var j = int(nt.nodeMap.count(idx))
+	if j == len(nt.nodes)-1 {
+		nt.nodes = nt.nodes[:j]
+	} else {
+		// No obvious performance difference, but append code is more obvious
+		nt.nodes = append(nt.nodes[:j], nt.nodes[j+1:]...)
+		//nt.nodes = nt.nodes[:j+copy(nt.nodes[j:], nt.nodes[j+1:])]
+	}
+	nt.nodeMap.unset(idx)
+	return nt
 }
 
 // visit executes the visitFn in pre-order traversal. If there is no node for
