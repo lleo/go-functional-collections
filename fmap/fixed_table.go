@@ -189,12 +189,34 @@ func (t *fixedTable) insert(idx uint, n nodeI) tableI {
 	return nt
 }
 
+func (t *fixedTable) replaceInplace(idx uint, n nodeI) {
+	t.nodes[idx] = n
+}
+
 func (t *fixedTable) replace(idx uint, n nodeI) tableI {
 	_ = assertOn && assert(t.nodes[idx] != nil,
 		"t.replace(idx, n) where idx slot is empty; this should be an insert")
 
 	var nt = t.copy().(*fixedTable)
-	nt.nodes[idx] = n
+	nt.replaceInplace(idx, n)
+	//nt.nodes[idx] = n
+	return nt
+}
+
+func (t *fixedTable) removeInplace(idx uint) {
+	t.nodes[idx] = nil
+	t.usedSlots--
+}
+
+func (t *fixedTable) downgrade() *sparseTable {
+	var nt = newSparseTable(t.depth, t.hashPath, t.slotsUsed())
+	var j uint
+	for i := uint(0); i < hash.IndexLimit; i++ {
+		if t.nodes[i] != nil {
+			nt.insertInplace(i, t.nodes[i])
+			j++
+		}
+	}
 	return nt
 }
 
@@ -208,23 +230,16 @@ func (t *fixedTable) remove(idx uint) tableI {
 		}
 
 		if t.slotsUsed()-1 == downgradeThreshold {
-			var nt = newSparseTable(t.depth, t.hashPath)
-			var j uint
-			for i := uint(0); i < hash.IndexLimit; i++ {
-				if t.nodes[i] != nil && i != idx {
-					//nt.insertInplace(i, t.nodes[i])
-					nt.nodes = append(nt.nodes, t.nodes[i])
-					nt.nodeMap.set(i)
-					j++
-				}
-			}
+			var nt = t.downgrade()
+			nt.removeInplace(idx)
 			return nt
 		}
 	}
 
 	var nt = t.copy().(*fixedTable)
-	nt.nodes[idx] = nil
-	nt.usedSlots--
+	nt.removeInplace(idx)
+	//nt.nodes[idx] = nil
+	//nt.usedSlots--
 	return nt
 }
 

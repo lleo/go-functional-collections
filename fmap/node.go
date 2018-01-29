@@ -42,6 +42,8 @@ type tableI interface {
 	get(idx uint) nodeI
 
 	insertInplace(idx uint, n nodeI)
+	replaceInplace(idx uint, n nodeI)
+	removeInplace(idx uint)
 
 	insert(idx uint, n nodeI) tableI
 	replace(idx uint, n nodeI) tableI

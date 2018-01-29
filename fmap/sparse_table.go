@@ -19,9 +19,16 @@ type sparseTable struct {
 	nodeMap  bitmap
 }
 
-func newSparseTable(depth uint, hashVal hash.Val) *sparseTable {
+func newSparseTable(depth uint, hashVal hash.Val, size uint) *sparseTable {
+	_ = assertOn && assertf(size <= hash.IndexLimit, "size,%d <= hash.IndexLimit", size)
 	var t = new(sparseTable)
-	t.nodes = make([]nodeI, 0, sparseTableInitCap)
+	var capacity int
+	if size < hash.IndexLimit {
+		capacity = pow2GreaterThan(size)
+	} else {
+		capacity = hash.IndexLimit
+	}
+	t.nodes = make([]nodeI, size, capacity)
 	t.depth = depth
 	t.hashPath = hashVal.HashPath(depth)
 	return t
@@ -83,7 +90,7 @@ func createSparseTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
 			leaf2.hash().HashPath(depth))
 	}
 
-	var retTable = newSparseTable(depth, leaf1.hash())
+	var retTable = newSparseTable(depth, leaf1.hash(), 0)
 
 	var idx1 = leaf1.hash().Index(depth)
 	var idx2 = leaf2.hash().Index(depth)
@@ -200,9 +207,6 @@ func (t *sparseTable) get(idx uint) nodeI {
 }
 
 func (t *sparseTable) insertInplace(idx uint, n nodeI) {
-	if t.slotsUsed()+1 == upgradeThreshold {
-		panic("sparseTable.insertInplace: t.slotsUsed()+1 == upgradeThreshold")
-	}
 	var j = int(t.nodeMap.count(idx))
 	if j == len(t.nodes) {
 		t.nodes = append(t.nodes, n)
@@ -218,19 +222,24 @@ func (t *sparseTable) insertInplace(idx uint, n nodeI) {
 	t.nodeMap.set(idx)
 }
 
+func (t *sparseTable) upgrade() *fixedTable {
+	var nt = newFixedTable(t.depth, t.hashPath)
+	var slots = t.slotsUsed()
+	for j := uint(0); j < slots; j++ {
+		var idx0 = t.nodes[j].hash().Index(t.depth)
+		nt.insertInplace(idx0, t.nodes[j])
+	}
+	return nt
+}
+
 func (t *sparseTable) insert(idx uint, n nodeI) tableI {
 	_ = assertOn && assert(!t.nodeMap.isSet(idx),
 		"t.insert(idx, n) where idx slot is NOT empty; this should be a replace")
 
 	if t.slotsUsed()+1 == upgradeThreshold {
-		var nt0 = newFixedTable(t.depth, t.hashPath)
-		var slots = t.slotsUsed()
-		for j := uint(0); j < slots; j++ {
-			var idx0 = t.nodes[j].hash().Index(t.depth)
-			nt0.insertInplace(idx0, t.nodes[j])
-		}
-		nt0.insertInplace(idx, n)
-		return nt0
+		var nt = t.upgrade()
+		nt.insertInplace(idx, n)
+		return nt
 	}
 
 	var nt = t.copy()
@@ -238,14 +247,33 @@ func (t *sparseTable) insert(idx uint, n nodeI) tableI {
 	return nt
 }
 
+func (t *sparseTable) replaceInplace(idx uint, n nodeI) {
+	var j = t.nodeMap.count(idx)
+	t.nodes[j] = n
+}
+
 func (t *sparseTable) replace(idx uint, n nodeI) tableI {
 	_ = assertOn && assert(t.nodeMap.isSet(idx),
 		"t.replace(idx, n) where idx slot is empty; this should be an insert")
 
-	var nt = t.copy().(*sparseTable)
-	var j = nt.nodeMap.count(idx)
-	nt.nodes[j] = n
+	var nt = t.copy()
+	nt.replaceInplace(idx, n)
+	//var nt = t.copy().(*sparseTable)
+	//var j = nt.nodeMap.count(idx)
+	//nt.nodes[j] = n
 	return nt
+}
+
+func (t *sparseTable) removeInplace(idx uint) {
+	var j = int(t.nodeMap.count(idx))
+	if j == len(t.nodes)-1 {
+		t.nodes = t.nodes[:j]
+	} else {
+		// No obvious performance difference, but append code is more obvious
+		t.nodes = append(t.nodes[:j], t.nodes[j+1:]...)
+		//t.nodes = t.nodes[:j+copy(t.nodes[j:], t.nodes[j+1:])]
+	}
+	t.nodeMap.unset(idx)
 }
 
 func (t *sparseTable) remove(idx uint) tableI {
@@ -256,16 +284,18 @@ func (t *sparseTable) remove(idx uint) tableI {
 		return nil
 	}
 
-	var nt = t.copy().(*sparseTable)
-	var j = int(nt.nodeMap.count(idx))
-	if j == len(nt.nodes)-1 {
-		nt.nodes = nt.nodes[:j]
-	} else {
-		// No obvious performance difference, but append code is more obvious
-		nt.nodes = append(nt.nodes[:j], nt.nodes[j+1:]...)
-		//nt.nodes = nt.nodes[:j+copy(nt.nodes[j:], nt.nodes[j+1:])]
-	}
-	nt.nodeMap.unset(idx)
+	var nt = t.copy()
+	nt.removeInplace(idx)
+	//var nt = t.copy().(*sparseTable)
+	//var j = int(nt.nodeMap.count(idx))
+	//if j == len(nt.nodes)-1 {
+	//	nt.nodes = nt.nodes[:j]
+	//} else {
+	//	// No obvious performance difference, but append code is more obvious
+	//	nt.nodes = append(nt.nodes[:j], nt.nodes[j+1:]...)
+	//	//nt.nodes = nt.nodes[:j+copy(nt.nodes[j:], nt.nodes[j+1:])]
+	//}
+	//nt.nodeMap.unset(idx)
 	return nt
 }
 

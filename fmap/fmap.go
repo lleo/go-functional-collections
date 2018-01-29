@@ -55,7 +55,7 @@ type Map struct {
 func New() *Map {
 	var m = new(Map)
 	m.root = newFixedTable(0, 0)
-	//m.root = newSparseTable(0, 0)
+	//m.root = newSparseTable(0, 0, 0)
 	return m
 }
 
@@ -176,7 +176,7 @@ func (m *Map) persist(oldTable, newTable tableI, path *tableStack) {
 
 //FIXME: generic version of newSparseTable & newFixedTable
 func newTable(depth uint, hashVal hash.Val) tableI {
-	return newSparseTable(depth, hashVal)
+	return newSparseTable(depth, hashVal, 0)
 }
 
 //FIXME: generic version of createSparseTable & createFixedTable
