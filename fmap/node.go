@@ -41,9 +41,11 @@ type tableI interface {
 
 	get(idx uint) nodeI
 
-	insert(idx uint, n nodeI)
-	replace(idx uint, n nodeI)
-	remove(idx uint)
+	insertInplace(idx uint, n nodeI)
+
+	insert(idx uint, n nodeI) tableI
+	replace(idx uint, n nodeI) tableI
+	remove(idx uint) tableI
 
 	iter() tableIterFunc
 
