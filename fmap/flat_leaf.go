@@ -44,24 +44,24 @@ func (l *flatLeaf) put(key hash.Key, val interface{}) (leafI, bool) {
 	if l.key.Equals(key) {
 		// maintain functional behavior of flatLeaf
 		nl = newFlatLeaf(l.key, val)
-		return nl, false //replaced
+		return nl, false // replaced
 	}
 
-	nl = newCollisionLeaf([]keyVal{{l.key, l.val}, {key, val}})
+	nl = newCollisionLeaf([]KeyVal{{l.key, l.val}, {key, val}})
 	return nl, true // key,val was added
 }
 
 func (l *flatLeaf) del(key hash.Key) (leafI, interface{}, bool) {
 	if l.key.Equals(key) {
-		return nil, l.val, true //found
+		return nil, l.val, true // found
 	}
-	return l, nil, false //not found
+	return l, nil, false // not found
 }
 
-func (l *flatLeaf) keyVals() []keyVal {
-	return []keyVal{{l.key, l.val}}
+func (l *flatLeaf) keyVals() []KeyVal {
+	return []KeyVal{{l.key, l.val}}
 }
 
-func (l *flatLeaf) visit(fn visitFn, depth uint) (bool, error) {
+func (l *flatLeaf) walkInOrder(fn visitFn, depth uint) (bool, error) {
 	return fn(l, depth), nil
 }

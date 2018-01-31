@@ -54,13 +54,10 @@ type Map struct {
 // New returns a properly initialize pointer to a fmap.Map struct.
 func New() *Map {
 	var m = new(Map)
-	m.root = newFixedTable(0, 0)
+	m.root = newRootTable()
+	//m.root = newFixedTable(0, 0)
 	//m.root = newSparseTable(0, 0, 0)
 	return m
-}
-
-func (m *Map) Root() tableI {
-	return m.root
 }
 
 // copy creates a shallow copy of the Map data structure and returns a pointer
@@ -98,7 +95,7 @@ func (m *Map) Load(key hash.Key) (interface{}, bool) {
 DepthIter:
 	for depth := uint(0); depth <= hash.MaxDepth; depth++ {
 		var idx = hv.Index(depth)
-		var curNode = curTable.get(idx) //nodeI
+		var curNode = curTable.get(idx) // nodeI
 
 		switch n := curNode.(type) {
 		case nil:
@@ -156,7 +153,7 @@ func (m *Map) persist(oldTable, newTable tableI, path *tableStack) {
 		return
 	}
 
-	var depth = uint(path.len()) //guaranteed depth > 0
+	var depth = uint(path.len()) // guaranteed depth > 0
 	var parentDepth = depth - 1
 
 	var parentIdx = oldTable.hash().Index(parentDepth)
@@ -171,16 +168,22 @@ func (m *Map) persist(oldTable, newTable tableI, path *tableStack) {
 	}
 
 	m.persist(oldParent, newParent, path)
-	return
 }
 
-//FIXME: generic version of newSparseTable & newFixedTable
+func newRootTable() tableI {
+	return newTable(0, 0)
+	//return newFixedTable(0, 0)
+	//return newSparseTable(0, 0, 0)
+}
+
+// FIXME: generic version of newSparseTable & newFixedTable
 func newTable(depth uint, hashVal hash.Val) tableI {
-	return newSparseTable(depth, hashVal, 0)
+	return newFixedTable(depth, hashVal)
+	//return newSparseTable(depth, hashVal, 0)
 }
 
-//FIXME: generic version of createSparseTable & createFixedTable
-//FIXME: This should obviate createSparseTable & createFixedTable.
+// FIXME: generic version of createSparseTable & createFixedTable
+// FIXME: This should obviate createSparseTable & createFixedTable.
 func createTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
 	if assertOn {
 		assert(depth > 0, "createTable(): depth < 1")
@@ -197,7 +200,7 @@ func createTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
 	if idx1 != idx2 {
 		retTable.insertInplace(idx1, leaf1)
 		retTable.insertInplace(idx2, leaf2)
-	} else { //idx1 == idx2
+	} else { // idx1 == idx2
 		var node nodeI
 		if depth == hash.MaxDepth {
 			node = newCollisionLeaf(append(leaf1.keyVals(), leaf2.keyVals()...))
@@ -228,7 +231,7 @@ func (m *Map) LoadOrStore(key hash.Key, val interface{}) (
 
 	var foundVal interface{}
 	var found bool
-	var added bool //probably not necessary added == !found
+	var added bool // probably not necessary added == !found
 
 	var nm *Map
 
@@ -242,12 +245,13 @@ func (m *Map) LoadOrStore(key hash.Key, val interface{}) (
 		if found {
 			return m, foundVal, true // result of Loaded value
 		}
-		//else
+		// else
 
 		var node nodeI
 		if leaf.hash() != hv {
 			// common case
-			node = createSparseTable(depth+1, leaf, newFlatLeaf(key, val))
+			//node = createSparseTable(depth+1, leaf, newFlatLeaf(key, val))
+			node = createTable(depth+1, leaf, newFlatLeaf(key, val))
 			added = true
 		} else {
 			// hash collision; very rare case; leaf.hash() == key.Hash()
@@ -302,7 +306,8 @@ func (m *Map) Store(key hash.Key, val interface{}) (*Map, bool) {
 		var node nodeI
 		if leaf.hash() != hv {
 			// common case
-			node = createSparseTable(depth+1, leaf, newFlatLeaf(key, val))
+			//node = createSparseTable(depth+1, leaf, newFlatLeaf(key, val))
+			node = createTable(depth+1, leaf, newFlatLeaf(key, val))
 			added = true
 		} else {
 			// hash collision; very rare case; leaf.hash() == key.Hash()
@@ -367,10 +372,10 @@ func (m *Map) Remove(key hash.Key) (*Map, interface{}, bool) {
 	var newTable tableI
 
 	if newLeaf == nil {
-		//leaf was a FlatLeaf
+		// leaf was a FlatLeaf
 		newTable = curTable.remove(idx)
 	} else {
-		//leaf was a CollisionLeaf
+		// leaf was a CollisionLeaf
 		newTable = curTable.replace(idx, newLeaf)
 	}
 
@@ -379,13 +384,13 @@ func (m *Map) Remove(key hash.Key) (*Map, interface{}, bool) {
 	return nm, val, deleted
 }
 
-//func (m *Map) walk(fn visitFn) bool {
-//	var keepOn, err = m.root.visit(fn, 0)
-//	if err != nil {
-//		panic(err)
-//	}
-//	return keepOn
-//}
+func (m *Map) walkInOrder(fn visitFn) bool {
+	var keepOn, err = m.root.walkInOrder(fn, 0)
+	if err != nil {
+		panic(err)
+	}
+	return keepOn
+}
 
 // Iter returns an *Iter structure. You can call the Next() method on the *Iter
 // structure sucessively until it return a nil key value, to walk the key/value
@@ -398,7 +403,7 @@ func (m *Map) Iter() *Iter {
 
 	var it = newIter(m.root)
 
-	//find left-most leaf
+	// find left-most leaf
 LOOP:
 	for {
 		var curNode = it.tblNextNode()
@@ -409,7 +414,7 @@ LOOP:
 			it.stack.push(it.tblNextNode)
 			it.tblNextNode = x.iter()
 			assert(it.tblNextNode != nil, "it.tblNextNode==nil")
-			break //switch
+			break // switch
 		case leafI:
 			it.curLeaf = x
 			break LOOP
@@ -434,8 +439,8 @@ func (m *Map) Range(fn func(hash.Key, interface{}) bool) {
 	//		}
 	//	}
 	//	return true
-	//} //end: visitLeafsFn = func(nodeI)
-	//m.walk(visitLeafs)
+	//} // end: visitLeafsFn = func(nodeI)
+	//m.walkInOrder(visitLeafs)
 	var it = m.Iter()
 	for k, v := it.Next(); k != nil; k, v = it.Next() {
 		if !fn(k, v) {
@@ -484,6 +489,120 @@ func (m *Map) TreeString(indent string) string {
 	str += indent + "}"
 
 	return str
+}
+
+func (m *Map) Dup() *Map {
+	var nm = m.copy()
+	nm.root = m.root.deepCopy()
+	return nm
+}
+
+func NewFromList(kvs []KeyVal) *Map {
+	var m = New()
+	for _, kv := range kvs {
+		var k, v = kv.Key, kv.Val
+		var hv = k.Hash()
+		var path, leaf, idx = m.find(hv)
+		var curTable = path.pop()
+		var depth = uint(path.len())
+		var added bool
+		if leaf == nil {
+			curTable.insertInplace(idx, newFlatLeaf(k, v))
+			added = true
+		} else {
+			var node nodeI
+			if leaf.hash() != hv {
+				//node = createSparseTable(depth+1, leaf, newFlatLeaf(k, v))
+				node = createTable(depth+1, leaf, newFlatLeaf(k, v))
+				added = true
+			} else {
+				node, added = leaf.put(k, v)
+			}
+			curTable.replaceInplace(idx, node)
+		}
+		if added {
+			m.numEnts++
+		}
+	}
+	return m
+}
+
+type ResolveConflictFunc func(
+	key hash.Key,
+	origVal, newVal interface{},
+) interface{}
+
+func KeepOrigVal(key hash.Key, origVal, newVal interface{}) interface{} {
+	return origVal
+}
+
+func TakeNewVal(key hash.Key, origVal, newVal interface{}) interface{} {
+	return newVal
+}
+
+func (m *Map) BulkInsert(kvs []KeyVal, resolve ResolveConflictFunc) *Map {
+	var isOrigTable = make(map[tableI]bool)
+	m.walkInOrder(func(n nodeI, depth uint) bool {
+		if t, isTable := n.(tableI); isTable {
+			isOrigTable[t] = true
+		}
+		return true
+	})
+
+	var nm = m.copy()
+	for _, kv := range kvs {
+		var k, v = kv.Key, kv.Val
+		var hv = k.Hash()
+		var path, leaf, idx = nm.find(hv)
+		var curTable = path.pop()
+		var depth = uint(path.len())
+		var added bool
+		var newTable tableI
+		if isOrigTable[curTable] {
+			if leaf == nil {
+				newTable = curTable.insert(idx, newFlatLeaf(k, v))
+				added = true
+			} else {
+				var node nodeI
+				if leaf.hash() != hv {
+					//node = createSparseTable(depth+1, leaf, newFlatLeaf(k, v))
+					node = createTable(depth+1, leaf, newFlatLeaf(k, v))
+					added = true
+				} else {
+					node, added = leaf.put(k, v)
+				}
+				newTable = curTable.replace(idx, node)
+			}
+			nm.persist(curTable, newTable, path)
+		} else {
+			if leaf == nil {
+				curTable.insertInplace(idx, newFlatLeaf(k, v))
+				added = true
+			} else {
+				var node nodeI
+				if leaf.hash() != hv {
+					//node = createSparseTable(depth+1, leaf, newFlatLeaf(k, v))
+					node = createTable(depth+1, leaf, newFlatLeaf(k, v))
+					added = true
+				} else {
+					node, added = leaf.put(k, v)
+				}
+				curTable.replaceInplace(idx, node)
+			}
+		}
+		if added {
+			nm.numEnts++
+		}
+	}
+	return nm
+}
+
+func (m *Map) BulkDelete(keys []hash.Key) (*Map, []hash.Key) {
+	return nil, nil
+}
+
+func (m *Map) Merge(om *Map, resolve ResolveConflictFunc) *Map {
+	return nil
 }
 
 //type Stats struct {
@@ -582,6 +701,6 @@ func (m *Map) TreeString(indent string) string {
 //		return keepOn
 //	}
 //
-//	m.walk(statFn)
+//	m.walkInOrder(statFn)
 //	return stats
 //}

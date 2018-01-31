@@ -34,20 +34,20 @@ LOOP:
 	for {
 		switch x := it.curLeaf.(type) {
 		case nil:
-			key = nil //the end
+			key = nil // the end
 			break LOOP
 		case *flatLeaf:
 			key = x.key
 			val = x.val
 			it.kvIdx = 0
-			it.setNextNode() //ignore return false == the end
+			it.setNextNode() // ignore return false == the end
 			//if !it.setNextNode() {
 			//	log.Printf("it.Next: case *flatLeaf: it.setNextNode()==false")
 			//}
 			break LOOP
 		case *collisionLeaf:
 			if it.kvIdx >= len(x.kvs) {
-				it.setNextNode() //ignore return false == the end
+				it.setNextNode() // ignore return false == the end
 				//if !it.setNextNode() {
 				//	log.Printf("it.Next: case *collisionLeaf: it.setNextNode()==false")
 				//}
@@ -65,8 +65,8 @@ LOOP:
 	return key, val
 }
 
-//setNextNode() sets the iter struct pointing to the next node. If there is no
-//next node it returns false, else it returns true.
+// setNextNode() sets the iter struct pointing to the next node. If there is no
+// next node it returns false, else it returns true.
 func (it *Iter) setNextNode() bool {
 	//log.Printf("it.setNextNode: called; it=%s", it)
 LOOP:
@@ -75,7 +75,7 @@ LOOP:
 		var cur = it.tblNextNode()
 		//log.Printf("it.setNextNode: it.tblNextNode()=>cur=%s", cur)
 
-		//if cur==nil pop stack and loop
+		// if cur==nil pop stack and loop
 		for cur == nil {
 			it.tblNextNode = it.stack.pop()
 			if it.tblNextNode == nil {
@@ -84,14 +84,14 @@ LOOP:
 			}
 			cur = it.tblNextNode()
 		}
-		//cur != nil
+		// cur != nil
 		switch x := cur.(type) {
 		case nil:
 			panic("WTF!!! cur == nil")
 		case tableI:
 			it.stack.push(it.tblNextNode)
 			it.tblNextNode = x.iter()
-			//break switch and LOOP
+			// break switch and LOOP
 		case leafI:
 			it.curLeaf = x
 			break LOOP

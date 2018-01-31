@@ -32,17 +32,17 @@ type strVal struct {
 
 func TestIntensiveDestroyMapBig(t *testing.T) {
 	var m = fmap.New()
-	var data = make([]keyVal, sizeBig)
+	var data = make([]KeyVal, sizeBig)
 
 	var s = "a"
 	for i := 0; i < sizeBig; i++ {
 		var k = hash.StringKey(s)
-		data[i] = keyVal{k, i}
+		data[i] = KeyVal{k, i}
 		m = m.Put(k, i)
 		s = Inc(s)
 	}
 
-	//destroy data
+	// destroy data
 	var val interface{}
 	var deleted bool
 	for _, kv := range data {
@@ -63,12 +63,12 @@ func TestIntensiveDestroyMapBig(t *testing.T) {
 	}
 }
 
-//findAndRemove is just here to demonstrate how slow array O(n) remove is versus
-//HAMT O(log16(n)) remove is.
-func findAndRemove(k hash.Key, kvs *[]keyVal) bool {
+// findAndRemove is just here to demonstrate how slow array O(n) remove is
+// versus HAMT O(log16(n)) remove is.
+func findAndRemove(k hash.Key, kvs *[]KeyVal) bool {
 	for i := 0; i < len(*kvs); i++ {
 		if k.Equals((*kvs)[i].Key) {
-			//BTW this is the fast non-order preserving element deletion
+			// BTW this is the fast non-order preserving element deletion
 			(*kvs)[i] = (*kvs)[len(*kvs)-1]
 			(*kvs) = (*kvs)[:len(*kvs)-1]
 			//log.Printf("findAndRemove: found i=%d; k=%s\n", i, k)
@@ -89,7 +89,7 @@ func TestIntensiveIterBig(t *testing.T) {
 		var found bool
 		var val interface{}
 		s, val, found = s.Remove(k)
-		//found = findAndRemove(k, &kvs) //between 900 & 2700 times slower
+		//found = findAndRemove(k, &kvs) // between 900 & 2700 times slower
 		if !found {
 			t.Fatalf("Failed to find k=%s", k)
 		}
@@ -100,7 +100,7 @@ func TestIntensiveIterBig(t *testing.T) {
 		numRemoved++
 		if numRemoved%10000 == 0 {
 			var timediff = time.Since(start)
-			var rate = 10000 * 1000000 / float64(timediff) //millisec
+			var rate = 10000 * 1000000 / float64(timediff) // millisec
 			var numLeft = s.NumEntries()
 			//var numLeft = len(kvs)
 			log.Printf("found numRemoved=%d; numLeft=%d; rate=%.3g 1/ms",

@@ -10,10 +10,10 @@ import (
 // implements nodeI
 // implements leafI
 type collisionLeaf struct {
-	kvs []keyVal
+	kvs []KeyVal
 }
 
-func newCollisionLeaf(kvs []keyVal) *collisionLeaf {
+func newCollisionLeaf(kvs []KeyVal) *collisionLeaf {
 	var leaf = new(collisionLeaf)
 	leaf.kvs = append(leaf.kvs, kvs...)
 
@@ -39,7 +39,7 @@ func (l *collisionLeaf) String() string {
 	}
 	var jkvstr = strings.Join(kvstrs, ",")
 
-	return fmt.Sprintf("collisionLeaf{hash:%s, kvs:[]keyVal{%s}}",
+	return fmt.Sprintf("collisionLeaf{hash:%s, kvs:[]KeyVal{%s}}",
 		l.kvs[0].Key.Hash(), jkvstr)
 }
 
@@ -57,14 +57,14 @@ func (l *collisionLeaf) put(key hash.Key, val interface{}) (leafI, bool) {
 		if kv.Key.Equals(key) {
 			var nl = l.copy()
 			nl.kvs[i].Val = val
-			return nl, false //replaced
+			return nl, false // replaced
 		}
 	}
 	var nl = new(collisionLeaf)
-	nl.kvs = make([]keyVal, len(l.kvs)+1)
+	nl.kvs = make([]KeyVal, len(l.kvs)+1)
 	copy(nl.kvs, l.kvs)
-	nl.kvs[len(l.kvs)] = keyVal{key, val}
-	//nl.kvs = append(nl.kvs, append(l.kvs, keyVal{k, v})...)
+	nl.kvs[len(l.kvs)] = KeyVal{key, val}
+	//nl.kvs = append(nl.kvs, append(l.kvs, KeyVal{k, v})...)
 
 	//log.Printf("%s : %d\n", l.hash(), len(l.kvs))
 
@@ -91,13 +91,13 @@ func (l *collisionLeaf) del(key hash.Key) (leafI, interface{}, bool) {
 	return l, nil, false
 }
 
-func (l *collisionLeaf) keyVals() []keyVal {
-	var r = make([]keyVal, 0, len(l.kvs))
+func (l *collisionLeaf) keyVals() []KeyVal {
+	var r = make([]KeyVal, 0, len(l.kvs))
 	r = append(r, l.kvs...)
 	return r
 	//return l.kvs
 }
 
-func (l *collisionLeaf) visit(fn visitFn, depth uint) (bool, error) {
+func (l *collisionLeaf) walkInOrder(fn visitFn, depth uint) (bool, error) {
 	return fn(l, depth), nil
 }

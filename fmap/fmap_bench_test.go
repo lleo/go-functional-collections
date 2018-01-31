@@ -9,17 +9,17 @@ import (
 	"github.com/lleo/go-functional-collections/hash"
 )
 
-func buildKvs2(numMapKvs, numKvsXtra int) ([]keyVal, []keyVal) {
-	var kvs = make([]keyVal, numMapKvs+numKvsXtra)
+func buildKvs2(numMapKvs, numKvsXtra int) ([]KeyVal, []KeyVal) {
+	var kvs = make([]KeyVal, numMapKvs+numKvsXtra)
 
 	var s = "a"
 	for i := 0; i < numMapKvs+numKvsXtra; i++ {
-		kvs[i] = keyVal{hash.StringKey(s), i}
+		kvs[i] = KeyVal{hash.StringKey(s), i}
 		s = Inc(s)
 	}
 
-	//randomize kvs
-	//https://en.wikipedia.org/wiki/Fisher–Yates_shuffle#The_modern_algorithm
+	// randomize kvs
+	// https://en.wikipedia.org/wiki/Fisher–Yates_shuffle#The_modern_algorithm
 	for i := len(kvs) - 1; i > 0; i-- {
 		var j = rand.Intn(i + 1)
 		kvs[i], kvs[j] = kvs[j], kvs[i]
@@ -58,20 +58,20 @@ var FMap1MM *fmap.Map
 var FMap10MM *fmap.Map
 var FMap100MM *fmap.Map
 
-var XtraKvs10 []keyVal
-var XtraKvs100 []keyVal
-var XtraKvs1M []keyVal
-var XtraKvs10M []keyVal
-var XtraKvs100M []keyVal
-var XtraKvs1MM []keyVal
-var XtraKvs10MM []keyVal
-var XtraKvs100MM []keyVal
+var XtraKvs10 []KeyVal
+var XtraKvs100 []KeyVal
+var XtraKvs1M []KeyVal
+var XtraKvs10M []KeyVal
+var XtraKvs100M []KeyVal
+var XtraKvs1MM []KeyVal
+var XtraKvs10MM []KeyVal
+var XtraKvs100MM []KeyVal
 
 func BenchmarkPutOne10(b *testing.B) {
 	var xtra = XtraKvs10
 	var m = FMap10
 	if m == nil {
-		var kvs []keyVal
+		var kvs []KeyVal
 		kvs, xtra = buildKvs2(NumKvs10, NumKvsExtra10)
 		m = buildMap(kvs)
 		XtraKvs10 = xtra
@@ -91,7 +91,7 @@ func BenchmarkPutOne100(b *testing.B) {
 	var xtra = XtraKvs100
 	var m = FMap100
 	if m == nil {
-		var kvs []keyVal
+		var kvs []KeyVal
 		kvs, xtra = buildKvs2(NumKvs100, NumKvsExtra100)
 		m = buildMap(kvs)
 		XtraKvs100 = xtra
@@ -111,7 +111,7 @@ func BenchmarkPutOne1M(b *testing.B) {
 	var xtra = XtraKvs1M
 	var m = FMap1M
 	if m == nil {
-		var kvs []keyVal
+		var kvs []KeyVal
 		kvs, xtra = buildKvs2(NumKvs1M, NumKvsExtra1M)
 		m = buildMap(kvs)
 		XtraKvs1M = xtra
@@ -131,7 +131,7 @@ func BenchmarkPutOne10M(b *testing.B) {
 	var xtra = XtraKvs10M
 	var m = FMap10M
 	if m == nil {
-		var kvs []keyVal
+		var kvs []KeyVal
 		kvs, xtra = buildKvs2(NumKvs10M, NumKvsExtra10M)
 		m = buildMap(kvs)
 		XtraKvs10M = xtra
@@ -151,7 +151,7 @@ func BenchmarkPutOne100M(b *testing.B) {
 	var xtra = XtraKvs100M
 	var m = FMap100M
 	if m == nil {
-		var kvs []keyVal
+		var kvs []KeyVal
 		kvs, xtra = buildKvs2(NumKvs100M, NumKvsExtra100M)
 		m = buildMap(kvs)
 		XtraKvs100M = xtra
@@ -171,7 +171,7 @@ func BenchmarkPutOne1MM(b *testing.B) {
 	var xtra = XtraKvs1MM
 	var m = FMap1MM
 	if m == nil {
-		var kvs []keyVal
+		var kvs []KeyVal
 		kvs, xtra = buildKvs2(NumKvs1MM, NumKvsExtra1MM)
 		m = buildMap(kvs)
 		XtraKvs1MM = xtra
@@ -191,7 +191,7 @@ func BenchmarkPutOne10MM(b *testing.B) {
 	var xtra = XtraKvs10MM
 	var m = FMap10MM
 	if m == nil {
-		var kvs []keyVal
+		var kvs []KeyVal
 		kvs, xtra = buildKvs2(NumKvs10MM, NumKvsExtra10MM)
 		m = buildMap(kvs)
 		XtraKvs10MM = xtra
@@ -211,7 +211,7 @@ func xBenchmarkPutOne100MM(b *testing.B) {
 	var xtra = XtraKvs100MM
 	var m = FMap100MM
 	if m == nil {
-		var kvs []keyVal
+		var kvs []KeyVal
 		kvs, xtra = buildKvs2(NumKvs100MM, NumKvsExtra100MM)
 		m = buildMap(kvs)
 		XtraKvs100MM = xtra
@@ -224,4 +224,30 @@ func xBenchmarkPutOne100MM(b *testing.B) {
 		var kv = xtra[j]
 		_ = m.Put(kv.Key, kv.Val)
 	}
+}
+
+func BenchmarkBuildFunctional(b *testing.B) {
+	log.Printf("BenchmarkBuildFunctional: b.N=%d\n", b.N)
+	var kvs = buildKvs(b.N)
+	var m = fmap.New()
+	b.ResetTimer()
+	for _, kv := range kvs {
+		var k, v = kv.Key, kv.Val
+		m = m.Put(k, v)
+	}
+}
+
+func BenchmarkBuildNewFromList(b *testing.B) {
+	log.Printf("BenchmarkBuildNewFromList: b.N=%d\n", b.N)
+	var kvs = buildKvs(b.N)
+	b.ResetTimer()
+	_ = fmap.NewFromList(kvs)
+}
+
+func BenchmarkBuildBulkInsert(b *testing.B) {
+	log.Printf("BenchmarkBuildBulkInsert: b.N=%d\n", b.N)
+	var kvs = buildKvs(b.N)
+	var m = fmap.New()
+	b.ResetTimer()
+	_ = m.BulkInsert(kvs, fmap.KeepOrigVal)
 }

@@ -6,13 +6,13 @@ import (
 	"github.com/lleo/go-functional-collections/hash"
 )
 
-// keyVal is a simple struct used to transfer lists ([]keyVal) from one
+// KeyVal is a simple struct used to transfer lists ([]KeyVal) from one
 // function to another.
-type keyVal struct {
+type KeyVal struct {
 	Key hash.Key
 	Val interface{}
 }
 
-func (kv keyVal) String() string {
+func (kv KeyVal) String() string {
 	return fmt.Sprintf("{%q, %v}", kv.Key, kv.Val)
 }

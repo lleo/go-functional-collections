@@ -39,8 +39,8 @@ func (t *fixedTable) deepCopy() tableI {
 	//	if table, isTable := t.nodes[i].(tableI); isTable {
 	//		nt.nodes[i] = table.deepCopy()
 	//	} else {
-	//		//leafs are functional, so no need to copy
-	//		//nils can be copied just fine; duh!
+	//		// leafs are functional, so no need to copy
+	//		// nils can be copied just fine; duh!
 	//		nt.nodes[i] = t.nodes[i]
 	//	}
 	//}
@@ -49,10 +49,10 @@ func (t *fixedTable) deepCopy() tableI {
 		case tableI:
 			nt.nodes[i] = x.deepCopy()
 		case leafI:
-			//leafI's are functional, so no need to copy them.
+			// leafI's are functional, so no need to copy them.
 			nt.nodes[i] = x
 		case nil:
-			//nils can be copied just fine; duh!
+			// nils can be copied just fine; duh!
 			nt.nodes[i] = x
 		default:
 			panic("unknown entry in table")
@@ -78,7 +78,7 @@ func createFixedTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
 	if idx1 != idx2 {
 		retTable.insertInplace(idx1, leaf1)
 		retTable.insertInplace(idx2, leaf2)
-	} else { //idx1 == idx2
+	} else { // idx1 == idx2
 		var node nodeI
 		if depth == hash.MaxDepth {
 			node = newCollisionLeaf(append(leaf1.keyVals(), leaf2.keyVals()...))
@@ -208,7 +208,23 @@ func (t *fixedTable) removeInplace(idx uint) {
 	t.usedSlots--
 }
 
-func (t *fixedTable) downgrade() *sparseTable {
+func (t *fixedTable) needsUpgrade() bool {
+	return false
+}
+
+func (t *fixedTable) needsDowngrade() bool {
+	if t.slotsUsed() <= downgradeThreshold {
+		return true
+	}
+	return false
+}
+
+func (t *fixedTable) upgrade() tableI {
+	panic("upgrade() invalid op")
+	return t
+}
+
+func (t *fixedTable) downgrade() tableI {
 	var nt = newSparseTable(t.depth, t.hashPath, t.slotsUsed())
 	var j uint
 	for i := uint(0); i < hash.IndexLimit; i++ {
@@ -243,28 +259,26 @@ func (t *fixedTable) remove(idx uint) tableI {
 	return nt
 }
 
-// visit executes the visitFn in pre-order traversal. If there is no node for
-// a given node slot, visit calls the visitFn on nil.
+// walkInOrder executes the visitFn in pre-order traversal. If there is no node for
+// a given node slot, walkInOrder calls the visitFn on nil.
 //
 // The traversal stops if the visitFn function returns false.
-func (t *fixedTable) visit(fn visitFn, depth uint) (bool, error) {
+func (t *fixedTable) walkInOrder(fn visitFn, depth uint) (bool, error) {
 	if depth != t.depth {
 		var err = fmt.Errorf("depth,%d != t.depth=%d; t=%s", depth, t.depth, t)
 		return false, err
 	}
 
-	depth++
-
-	if !fn(t, depth) {
+	if !fn(t, depth+1) {
 		return false, nil
 	}
 
 	for _, n := range t.nodes {
 		if n == nil {
-			if !fn(n, depth) {
+			if !fn(n, depth+1) {
 				return false, nil
 			}
-		} else if keepOn, err := n.visit(fn, depth); !keepOn || err != nil {
+		} else if keepOn, err := n.walkInOrder(fn, depth+1); !keepOn || err != nil {
 			return keepOn, err
 		}
 	}

@@ -1,7 +1,6 @@
 package fmap_test
 
 import (
-	//"testing"
 	"log"
 	"math/rand"
 	"os"
@@ -25,13 +24,10 @@ func init() {
 
 var Inc = stringutil.Lower.Inc
 
-type keyVal struct {
-	Key hash.Key
-	Val interface{}
-}
+type KeyVal = fmap.KeyVal
 
-func buildKvs(num int) []keyVal {
-	var kvs = make([]keyVal, num)
+func buildKvs(num int) []KeyVal {
+	var kvs = make([]KeyVal, num)
 
 	var keyStr = "a"
 	for i := 0; i < num; i++ {
@@ -55,8 +51,8 @@ func buildStrings(num int) []string {
 	return strs
 }
 
-func buildKvsFromStrings(strs []string) []keyVal {
-	var kvs = make([]keyVal, len(strs))
+func buildKvsFromStrings(strs []string) []KeyVal {
+	var kvs = make([]KeyVal, len(strs))
 
 	for i := 0; i < len(strs); i++ {
 		kvs[i].Key = hash.StringKey(strs[i])
@@ -66,12 +62,12 @@ func buildKvsFromStrings(strs []string) []keyVal {
 	return kvs
 }
 
-func randomizeKvs(kvs []keyVal) []keyVal {
-	var randKvs = make([]keyVal, len(kvs))
+func randomizeKvs(kvs []KeyVal) []KeyVal {
+	var randKvs = make([]KeyVal, len(kvs))
 	copy(randKvs, kvs)
 
-	//randomize kvs
-	//https://en.wikipedia.org/wiki/Fisher–Yates_shuffle#The_modern_algorithm
+	// randomize kvs
+	// https://en.wikipedia.org/wiki/Fisher–Yates_shuffle#The_modern_algorithm
 	for i := len(randKvs) - 1; i > 0; i-- {
 		var j = rand.Intn(i + 1)
 		randKvs[i], randKvs[j] = randKvs[j], randKvs[i]
@@ -80,7 +76,7 @@ func randomizeKvs(kvs []keyVal) []keyVal {
 	return randKvs
 }
 
-func buildMap(kvs []keyVal) *fmap.Map {
+func buildMap(kvs []KeyVal) *fmap.Map {
 	var m = fmap.New()
 	for _, kv := range kvs {
 		m = m.Put(kv.Key, kv.Val)

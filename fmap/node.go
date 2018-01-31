@@ -15,7 +15,7 @@ type visitFn func(nodeI, uint) bool
 
 type nodeI interface {
 	hash() hash.Val
-	visit(fn visitFn, depth uint) (bool, error)
+	walkInOrder(fn visitFn, depth uint) (bool, error)
 	String() string
 }
 
@@ -25,7 +25,7 @@ type leafI interface {
 	get(key hash.Key) (interface{}, bool)
 	put(key hash.Key, val interface{}) (leafI, bool)
 	del(key hash.Key) (leafI, interface{}, bool)
-	keyVals() []keyVal
+	keyVals() []KeyVal
 }
 
 type tableIterFunc func() nodeI
@@ -48,6 +48,11 @@ type tableI interface {
 	insert(idx uint, n nodeI) tableI
 	replace(idx uint, n nodeI) tableI
 	remove(idx uint) tableI
+
+	needsUpgrade() bool
+	needsDowngrade() bool
+	upgrade() tableI
+	downgrade() tableI
 
 	iter() tableIterFunc
 
