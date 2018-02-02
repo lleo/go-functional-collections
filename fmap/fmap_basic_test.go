@@ -195,3 +195,95 @@ func TestBasicString(t *testing.T) {
 		t.Fatalf("str,%q != expectedStr,%q", str, expectedStr)
 	}
 }
+
+func TestBasicNewFromList(t *testing.T) {
+	var kvs = buildKvs(100)
+
+	var m = fmap.NewFromList(kvs)
+
+	for _, kv := range kvs {
+		var k, v = kv.Key, kv.Val
+		var val, found = m.Load(k)
+		if !found {
+			t.Fatalf("failed to find key=%s", k)
+		}
+		if val != v {
+			t.Fatalf("val,%d != v,%d", val, v)
+		}
+	}
+}
+
+//FIXME: need more; test conflict
+func TestBasicBulkInsert(t *testing.T) {
+	var kvs = buildKvs(100)
+	var m = fmap.NewFromList(kvs[:50])
+
+	m = m.BulkInsert(kvs[50:], fmap.KeepOrigVal)
+
+	if m.NumEntries() != 100 {
+		t.Fatalf("m.NumEntries(),%d != 100", m.NumEntries())
+	}
+
+	for _, kv := range kvs {
+		var k, v = kv.Key, kv.Val
+		var val, found = m.Load(k)
+		if !found {
+			t.Fatalf("failed to find key=%s", k)
+		}
+		if val != v {
+			t.Fatalf("val,%d != v,%d", val, v)
+		}
+	}
+}
+
+//FIXME: need more; test not found
+func TestBasicBulkDelete(t *testing.T) {
+	var kvs = buildKvs(100)
+	var keys = make([]hash.Key, len(kvs))
+	for i, kv := range kvs {
+		keys[i] = kv.Key
+	}
+	var m = fmap.NewFromList(kvs)
+
+	var notFound []hash.Key
+	m, notFound = m.BulkDelete(keys[50:])
+
+	if len(notFound) != 0 {
+		t.Fatalf("len(notFound),%d != 0", len(notFound))
+	}
+
+	if m.NumEntries() != 50 {
+		t.Fatalf("m.NumEntries(),%d != 50", m.NumEntries())
+	}
+
+	for _, kv := range kvs[:50] {
+		var k, v = kv.Key, kv.Val
+		var val, found = m.Load(k)
+		if !found {
+			t.Fatalf("k=%s not found", k)
+		}
+		if v != val {
+			t.Fatalf("v,%d != val,%d", v, val)
+		}
+	}
+}
+
+//FIXME: need more; test conflict
+func TestBasicMerge(t *testing.T) {
+	var kvs = buildKvs(100)
+
+	var m0 = fmap.NewFromList(kvs[:50])
+	var m1 = fmap.NewFromList(kvs[50:])
+	var m = m0.Merge(m1, fmap.KeepOrigVal)
+
+	for _, kv := range kvs {
+		var k, v = kv.Key, kv.Val
+		var val, found = m.Load(k)
+		if !found {
+			t.Fatalf("k=%s not found", k)
+		}
+		if val != v {
+			t.Fatalf("val,%d != v,%d", val, v)
+		}
+	}
+}

@@ -51,6 +51,14 @@ func buildStrings(num int) []string {
 	return strs
 }
 
+func buildKeys(num int) []hash.Key {
+	var keys = make([]hash.Key, num)
+	for i, s := range buildStrings(num) {
+		keys[i] = hash.StringKey(s)
+	}
+	return keys
+}
+
 func buildKvsFromStrings(strs []string) []KeyVal {
 	var kvs = make([]KeyVal, len(strs))
 

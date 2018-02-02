@@ -98,6 +98,6 @@ func (l *collisionLeaf) keyVals() []KeyVal {
 	//return l.kvs
 }
 
-func (l *collisionLeaf) walkInOrder(fn visitFn, depth uint) (bool, error) {
+func (l *collisionLeaf) walkPreOrder(fn visitFn, depth uint) (bool, error) {
 	return fn(l, depth), nil
 }

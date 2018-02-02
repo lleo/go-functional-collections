@@ -15,7 +15,7 @@ type visitFn func(nodeI, uint) bool
 
 type nodeI interface {
 	hash() hash.Val
-	walkInOrder(fn visitFn, depth uint) (bool, error)
+	walkPreOrder(fn visitFn, depth uint) (bool, error)
 	String() string
 }
 

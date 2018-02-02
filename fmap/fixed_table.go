@@ -259,11 +259,11 @@ func (t *fixedTable) remove(idx uint) tableI {
 	return nt
 }
 
-// walkInOrder executes the visitFn in pre-order traversal. If there is no node for
-// a given node slot, walkInOrder calls the visitFn on nil.
+// walkPreOrder executes the visitFn in pre-order traversal. If there is no node for
+// a given node slot, walkPreOrder calls the visitFn on nil.
 //
 // The traversal stops if the visitFn function returns false.
-func (t *fixedTable) walkInOrder(fn visitFn, depth uint) (bool, error) {
+func (t *fixedTable) walkPreOrder(fn visitFn, depth uint) (bool, error) {
 	if depth != t.depth {
 		var err = fmt.Errorf("depth,%d != t.depth=%d; t=%s", depth, t.depth, t)
 		return false, err
@@ -278,7 +278,7 @@ func (t *fixedTable) walkInOrder(fn visitFn, depth uint) (bool, error) {
 			if !fn(n, depth+1) {
 				return false, nil
 			}
-		} else if keepOn, err := n.walkInOrder(fn, depth+1); !keepOn || err != nil {
+		} else if keepOn, err := n.walkPreOrder(fn, depth+1); !keepOn || err != nil {
 			return keepOn, err
 		}
 	}

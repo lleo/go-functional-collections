@@ -62,6 +62,6 @@ func (l *flatLeaf) keyVals() []KeyVal {
 	return []KeyVal{{l.key, l.val}}
 }
 
-func (l *flatLeaf) walkInOrder(fn visitFn, depth uint) (bool, error) {
+func (l *flatLeaf) walkPreOrder(fn visitFn, depth uint) (bool, error) {
 	return fn(l, depth), nil
 }

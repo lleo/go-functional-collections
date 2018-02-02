@@ -384,8 +384,8 @@ func (m *Map) Remove(key hash.Key) (*Map, interface{}, bool) {
 	return nm, val, deleted
 }
 
-func (m *Map) walkInOrder(fn visitFn) bool {
-	var keepOn, err = m.root.walkInOrder(fn, 0)
+func (m *Map) walkPreOrder(fn visitFn) bool {
+	var keepOn, err = m.root.walkPreOrder(fn, 0)
 	if err != nil {
 		panic(err)
 	}
@@ -440,7 +440,7 @@ func (m *Map) Range(fn func(hash.Key, interface{}) bool) {
 	//	}
 	//	return true
 	//} // end: visitLeafsFn = func(nodeI)
-	//m.walkInOrder(visitLeafs)
+	//m.walkPreOrder(visitLeafs)
 	var it = m.Iter()
 	for k, v := it.Next(); k != nil; k, v = it.Next() {
 		if !fn(k, v) {
@@ -491,12 +491,15 @@ func (m *Map) TreeString(indent string) string {
 	return str
 }
 
+// Dup does a complete deep copy of a *Map returning an entirely new *Map.
 func (m *Map) Dup() *Map {
 	var nm = m.copy()
 	nm.root = m.root.deepCopy()
 	return nm
 }
 
+// NewFromList constructs a new *Map structure containing all the key,value
+// pairs of the given KeyVal slice.
 func NewFromList(kvs []KeyVal) *Map {
 	var m = New()
 	for _, kv := range kvs {
@@ -527,22 +530,86 @@ func NewFromList(kvs []KeyVal) *Map {
 	return m
 }
 
+// ResolveConflictFunc is the signature of functions used to choose between, or
+// create a new value from, two key,value pairs where the keys are equal (this
+// is defined by k0.Equal(k1), hence only the Map key is passed in).
 type ResolveConflictFunc func(
 	key hash.Key,
 	origVal, newVal interface{},
 ) interface{}
 
+// KeepOrigVal is an implementation of ResolveConflictFunc type which returns
+// the first (origVal) value.
 func KeepOrigVal(key hash.Key, origVal, newVal interface{}) interface{} {
 	return origVal
 }
 
+// TakeNewVal is an implementation of ResolveConflictFunc type which returns
+// the second (newVal) value.
 func TakeNewVal(key hash.Key, origVal, newVal interface{}) interface{} {
 	return newVal
 }
 
+func insertPersist(
+	m *Map,
+	isOrigTable map[tableI]bool,
+	resolve ResolveConflictFunc,
+	k hash.Key,
+	v interface{},
+) {
+	var hv = k.Hash()
+	var path, leaf, idx = m.find(hv)
+	var curTable = path.pop()
+	var depth = uint(path.len())
+	var added bool
+	if isOrigTable[curTable] {
+		var newTable tableI
+		if leaf == nil {
+			newTable = curTable.insert(idx, newFlatLeaf(k, v))
+			added = true
+		} else {
+			var node nodeI
+			if leaf.hash() != hv {
+				//node = createSparseTable(depth+1, leaf, newFlatLeaf(k, v))
+				node = createTable(depth+1, leaf, newFlatLeaf(k, v))
+				added = true
+			} else {
+				// FIXME: does any of the keys in the leaf Equal() leaf?
+				// If is does, replace the value with the result of resolve.
+				node, added = leaf.put(k, v)
+			}
+			newTable = curTable.replace(idx, node)
+		}
+		m.persist(curTable, newTable, path)
+	} else {
+		if leaf == nil {
+			curTable.insertInplace(idx, newFlatLeaf(k, v))
+			added = true
+		} else {
+			var node nodeI
+			if leaf.hash() != hv {
+				//node = createSparseTable(depth+1, leaf, newFlatLeaf(k, v))
+				node = createTable(depth+1, leaf, newFlatLeaf(k, v))
+				added = true
+			} else {
+				// FIXME: does any of the keys in the leaf Equal() leaf?
+				// If is does, replace the value with the result of resolve.
+				node, added = leaf.put(k, v)
+			}
+			curTable.replaceInplace(idx, node)
+		}
+	}
+	if added {
+		m.numEnts++
+	}
+}
+
+// BulkInsert stores all the given key,value pairs into the *Map while
+// resolving any conflict with the given resolve function. The returned *Map
+// maintains the structure sharing relationship with the original *Map.
 func (m *Map) BulkInsert(kvs []KeyVal, resolve ResolveConflictFunc) *Map {
 	var isOrigTable = make(map[tableI]bool)
-	m.walkInOrder(func(n nodeI, depth uint) bool {
+	m.walkPreOrder(func(n nodeI, depth uint) bool {
 		if t, isTable := n.(tableI); isTable {
 			isOrigTable[t] = true
 		}
@@ -552,57 +619,153 @@ func (m *Map) BulkInsert(kvs []KeyVal, resolve ResolveConflictFunc) *Map {
 	var nm = m.copy()
 	for _, kv := range kvs {
 		var k, v = kv.Key, kv.Val
-		var hv = k.Hash()
-		var path, leaf, idx = nm.find(hv)
-		var curTable = path.pop()
-		var depth = uint(path.len())
-		var added bool
-		var newTable tableI
-		if isOrigTable[curTable] {
-			if leaf == nil {
-				newTable = curTable.insert(idx, newFlatLeaf(k, v))
-				added = true
-			} else {
-				var node nodeI
-				if leaf.hash() != hv {
-					//node = createSparseTable(depth+1, leaf, newFlatLeaf(k, v))
-					node = createTable(depth+1, leaf, newFlatLeaf(k, v))
-					added = true
-				} else {
-					node, added = leaf.put(k, v)
-				}
-				newTable = curTable.replace(idx, node)
-			}
-			nm.persist(curTable, newTable, path)
-		} else {
-			if leaf == nil {
-				curTable.insertInplace(idx, newFlatLeaf(k, v))
-				added = true
-			} else {
-				var node nodeI
-				if leaf.hash() != hv {
-					//node = createSparseTable(depth+1, leaf, newFlatLeaf(k, v))
-					node = createTable(depth+1, leaf, newFlatLeaf(k, v))
-					added = true
-				} else {
-					node, added = leaf.put(k, v)
-				}
-				curTable.replaceInplace(idx, node)
-			}
-		}
-		if added {
-			nm.numEnts++
-		}
+		insertPersist(nm, isOrigTable, resolve, k, v)
+		//var hv = k.Hash()
+		//var path, leaf, idx = nm.find(hv)
+		//var curTable = path.pop()
+		//var depth = uint(path.len())
+		//var added bool
+		//if isOrigTable[curTable] {
+		//	var newTable tableI
+		//	if leaf == nil {
+		//		newTable = curTable.insert(idx, newFlatLeaf(k, v))
+		//		added = true
+		//	} else {
+		//		var node nodeI
+		//		if leaf.hash() != hv {
+		//			//node = createSparseTable(depth+1, leaf, newFlatLeaf(k, v))
+		//			node = createTable(depth+1, leaf, newFlatLeaf(k, v))
+		//			added = true
+		//		} else {
+		//			node, added = leaf.put(k, v)
+		//		}
+		//		newTable = curTable.replace(idx, node)
+		//	}
+		//	nm.persist(curTable, newTable, path)
+		//} else {
+		//	if leaf == nil {
+		//		curTable.insertInplace(idx, newFlatLeaf(k, v))
+		//		added = true
+		//	} else {
+		//		var node nodeI
+		//		if leaf.hash() != hv {
+		//			//node = createSparseTable(depth+1, leaf, newFlatLeaf(k, v))
+		//			node = createTable(depth+1, leaf, newFlatLeaf(k, v))
+		//			added = true
+		//		} else {
+		//			node, added = leaf.put(k, v)
+		//		}
+		//		curTable.replaceInplace(idx, node)
+		//	}
+		//}
+		//if added {
+		//	nm.numEnts++
+		//}
 	}
 	return nm
 }
 
 func (m *Map) BulkDelete(keys []hash.Key) (*Map, []hash.Key) {
-	return nil, nil
+	var isOrigTable = make(map[tableI]bool)
+	m.walkPreOrder(func(n nodeI, depth uint) bool {
+		if t, isTable := n.(tableI); isTable {
+			isOrigTable[t] = true
+		}
+		return true
+	})
+
+	var notFound []hash.Key
+	var nm = m.copy()
+KEYSLOOP:
+	for _, k := range keys {
+		var hv = k.Hash()
+		var path, leaf, idx = nm.find(hv)
+		if leaf == nil {
+			notFound = append(notFound, k)
+			continue KEYSLOOP
+		}
+		var newLeaf, _, found = leaf.del(k)
+		if !found {
+			notFound = append(notFound, k)
+			continue KEYSLOOP
+		}
+		nm.numEnts--
+		var curTable = path.pop()
+		if isOrigTable[curTable] {
+			var newTable tableI
+			if newLeaf == nil {
+				newTable = curTable.remove(idx)
+			} else {
+				newTable = curTable.replace(idx, newLeaf)
+			}
+			nm.persist(newTable, curTable, path)
+		} else {
+			if newLeaf == nil {
+				curTable.removeInplace(idx)
+			} else {
+				curTable.replace(idx, newLeaf)
+			}
+		}
+	}
+	return nm, notFound
 }
 
 func (m *Map) Merge(om *Map, resolve ResolveConflictFunc) *Map {
-	return nil
+	var isOrigTable = make(map[tableI]bool)
+	m.walkPreOrder(func(n nodeI, depth uint) bool {
+		if t, isTable := n.(tableI); isTable {
+			isOrigTable[t] = true
+		}
+		return true
+	})
+
+	var nm = m.copy()
+	var it = om.Iter()
+	for k, v := it.Next(); k != nil; k, v = it.Next() {
+		insertPersist(nm, isOrigTable, resolve, k, v)
+		//var hv = k.Hash()
+		//var path, leaf, idx = nm.find(hv)
+		//var curTable = path.pop()
+		//var depth = uint(path.len())
+		//var added bool
+		//if isOrigTable[curTable] {
+		//	var newTable tableI
+		//	if leaf == nil {
+		//		newTable = curTable.insert(idx, newFlatLeaf(k, v))
+		//		added = true
+		//	} else {
+		//		var node nodeI
+		//		if leaf.hash() != hv {
+		//			//node = createSparseTable(depth+1, leaf, newFlatLeaf(k, v))
+		//			node = createTable(depth+1, leaf, newFlatLeaf(k, v))
+		//			added = true
+		//		} else {
+		//			node, added = leaf.put(k, v)
+		//		}
+		//		newTable = curTable.replace(idx, node)
+		//	}
+		//	nm.persist(curTable, newTable, path)
+		//} else {
+		//	if leaf == nil {
+		//		curTable.insertInplace(idx, newFlatLeaf(k, v))
+		//		added = true
+		//	} else {
+		//		var node nodeI
+		//		if leaf.hash() != hv {
+		//			//node = createSparseTable(depth+1, leaf, newFlatLeaf(k, v))
+		//			node = createTable(depth+1, leaf, newFlatLeaf(k, v))
+		//			added = true
+		//		} else {
+		//			node, added = leaf.put(k, v)
+		//		}
+		//		curTable.replaceInplace(idx, node)
+		//	}
+		//}
+		//if added {
+		//	nm.numEnts++
+		//}
+	}
+	return nm
 }
 
 //type Stats struct {
@@ -701,6 +864,6 @@ func (m *Map) Merge(om *Map, resolve ResolveConflictFunc) *Map {
 //		return keepOn
 //	}
 //
-//	m.walkInOrder(statFn)
+//	m.walkPreOrder(statFn)
 //	return stats
 //}
