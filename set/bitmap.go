@@ -30,7 +30,7 @@ func (bm *bitmap) String() string {
 	// bitmap base type.
 	var strs = make([]string, bitmapSize)
 	//var fmtStr = fmt.Sprintf("%%0%db", 1<<bitmapShift)
-	for i := uint(0); i < bitmapSize; i++ {
+	for i := len(*bm) - 1; i >= 0; i-- {
 		strs[i] = fmt.Sprintf(bitsFmtStr, bm[i])
 	}
 
@@ -45,27 +45,27 @@ func (bm *bitmap) isSet(idx uint) bool {
 	return (bm[nth] & (1 << bit)) > 0
 }
 
-// Set marks the i'th bit 1.
-func (bm *bitmap) set(idx uint) {
+// Set marks the idx'th bit 1.
+func (bm *bitmap) set(idx uint) *bitmap {
 	var nth = idx >> bitmapShift
 	var bit = idx & byteMask
 
 	bm[nth] |= 1 << bit
 
-	return
+	return bm
 }
 
 // Unset marks the i'th bit to 0.
-func (bm *bitmap) unset(idx uint) {
+func (bm *bitmap) unset(idx uint) *bitmap {
 	var nth = idx >> bitmapShift
-	var bit = idx & ((1 << bitmapShift) - 1)
+	var bit = idx & byteMask
 
 	//if bm[nth]&(1<<bit) > 0 {
 	//	bm[nth] &^= 1 << bit
 	//}
 	bm[nth] &^= 1 << bit
 
-	return
+	return bm
 }
 
 // Count returns the numbers of bits set below the i'th bit.

@@ -19,6 +19,7 @@ package set
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/lleo/go-functional-collections/hash"
@@ -47,8 +48,51 @@ type Set struct {
 // New returns a properly initialized pointer to a Set struct.
 func New() *Set {
 	var s = new(Set)
-	s.root = newFixedTable()
+	s.root = newRootTable()
 	return s
+}
+
+func newRootTable() tableI {
+	// fixedTable at root makes a noticable perf diff on small & large Maps.
+	return newFixedTable(0, 0)
+	//return newSparseTable(0, 0, 0)
+}
+
+// FIXME: generic version of newSparseTable & newFixedTable
+func newTable(depth uint, hashVal hash.Val) tableI {
+	//return newFixedTable(depth, hashVal)
+	return newSparseTable(depth, hashVal, 0)
+}
+
+// FIXME: generic version of createSparseTable & createFixedTable
+// FIXME: This should obviate createSparseTable & createFixedTable.
+func createTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
+	if assertOn {
+		assert(depth > 0, "createTable(): depth < 1")
+		assertf(leaf1.hash().HashPath(depth) == leaf2.hash().HashPath(depth),
+			"createTable(): hp1,%s != hp2,%s",
+			leaf1.hash().HashPath(depth),
+			leaf2.hash().HashPath(depth))
+	}
+
+	var retTable = newTable(depth, leaf1.hash())
+
+	var idx1 = leaf1.hash().Index(depth)
+	var idx2 = leaf2.hash().Index(depth)
+	if idx1 != idx2 {
+		retTable.insertInplace(idx1, leaf1)
+		retTable.insertInplace(idx2, leaf2)
+	} else { // idx1 == idx2
+		var node nodeI
+		if depth == hash.MaxDepth {
+			node = newCollisionLeaf(append(leaf1.keys(), leaf2.keys()...))
+		} else {
+			node = createTable(depth+1, leaf1, leaf2)
+		}
+		retTable.insertInplace(idx1, node)
+	}
+
+	return retTable
 }
 
 // copy creates a shallow copy of the Set data structure and returns a pointer
@@ -56,7 +100,7 @@ func New() *Set {
 func (s *Set) copy() *Set {
 	var ns = new(Set)
 	*ns = *s
-	return s
+	return ns
 }
 
 // IsSet searches the Set for a hash.Key value where the given key (k) matches
@@ -128,6 +172,13 @@ DepthIter:
 // Hence, modifying it is allowed.
 func (s *Set) persist(oldTable, newTable tableI, path *tableStack) {
 	assert(s.root != nil, "s.root == nil")
+
+	// downgrade() & upgrade() can return an unmodified table in NewFromList(),
+	// BulkInsert(), BulkDelete(), and Merge(). Hence persist() is unnecessary.
+	//if newTable == oldTable {
+	//	return
+	//}
+
 	if s.root == oldTable {
 		s.root = newTable
 		return
@@ -139,12 +190,12 @@ func (s *Set) persist(oldTable, newTable tableI, path *tableStack) {
 	var parentIdx = oldTable.hash().Index(parentDepth)
 
 	var oldParent = path.pop()
-	var newParent = oldParent.copy()
+	var newParent tableI
 
 	if newTable == nil {
-		newParent.remove(parentIdx)
+		newParent = oldParent.remove(parentIdx)
 	} else {
-		newParent.replace(parentIdx, newTable)
+		newParent = oldParent.replace(parentIdx, newTable)
 	}
 
 	s.persist(oldParent, newParent, path)
@@ -159,8 +210,8 @@ func (s *Set) persist(oldTable, newTable tableI, path *tableStack) {
 // Equivalentcy of keys is determined by k.Equals(k0) where k is the given
 // hash.Key and k0 is the hash.Key already stored in the *Set.
 func (s *Set) Set(key hash.Key) *Set {
-	s, _ = s.Add(key)
-	return s
+	var ns, _ = s.Add(key)
+	return ns
 }
 
 // Add inserts a new key to the *Set data structure. It returns the
@@ -186,28 +237,21 @@ func (s *Set) Add(key hash.Key) (*Set, bool) {
 	var newTable tableI
 
 	if leaf == nil {
-		// if curTable.get(idx) slot is empty
-		if (curTable.slotsUsed() + 1) == upgradeThreshold {
-			newTable = upgradeToFixedTable(
-				curTable.hash(), depth, curTable.entries())
-		} else {
-			newTable = curTable.copy()
-		}
-
-		newTable.insert(idx, newFlatLeaf(key))
+		newTable = curTable.insert(idx, newFlatLeaf(key))
 		added = true
 	} else {
-		newTable = curTable.copy()
-
+		// This only happens when depth == MaxDepth
 		var node nodeI
-		if leaf.hash() == hv {
-			node, added = leaf.put(key)
-		} else {
-			node = createSparseTable(depth+1, leaf, newFlatLeaf(key))
+		if leaf.hash() != hv {
+			// common case
+			//node = createSparseTable(depth+1, leaf, newFlatLeaf(key))
+			node = createTable(depth+1, leaf, newFlatLeaf(key))
 			added = true
+		} else {
+			node, added = leaf.put(key)
 		}
 
-		newTable.replace(idx, node)
+		newTable = curTable.replace(idx, node)
 	}
 
 	ns.persist(curTable, newTable, path)
@@ -232,7 +276,9 @@ func (s *Set) Unset(key hash.Key) *Set {
 // If the hash.Key does not exist in the *Set then the original *Set is returned
 // with a false value indicating that the hash.Key was not found.
 func (s *Set) Remove(key hash.Key) (*Set, bool) {
-	if s.numEnts == 0 {
+	//if m.numEnts == 0 {
+	//if m.root == nil {
+	if s.NumEntries() == 0 {
 		return s, false
 	}
 
@@ -250,7 +296,7 @@ func (s *Set) Remove(key hash.Key) (*Set, bool) {
 	}
 
 	var curTable = path.pop()
-	var depth = uint(path.len())
+	//var depth = uint(path.len())
 
 	var ns = s.copy()
 
@@ -259,25 +305,14 @@ func (s *Set) Remove(key hash.Key) (*Set, bool) {
 		panic("WTF!?! new map.numEnts < 0")
 	}
 
-	var newTable = curTable.copy()
+	var newTable tableI
 
-	if newLeaf == nil { //leaf was a FlatLeaf
-		newTable.remove(idx)
-
-		// Side-Effects of removing a Key from the table
-		var nents = newTable.slotsUsed()
-		if depth > 0 {
-			// do not remove nor downgrade root table
-			switch {
-			case nents == 0:
-				newTable = nil
-			case nents == downgradeThreshold:
-				newTable = downgradeToSparseTable(
-					newTable.hash(), depth, newTable.entries())
-			}
-		}
-	} else { //leaf was a CollisionLeaf
-		newTable.replace(idx, newLeaf)
+	if newLeaf == nil {
+		// leaf was a FlatLeaf
+		newTable = curTable.remove(idx)
+	} else {
+		// leaf was a CollisionLeaf
+		newTable = curTable.replace(idx, newLeaf)
 	}
 
 	ns.persist(curTable, newTable, path)
@@ -285,13 +320,9 @@ func (s *Set) Remove(key hash.Key) (*Set, bool) {
 	return ns, deleted
 }
 
-//func (s *Set) walk(fn visitFn) bool {
-//	var keepOn, err = s.root.visit(fn, 0)
-//	if err != nil {
-//		panic(err)
-//	}
-//	return keepOn
-//}
+func (s *Set) walkPreOrder(fn visitFunc) bool {
+	return s.root.walkPreOrder(fn, 0)
+}
 
 // Iter returns an *Iter structure. You can call the Next() method on the *Iter
 // structure sucessively until it returns a nil key value to walk the keys in
@@ -350,6 +381,18 @@ func (s *Set) Range(fn func(hash.Key) bool) {
 	}
 }
 
+// Keys returns a hash.Key slice that contains all the entries in Set.
+func (s *Set) Keys() []hash.Key {
+	var keys = make([]hash.Key, s.NumEntries())
+	var i int
+	s.Range(func(k hash.Key) bool {
+		keys[i] = k
+		i++
+		return true
+	})
+	return keys
+}
+
 // NumEntries returns the number of hash.Keys in the *Set. This operation is
 // O(1) because the count is maintained at the top level for the *Set and does
 // not require a walk of the *Set data structure to return the count.
@@ -362,18 +405,26 @@ func (s *Set) NumEntries() int {
 func (s *Set) String() string {
 	var ents = make([]string, s.NumEntries())
 	var i int
-	s.Range(func(k hash.Key) bool {
-		//log.Printf("i=%d, k=%#v\n", i, k)
+
+	var it = s.Iter()
+	for k := it.Next(); k != nil; k = it.Next() {
 		ents[i] = fmt.Sprintf("%#v", k)
 		i++
-		return true
-	})
+	}
+
+	//s.Range(func(k hash.Key) bool {
+	//	//log.Printf("i=%d, k=%#v\n", i, k)
+	//	ents[i] = fmt.Sprintf("%#v", k)
+	//	i++
+	//	return true
+	//})
+
 	return "Set{" + strings.Join(ents, ",") + "}"
 }
 
-// treeString returns a (potentially very large) string that represets the
+// TreeString returns a (potentially very large) string that represets the
 // entire Set data structure.
-func (s *Set) treeString(indent string) string {
+func (s *Set) TreeString(indent string) string {
 	var str string
 
 	str = indent +
@@ -383,6 +434,426 @@ func (s *Set) treeString(indent string) string {
 
 	return str
 }
+
+// DeepCopy does a complete deep copy of a *Set returning an entirely new *Set.
+func (s *Set) DeepCopy() *Set {
+	var ns = s.copy()
+	ns.root = s.root.deepCopy()
+	return ns
+}
+
+// Equiv compares two *Set's by value.
+func (s *Set) Equiv(s0 *Set) bool {
+	//log.Printf("Set#Equiv: s.NumEntries(),%d != s0.NumEntries(),%d",
+	//	s.NumEntries(), s0.NumEntries())
+
+	if s.NumEntries() != s0.NumEntries() {
+		return false
+	}
+	if !s.root.equiv(s0.root) {
+		return false
+	}
+	return true
+	//return s.NumEntries() == s0.NumEntries() && s.root.equiv(s0.root)
+}
+
+// Count recursively traverses the HAMT data structure to count every key.
+func (s *Set) Count() int {
+	return s.root.count()
+}
+
+// NewFromList constructs a new *Set structure containing all the keys
+// of the given hash.Key slice.
+//
+// NewFromList is implemented more efficiently than repeated calls to Add.
+func NewFromList(keys []hash.Key) *Set {
+	var s = New()
+	for _, k := range keys {
+		var hv = k.Hash()
+		var path, leaf, idx = s.find(hv)
+		var curTable = path.pop()
+		var depth = uint(path.len())
+		var added bool
+		if leaf == nil {
+			curTable.insertInplace(idx, newFlatLeaf(k))
+			//var _, isSparseTable = curTable.(*sparseTable)
+			//if isSparseTable && curTable.slotsUsed() == upgradeThreshold {
+			//if curTable.slotsUsed() == upgradeThreshold {
+			if curTable.needsUpgrade() {
+				var newTable = curTable.upgrade()
+				s.persist(newTable, curTable, path)
+			}
+			added = true
+		} else {
+			var node nodeI
+			if leaf.hash() != hv {
+				//node = createSparseTable(depth+1, leaf, newFlatLeaf(k))
+				node = createTable(depth+1, leaf, newFlatLeaf(k))
+				added = true
+			} else {
+				node, added = leaf.put(k)
+			}
+			curTable.replaceInplace(idx, node)
+		}
+		if added {
+			s.numEnts++
+		}
+	}
+	return s
+}
+
+func insertPersist(
+	s *Set,
+	isOrigTable map[tableI]bool,
+	k hash.Key,
+) {
+	var hv = k.Hash()
+	var path, leaf, idx = s.find(hv)
+	var curTable = path.pop()
+	var depth = uint(path.len())
+	var added bool
+	if isOrigTable[curTable] {
+		var newTable tableI
+		if leaf == nil {
+			newTable = curTable.insert(idx, newFlatLeaf(k))
+			added = true
+		} else {
+			var node nodeI
+			if leaf.hash() != hv {
+				//node = createSparseTable(depth+1, leaf, newFlatLeaf(k))
+				node = createTable(depth+1, leaf, newFlatLeaf(k))
+				added = true
+			} else {
+				node, added = leaf.put(k)
+			}
+			newTable = curTable.replace(idx, node)
+		}
+		s.persist(curTable, newTable, path)
+	} else {
+		if leaf == nil {
+			curTable.insertInplace(idx, newFlatLeaf(k))
+			//var _, isSparseTable = curTable.(*sparseTable)
+			//if isSparseTable && curTable.slotsUsed() == upgradeThreshold {
+			//if curTable.slotsUsed() == upgradeThreshold {
+			if curTable.needsUpgrade() {
+				var newTable = curTable.upgrade()
+				s.persist(curTable, newTable, path)
+			}
+			added = true
+		} else {
+			var node nodeI
+			if leaf.hash() != hv {
+				//node = createSparseTable(depth+1, leaf, newFlatLeaf(k))
+				node = createTable(depth+1, leaf, newFlatLeaf(k))
+				added = true
+			} else {
+				node, added = leaf.put(k)
+			}
+			curTable.replaceInplace(idx, node)
+		}
+	}
+	if added {
+		s.numEnts++
+	}
+}
+
+// BulkInsert stores all the given keys from the argument hash.Key slice  into
+// the receiver Set.
+//
+// The returned Set maintains the structure sharing relationship with the
+// receiver Set.
+//
+// BulkInsert is implemented more efficiently than repeated calls to Add.
+func (s *Set) BulkInsert(keys []hash.Key) *Set {
+	var isOrigTable = make(map[tableI]bool)
+	s.walkPreOrder(func(n nodeI, depth uint) bool {
+		if t, isTable := n.(tableI); isTable {
+			isOrigTable[t] = true
+		}
+		return true
+	})
+
+	var ns = s.copy()
+	for _, k := range keys {
+		insertPersist(ns, isOrigTable, k)
+	}
+	return ns
+}
+
+// Merge returns a Set that contains all the entries from the receiver Set and
+// the argument Set.
+func (s *Set) Merge(other *Set) *Set {
+	var big, sml = s, other
+	if s.NumEntries() < other.NumEntries() {
+		big, sml = other, s
+	}
+	// big is bigger then sml
+
+	var isOrigTable = make(map[tableI]bool)
+	big.walkPreOrder(func(n nodeI, depth uint) bool {
+		if t, isTable := n.(tableI); isTable {
+			isOrigTable[t] = true
+		}
+		return true
+	})
+
+	var ns = big.copy()
+	var it = sml.Iter()
+	for k := it.Next(); k != nil; k = it.Next() {
+		insertPersist(ns, isOrigTable, k)
+	}
+	return ns
+}
+
+func removePersist(
+	s *Set,
+	isOrigTable map[tableI]bool,
+	k hash.Key,
+) bool {
+	var hv = k.Hash()
+	var path, leaf, idx = s.find(hv)
+	if leaf == nil {
+		return false // did not remove k
+	}
+	var newLeaf, found = leaf.del(k)
+	if !found {
+		return false // did not remove k
+	}
+	s.numEnts--
+	var curTable = path.pop()
+	if isOrigTable[curTable] {
+		var newTable tableI
+		if newLeaf == nil {
+			newTable = curTable.remove(idx)
+		} else {
+			newTable = curTable.replace(idx, newLeaf)
+		}
+		s.persist(curTable, newTable, path)
+	} else {
+		if newLeaf == nil {
+			if curTable.slotsUsed()-1 > 0 {
+				curTable.removeInplace(idx)
+				if curTable.needsDowngrade() {
+					var newTable = curTable.downgrade()
+					s.persist(curTable, newTable, path)
+				}
+			} else { // curTable.slotsUsed()-1 <= 0
+				// we need to use persist cuz this will shrink empty tables
+				var newTable = curTable.remove(idx)
+				s.persist(curTable, newTable, path)
+			}
+		} else {
+			curTable.replaceInplace(idx, newLeaf)
+		}
+	}
+	return true // removed k
+}
+
+// BulkDelete removes all the keys in the given hash.Key slice. It returns a new
+// persistent Set and a slice of the keys not found in the in the original Set.
+//
+// BulkDelete is implemented more efficiently than repeated calls to Remove.
+func (s *Set) BulkDelete(keys []hash.Key) (*Set, []hash.Key) {
+	var isOrigTable = make(map[tableI]bool)
+	s.walkPreOrder(func(n nodeI, depth uint) bool {
+		if t, isTable := n.(tableI); isTable {
+			isOrigTable[t] = true
+		}
+		return true
+	})
+
+	var notFound []hash.Key
+	var ns = s.copy()
+	//KEYSLOOP:
+	for _, k := range keys {
+		if !removePersist(ns, isOrigTable, k) {
+			notFound = append(notFound, k)
+		}
+	}
+	return ns, notFound
+}
+
+// BulkDelete2 removes all the keys in the given hash.Key slice. It returns a
+// new persistent Set.
+//
+// BulkDelete2 is implemented more efficiently than repeated calls to Remove.
+func (s *Set) BulkDelete2(keys []hash.Key) *Set {
+	var isOrigTable = make(map[tableI]bool)
+	s.walkPreOrder(func(n nodeI, depth uint) bool {
+		if t, isTable := n.(tableI); isTable {
+			isOrigTable[t] = true
+		}
+		return true
+	})
+
+	var ns = s.copy()
+	//KEYSLOOP:
+	for _, k := range keys {
+		removePersist(ns, isOrigTable, k)
+	}
+	return ns
+}
+
+// Union returns a Set that contains all entries of all given Sets.
+//
+// First it sorts all the sets from largest to smallest then progressively
+// calculates the union of the biggest Set with each smaller Set.
+//
+//    var resultSet = sets[0] // biggest *Set
+//    for _, s := range sets[1:] {
+//      resultSet = resultSet.Union(s)
+//    }
+//    return resultSet
+//
+func Union(sets ...*Set) *Set {
+	if len(sets) == 0 {
+		return nil
+	}
+	if len(sets) == 1 {
+		return sets[0]
+	}
+
+	sort.Slice(sets, func(i, j int) bool {
+		return sets[i].NumEntries() > sets[j].NumEntries()
+	})
+	// sets is now sorted from largest to smallest
+
+	var resultSet = sets[0].copy()
+	var rest = sets[1:]
+
+	var isOrigTable = make(map[tableI]bool)
+	resultSet.walkPreOrder(func(n nodeI, depth uint) bool {
+		if t, isTable := n.(tableI); isTable {
+			isOrigTable[t] = true
+		}
+		return true
+	})
+
+	for _, s := range rest {
+		var it = s.Iter()
+		for k := it.Next(); k != nil; k = it.Next() {
+			insertPersist(resultSet, isOrigTable, k)
+		}
+	}
+	return resultSet
+}
+
+// Union returns a Set that contains all entries for the receiver Set and the
+// argument Set.
+func (s *Set) Union(other *Set) *Set {
+	return s.Merge(other)
+}
+
+// Intersection returns a Set that is the Intersection  of all the given sets.
+//
+// First it sorts all the sets from largest to smallest then progressively
+// calculates the intersection of the biggest Set with each smaller Set.
+//
+//    var resultSet = sets[0] // biggest *Set
+//    for _, s := range sets[1:] {
+//      resultSet = resultSet.Intersect(s)
+//    }
+//    return resultSet
+//
+func Intersection(sets ...*Set) *Set {
+	if len(sets) == 0 {
+		return nil
+	}
+	if len(sets) == 1 {
+		return sets[0]
+	}
+
+	sort.Slice(sets, func(i, j int) bool {
+		return sets[i].NumEntries() > sets[j].NumEntries()
+	})
+	// sets is now sorted from largest to smallest
+
+	var res = sets[0] // largest
+	for _, s := range sets[1:] {
+		res = res.Intersect(s)
+	}
+	return res
+}
+
+// Intersect returns a Set that contains only the entries that the receiver Set
+// and the argument Set have in common.
+//
+// There is no structural sharing with either the receiver Set or argument Set.
+func (s *Set) Intersect(other *Set) *Set {
+	var intersectKeys []hash.Key
+	var it = other.Iter()
+	for k := it.Next(); k != nil; k = it.Next() {
+		if s.IsSet(k) {
+			intersectKeys = append(intersectKeys, k)
+		}
+	}
+	return NewFromList(intersectKeys)
+}
+
+// Difference returns a new Set based on the receiver Set that contains none of
+// the entries from the argument Set.
+//
+// Difference is implemented by repeated calls to Unset.
+//
+// NOTE: a.Difference(b) != b.Difference(a)
+func (s *Set) Difference(other *Set) *Set {
+	var diffSet = s
+	var it = other.Iter()
+	for k := it.Next(); k != nil; k = it.Next() {
+		diffSet = diffSet.Unset(k)
+	}
+	return diffSet
+}
+
+// // Difference2 returns a new Set based on the receiver Set that contains none of
+// // the entries from the argument Set.
+// //
+// // Difference2 is implemented by repeated calls to removePersist, the basic
+// // function of BulkDelete.
+// //
+// // NOTE: a.Difference2(b) != b.Difference2(a)
+// func (s *Set) Difference2(other *Set) *Set {
+// 	var isOrigTable = make(map[tableI]bool)
+// 	s.walkPreOrder(func(n nodeI, depth uint) bool {
+// 		if t, isTable := n.(tableI); isTable {
+// 			isOrigTable[t] = true
+// 		}
+// 		return true
+// 	})
+//
+// 	var diffSet = s.copy()
+// 	var it = other.Iter()
+// 	for k := it.Next(); k != nil; k = it.Next() {
+// 		removePersist(diffSet, isOrigTable, k)
+// 	}
+// 	return diffSet
+// }
+
+// // Difference1 returns a new Set based on the receiver Set that contains none of
+// // the entries from the argument Set.
+// //
+// // Difference1 is calculated by creating a list of shared keys, then doing a
+// // BulkDelete of those shared keys from the receiver Set.
+// //
+// // NOTE: a.Difference1(b) != b.Difference1(a)
+// func (s *Set) Difference1(other *Set) *Set {
+// 	var otherKeys = other.Keys()
+// 	var diff, _ = s.BulkDelete(otherKeys)
+// 	return diff
+// }
+
+// // Difference3 returns a new Set based on the receiver Set that contains none of
+// // the entries from the argument Set.
+// //
+// // Difference3 is calculated by creating a list of shared keys, then doing a
+// // BulkDelete of those shared keys from the receiver Set.
+// //
+// // NOTE: a.Difference3(b) != b.Difference3(a)
+// func (s *Set) Difference3(other *Set) *Set {
+// 	var otherKeys = other.Keys()
+// 	var diff = s.BulkDelete2(otherKeys)
+// 	return diff
+// }
 
 //type Stats struct {
 //	DeepestKeys struct {
@@ -405,9 +876,6 @@ func (s *Set) treeString(indent string) string {
 //	// depth. There are slots for [0..DepthLimit).
 //	// [0..DepthLimit)
 //	TableCountsByDepth [hash.DepthLimit]uint
-//
-//	// Nils is the total count of allocated slots that are unused in the Set.
-//	Nils uint
 //
 //	// Nodes is the total count of nodeI capable structs in the Set.
 //	Nodes uint
@@ -443,9 +911,6 @@ func (s *Set) treeString(indent string) string {
 //	var statFn = func(n nodeI, depth uint) bool {
 //		var keepOn = true
 //		switch x := n.(type) {
-//		case nil:
-//			stats.Nils++
-//			keepOn = false
 //		case *fixedTable:
 //			stats.Nodes++
 //			stats.Tables++

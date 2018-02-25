@@ -201,3 +201,158 @@ func BenchmarkSetOne10MM(b *testing.B) {
 		_ = m.Set(key)
 	}
 }
+
+var bulkSize = 10000
+var bulkKeys []hash.Key
+var bulkSet *set.Set
+
+func BenchmarkBulkInsert(b *testing.B) {
+	if bulkKeys == nil {
+		log.Printf("BenchBulkDelete: building bulkKeys & bulkSet.")
+		bulkKeys = buildKeys(bulkSize)
+		//bulkSet = buildSet(bulkKeys)
+	}
+	b.ResetTimer()
+	var s = set.New()
+	for i := 0; i < b.N; i++ {
+		s.BulkInsert(bulkKeys)
+		s = set.New()
+	}
+}
+
+func BenchmarkBulkInsert2(b *testing.B) {
+	if bulkKeys == nil {
+		log.Printf("BenchBulkDelete: building bulkKeys & bulkSet.")
+		bulkKeys = buildKeys(bulkSize)
+		//bulkSet = buildSet(bulkKeys)
+	}
+	b.ResetTimer()
+	var s = set.New()
+	for i := 0; i < b.N; i++ {
+		//for j := 0; j < bulkSize; j++ {
+		for j := 0; s.NumEntries() < bulkSize; j++ {
+			s = s.Set(bulkKeys[j])
+		}
+		s = set.New()
+	}
+}
+
+func BenchmarkBulkDelete(b *testing.B) {
+	if bulkKeys == nil {
+		log.Printf("BenchBulkDelete: building bulkKeys & bulkSet.")
+		bulkKeys = buildKeys(bulkSize)
+		bulkSet = buildSet(bulkKeys)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		bulkSet.BulkDelete(bulkKeys)
+	}
+}
+
+func BenchmarkBulkDelete2(b *testing.B) {
+	if bulkKeys == nil {
+		log.Printf("BenchBulkDelete2: building bulkKeys & bulkSet.")
+		bulkKeys = buildKeys(bulkSize)
+		bulkSet = buildSet(bulkKeys)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		bulkSet.BulkDelete2(bulkKeys)
+	}
+}
+
+func BenchmarkBulkDelete3(b *testing.B) {
+	if bulkKeys == nil {
+		log.Printf("BenchBulkDelete2: building bulkKeys & bulkSet.")
+		bulkKeys = buildKeys(bulkSize)
+		bulkSet = buildSet(bulkKeys)
+	}
+	b.ResetTimer()
+	var s = bulkSet
+	for i := 0; i < b.N; i++ {
+		//for j := 0; j < len(bulkKeys); j++ {
+		//	s, _ = s.Remove(bulkKeys[j])
+		//}
+		//for _, k := range bulkKeys {
+		//	s = s.Unset(k)
+		//}
+		for j := 0; j < bulkSize; j++ {
+			s = s.Unset(bulkKeys[j])
+		}
+		s = bulkSet
+	}
+}
+
+var diffKeys []hash.Key
+var setA, setB *set.Set
+var origSetA, origSetB *set.Set
+var tot = 100
+
+var big, sml = tot * 6 / 10, tot * 4 / 10
+
+//var big, sml = tot * 3 / 10, tot * 8 / 10
+//var big, sml = tot * 8 / 10, tot * 7 / 10
+//var big, sml = tot, tot * 9 / 10
+
+//func init() {
+//	diffKeys = buildKeys(tot)
+//	setA = set.NewFromList(diffKeys[:big])
+//	setB = set.NewFromList(diffKeys[sml:])
+//}
+
+func BenchmarkDifference(b *testing.B) {
+	log.Println("b.N =", b.N)
+	if diffKeys == nil {
+		log.Printf("tot=%d; big=%d; sml=%d;\n", tot, big, sml)
+		diffKeys = buildKeys(tot)
+		setA = set.NewFromList(diffKeys[:big])
+		setB = set.NewFromList(diffKeys[sml:])
+	}
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_ = setA.Difference(setB)
+	}
+}
+
+//func BenchmarkDifference2(b *testing.B) {
+//	if diffKeys == nil {
+//		log.Printf("tot=%d; big=%d; sml=%d;\n", tot, big, sml)
+//		diffKeys = buildKeys(tot)
+//		setA = set.NewFromList(diffKeys[:big])
+//		setB = set.NewFromList(diffKeys[sml:])
+//	}
+//	b.ResetTimer()
+//
+//	for i := 0; i < b.N; i++ {
+//		_ = setA.Difference2(setB)
+//	}
+//}
+
+//func BenchmarkDifference1(b *testing.B) {
+//	if diffKeys == nil {
+//		log.Printf("tot=%d; big=%d; sml=%d;\n", tot, big, sml)
+//		diffKeys = buildKeys(tot)
+//		setA = set.NewFromList(diffKeys[:big])
+//		setB = set.NewFromList(diffKeys[sml:])
+//	}
+//	b.ResetTimer()
+//
+//	for i := 0; i < b.N; i++ {
+//		_ = setA.Difference1(setB)
+//	}
+//}
+//
+//func BenchmarkDifference3(b *testing.B) {
+//	if diffKeys == nil {
+//		log.Printf("tot=%d; big=%d; sml=%d;\n", tot, big, sml)
+//		diffKeys = buildKeys(tot)
+//		setA = set.NewFromList(diffKeys[:big])
+//		setB = set.NewFromList(diffKeys[sml:])
+//	}
+//	b.ResetTimer()
+//
+//	for i := 0; i < b.N; i++ {
+//		_ = setA.Difference3(setB)
+//	}
+//}

@@ -7,6 +7,23 @@ import (
 	"github.com/lleo/go-functional-collections/set"
 )
 
+func ExampleSet_Iter() {
+	var s = set.New().
+		Set(hash.StringKey("a")).
+		Set(hash.StringKey("b")).
+		Set(hash.StringKey("c"))
+
+	var it = s.Iter()
+	for k := it.Next(); k != nil; k = it.Next() {
+		fmt.Println(k)
+	}
+
+	// Output:
+	// c
+	// b
+	// a
+}
+
 func ExampleSet_Range() {
 	var s = set.New().
 		Set(hash.StringKey("a")).

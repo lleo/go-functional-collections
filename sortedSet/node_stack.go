@@ -11,12 +11,15 @@ func newNodeStack(n int) *nodeStack {
 	return &ns
 }
 
+//FIXME: should rename to copy or deepCopy.
 func (ns *nodeStack) dup() *nodeStack {
 	var nns = newNodeStack(ns.len())
+	if ns.len() == 0 {
+		return nns
+	}
 	(*nns)[0] = (*ns)[0].copy()
 	for i, n := range (*ns)[1:] {
-		//i is relative to (*ns)[1:] not (*ns)[] so it is -1 what I was
-		//expecting.
+		// i is relative to (*ns)[1:] not (*ns)[] so it is -1 what was expected.
 		var nn = n.copy()
 		if n.isLeftChildOf((*ns)[i]) {
 			(*nns)[i].ln = nn

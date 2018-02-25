@@ -7,6 +7,23 @@ import (
 	"github.com/lleo/go-functional-collections/sortedSet"
 )
 
+func ExampleSet_Iter() {
+	var s = sortedSet.New().
+		Set(sorted.StringKey("a")).
+		Set(sorted.StringKey("b")).
+		Set(sorted.StringKey("c"))
+
+	var it = s.Iter()
+	for k := it.Next(); k != nil; k = it.Next() {
+		fmt.Println(k)
+	}
+
+	// Output:
+	// a
+	// b
+	// c
+}
+
 func ExampleRange() {
 	var s = sortedSet.New().
 		Set(sorted.StringKey("a")).

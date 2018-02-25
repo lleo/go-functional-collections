@@ -40,7 +40,7 @@ func TestBasicAddReplace(t *testing.T) {
 			mknod(30, red, nil, nil)))
 
 	var origM0 = m0
-	var dupM0 = m0.dup()
+	var dupM0 = m0.DeepCopy()
 
 	var m1, added = m0.Add(sorted.IntKey(30))
 
@@ -51,7 +51,7 @@ func TestBasicAddReplace(t *testing.T) {
 	if m1.NumEntries() != 3 {
 		t.Fatalf("m1.NumEntries(),%d != 3", m1.NumEntries())
 	}
-	if !origM0.equiv(dupM0) {
+	if !origM0.Equiv(dupM0) {
 		t.Fatal("TestBasicStoreReplace: orig Set and duplicate of orig Set are not identical.")
 	}
 }
@@ -60,7 +60,7 @@ func TestBasicSetCase1(t *testing.T) {
 	var s = mkset(nil)
 
 	var origM = s
-	var dupM = s.dup()
+	var dupM = s.DeepCopy()
 
 	//log.Printf("BEFORE Set s =\n%s", s.treeString())
 
@@ -76,7 +76,7 @@ func TestBasicSetCase1(t *testing.T) {
 		t.Fatalf("set not valid; err=%s", err)
 	}
 
-	if !origM.equiv(dupM) {
+	if !origM.Equiv(dupM) {
 		t.Fatal("TestBasicSetCase1: orig Set and duplicate of orig Set are not identical.")
 	}
 }
@@ -88,7 +88,7 @@ func TestBasicSetCase2(t *testing.T) {
 			nil))
 
 	var origM = s
-	var dupM = s.dup()
+	var dupM = s.DeepCopy()
 
 	//log.Printf("BEFORE Set s =\n%s", s.treeString())
 
@@ -104,7 +104,7 @@ func TestBasicSetCase2(t *testing.T) {
 		t.Fatalf("set not valid; err=%s", err)
 	}
 
-	if !origM.equiv(dupM) {
+	if !origM.Equiv(dupM) {
 		t.Fatal("TestBasicSetCase2: orig Set and duplicate of orig Set are not identical.")
 	}
 }
@@ -121,7 +121,7 @@ func TestBasicSetCase3(t *testing.T) {
 		))
 
 	var origM = s
-	var dupM = s.dup()
+	var dupM = s.DeepCopy()
 
 	//log.Printf("BEFORE Set s =\n%s", s.treeString())
 
@@ -137,7 +137,7 @@ func TestBasicSetCase3(t *testing.T) {
 		t.Fatalf("set not valid; err=%s", err)
 	}
 
-	if !origM.equiv(dupM) {
+	if !origM.Equiv(dupM) {
 		t.Fatal("TestBasicSetCase3: orig Set and duplicate of orig Set are not identical.")
 	}
 }
@@ -153,8 +153,8 @@ func TestBasicSetCase4(t *testing.T) {
 				mknod(70, red, nil, nil)),
 		))
 
-	var origM = s      //copy the pointer
-	var dupM = s.dup() //copy the value
+	var origM = s           //copy the pointer
+	var dupM = s.DeepCopy() //copy the value
 
 	//log.Printf("BEFORE Set s =\n%s", s.treeString())
 
@@ -170,7 +170,7 @@ func TestBasicSetCase4(t *testing.T) {
 		t.Fatalf("set not valid; err=%s", err)
 	}
 
-	if !origM.equiv(dupM) {
+	if !origM.Equiv(dupM) {
 		t.Fatal("TestBasicSetCase4: orig Set and duplicate of orig Set are not identical.")
 	}
 }
@@ -197,7 +197,7 @@ func TestBasicUnsetCase1Tree0(t *testing.T) {
 		mknod(10, black, nil, nil))
 
 	var then = m0.treeString()
-	//var dupM0 = m0.dup()
+	//var dupM0 = m0.DeepCopy()
 
 	var m1 = m0.Unset(sorted.IntKey(10))
 
@@ -212,7 +212,7 @@ func TestBasicUnsetCase1Tree0(t *testing.T) {
 		t.Fatal("The original tree changed.")
 	}
 
-	//if !m0.equiv(dupM0) {
+	//if !m0.Equiv(dupM0) {
 	//	t.Fatal("The original tree changed.")
 	//}
 }
@@ -361,7 +361,7 @@ func TestBasicUnsetCase6Tree0(t *testing.T) {
 					mknod(60, red, nil, nil)))))
 
 	var origM = s
-	var dupOrigM = s.dup()
+	var dupOrigM = s.DeepCopy()
 	var origSetStr0 = s.treeString()
 
 	//log.Printf("origSetStr0 =\n%s", origSetStr0)
@@ -378,7 +378,7 @@ func TestBasicUnsetCase6Tree0(t *testing.T) {
 			"origSetStr0=\n%s\norigSetStr1=\n%s", origSetStr0, origSetStr1)
 	}
 
-	if !origM.equiv(dupOrigM) {
+	if !origM.Equiv(dupOrigM) {
 		t.Fatal("TestBasicPutCase4: orig Set and duplicate of orig Set are not identical.")
 	}
 }
@@ -403,7 +403,7 @@ func TestBasicUnsetTwoChildTree0(t *testing.T) {
 	}
 
 	var origM = s
-	var dupOrigM = s.dup()
+	var dupOrigM = s.DeepCopy()
 	var origSetStr0 = s.treeString()
 
 	//log.Printf("BEFORE DEL s = \n%s", s.treeString())
@@ -435,7 +435,7 @@ func TestBasicUnsetTwoChildTree0(t *testing.T) {
 			"origSetStr0=\n%s\norigSetStr1=\n%s", origSetStr0, origSetStr1)
 	}
 
-	if !origM.equiv(dupOrigM) {
+	if !origM.Equiv(dupOrigM) {
 		t.Fatal("TestBasicUnsetTwoChildrenCase2: " +
 			"orig Set and duplicate of orig Set are not identical.")
 	}
@@ -462,7 +462,7 @@ func TestBasicUnsetTwoChildTree1(t *testing.T) {
 	}
 
 	var origM = s
-	var dupOrigM = s.dup()
+	var dupOrigM = s.DeepCopy()
 	var origSetStr0 = s.treeString()
 
 	//log.Printf("BEFORE DEL s = \n%s", s.treeString())
@@ -494,7 +494,7 @@ func TestBasicUnsetTwoChildTree1(t *testing.T) {
 			"origSetStr0=\n%s\norigSetStr1=\n%s", origSetStr0, origSetStr1)
 	}
 
-	if !origM.equiv(dupOrigM) {
+	if !origM.Equiv(dupOrigM) {
 		t.Fatal("TestBasicDelTwoChildrenCase2: " +
 			"orig Set and duplicate of orig Set are not identical.")
 	}
@@ -517,7 +517,7 @@ func TestBasicUnsetTwoChildTree2(t *testing.T) {
 	}
 
 	var origM = s
-	var dupOrigM = s.dup()
+	var dupOrigM = s.DeepCopy()
 	var origSetStr0 = s.treeString()
 
 	//log.Printf("BEFORE DEL s = \n%s", s.treeString())
@@ -549,7 +549,7 @@ func TestBasicUnsetTwoChildTree2(t *testing.T) {
 			"origSetStr0=\n%s\norigSetStr1=\n%s", origSetStr0, origSetStr1)
 	}
 
-	if !origM.equiv(dupOrigM) {
+	if !origM.Equiv(dupOrigM) {
 		t.Fatal("TestBasicUnsetTwoChildrenCase2: " +
 			"orig Set and duplicate of orig Set are not identical.")
 	}
@@ -575,7 +575,7 @@ func TestBasicUnsetTwoChildTree3(t *testing.T) {
 	}
 
 	var origM = s
-	var dupOrigM = s.dup()
+	var dupOrigM = s.DeepCopy()
 	var origSetStr0 = s.treeString()
 
 	//log.Printf("BEFORE DEL s = \n%s", s.treeString())
@@ -607,7 +607,7 @@ func TestBasicUnsetTwoChildTree3(t *testing.T) {
 			"origSetStr0=\n%s\norigSetStr1=\n%s", origSetStr0, origSetStr1)
 	}
 
-	if !origM.equiv(dupOrigM) {
+	if !origM.Equiv(dupOrigM) {
 		t.Fatal("TestBasicUnsetTwoChildrenCase2: " +
 			"orig Set and duplicate of orig Set are not identical.")
 	}
@@ -643,7 +643,7 @@ func TestBasicUnsetTwoChildTree4(t *testing.T) {
 	}
 
 	var origM = s
-	var dupOrigM = s.dup()
+	var dupOrigM = s.DeepCopy()
 	var origSetStr0 = s.treeString()
 
 	//log.Printf("BEFORE DEL s = \n%s", s.treeString())
@@ -675,7 +675,7 @@ func TestBasicUnsetTwoChildTree4(t *testing.T) {
 			"origSetStr0=\n%s\norigSetStr1=\n%s", origSetStr0, origSetStr1)
 	}
 
-	if !origM.equiv(dupOrigM) {
+	if !origM.Equiv(dupOrigM) {
 		t.Fatal("TestBasicUnsetTwoChildrenCase2: " +
 			"orig Set and duplicate of orig Set are not identical.")
 	}
@@ -1405,7 +1405,7 @@ func TestBasicRangeStop(t *testing.T) {
 	s.Range(fn)
 }
 
-func TestBasicSetString(t *testing.T) {
+func TestBasicString(t *testing.T) {
 	var s = mkset(
 		mknod(20, black,
 			mknod(10, red, nil, nil),
@@ -1418,42 +1418,88 @@ func TestBasicSetString(t *testing.T) {
 	}
 }
 
-//func TestBasicKeys(t *testing.T) {
-//	var s = mkset(
-//		mknod(60, black,
-//			mknod(20, black,
-//				mknod(10, black, nil, nil),
-//				mknod(40, black,
-//					mknod(30, red, nil, nil),
-//					mknod(50, red, nil, nil))),
-//			mknod(100, black,
-//				mknod(80, black,
-//					mknod(70, red, nil, nil),
-//					mknod(90, red, nil, nil)),
-//				mknod(120, black,
-//					mknod(110, red, nil, nil),
-//					mknod(130, red, nil, nil)))))
-//
-//	var shouldHaveKeys = []sorted.Key{
-//		sorted.IntKey(10),
-//		sorted.IntKey(20),
-//		sorted.IntKey(30),
-//		sorted.IntKey(40),
-//		sorted.IntKey(50),
-//		sorted.IntKey(60),
-//		sorted.IntKey(70),
-//		sorted.IntKey(80),
-//		sorted.IntKey(90),
-//		sorted.IntKey(100),
-//		sorted.IntKey(110),
-//		sorted.IntKey(120),
-//		sorted.IntKey(130),
-//	}
-//
-//	var foundKeys = s.Keys()
-//	for i, key := range shouldHaveKeys {
-//		if sorted.Cmp(key, foundKeys[i]) != 0 {
-//			t.Fatalf("key,%s != foundKeys[%d],%s", key, i, foundKeys[i])
-//		}
-//	}
-//}
+func TestBasicKeys(t *testing.T) {
+	var s = mkset(
+		mknod(60, black,
+			mknod(20, black,
+				mknod(10, black, nil, nil),
+				mknod(40, black,
+					mknod(30, red, nil, nil),
+					mknod(50, red, nil, nil))),
+			mknod(100, black,
+				mknod(80, black,
+					mknod(70, red, nil, nil),
+					mknod(90, red, nil, nil)),
+				mknod(120, black,
+					mknod(110, red, nil, nil),
+					mknod(130, red, nil, nil)))))
+
+	var shouldHaveKeys = []sorted.Key{
+		sorted.IntKey(10),
+		sorted.IntKey(20),
+		sorted.IntKey(30),
+		sorted.IntKey(40),
+		sorted.IntKey(50),
+		sorted.IntKey(60),
+		sorted.IntKey(70),
+		sorted.IntKey(80),
+		sorted.IntKey(90),
+		sorted.IntKey(100),
+		sorted.IntKey(110),
+		sorted.IntKey(120),
+		sorted.IntKey(130),
+	}
+
+	var foundKeys = s.Keys()
+	for i, key := range shouldHaveKeys {
+		if sorted.Cmp(key, foundKeys[i]) != 0 {
+			t.Fatalf("key,%s != foundKeys[%d],%s", key, i, foundKeys[i])
+		}
+	}
+}
+
+func TestBasicCount(t *testing.T) {
+	var size = 1000
+	var keys = buildKeys(size)
+	var s = buildSet(keys)
+
+	var count = s.Count()
+	if count != size {
+		t.Fatalf("s.Count(),%d != size,%d", count, size)
+	}
+
+	var numEnts = s.NumEntries()
+	if numEnts != size {
+		t.Fatalf("s.NumEntries(),%d != size,%d", numEnts, size)
+	}
+}
+
+func TestBasicNewFromList(t *testing.T) {
+	var size = 10
+	var keys = buildKeys(size)
+	var s = NewFromList(keys)
+
+	var count = s.Count()
+	if count != size {
+		t.Fatalf("s.Count(),%d != size,%d", count, size)
+	}
+
+	var numEnts = s.NumEntries()
+	if numEnts != size {
+		t.Fatalf("s.NumEntries(),%d != size,%d", numEnts, size)
+	}
+}
+
+func TestBasicBulkInsert(t *testing.T) {}
+
+func TestBasicMerge(t *testing.T) {}
+
+func TestBasicBulkDelete(t *testing.T) {}
+
+func TestBasicBulkDelete2(t *testing.T) {}
+
+func TestBasicUnion(t *testing.T) {}
+
+func TestBasicIntersect(t *testing.T) {}
+
+func TestBasicDifference(t *testing.T) {}

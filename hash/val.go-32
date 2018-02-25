@@ -41,7 +41,7 @@ const IndexLimit = 1 << NumIndexBits
 // MaxDepth is the maximum value of a depth variable. MaxDepth = DepthLimit - 1
 const MaxDepth = DepthLimit - 1
 
-// maxIndex is the maximum value of a Index variable. maxIndex = IndexLimit - 1
+// MaxIndex is the maximum value of a Index variable. maxIndex = IndexLimit - 1
 const MaxIndex = IndexLimit - 1
 
 // CalcHash deterministically calculates a randomized Val of a given byte
@@ -131,7 +131,7 @@ func (v Val) HashPathString(limit uint) string {
 	return "/" + strings.Join(strs, "/")
 }
 
-// bitString returns a Val as a string of bits separated into groups of
+// BitString returns a Val as a string of bits separated into groups of
 // NumIndexBits bits.
 func (v Val) BitString() string {
 	var strs = make([]string, DepthLimit)
@@ -156,7 +156,10 @@ func (v Val) String() string {
 	//return v.HashPathString(MaxDepth)
 }
 
-// parseHashPath
+// ParseHashPath is an unnecessary utility function to take the string
+// representation of a hash.Val (something like "/02/12/27/19/00/01/25/07") and
+// converts it into a hash.Val and an error if there was a failure in the string
+// representation.
 func ParseHashPath(s string) (Val, error) {
 	if !strings.HasPrefix(s, "/") {
 		return 0, errors.Errorf(

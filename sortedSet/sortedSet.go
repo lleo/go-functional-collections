@@ -18,6 +18,7 @@ package sortedSet
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/lleo/go-functional-collections/sorted"
@@ -84,17 +85,38 @@ func (s *Set) Set(k sorted.Key) *Set {
 // Add() inserts a new key and returns a new Set and a boolean
 // indicatiing if the key was added(true) or merely replaced(false).
 func (s *Set) Add(k sorted.Key) (*Set, bool) {
-	var on, path = s.root.findNodeDupPath(k)
-	//path is duped and stiched, but not anchored to s.root
+	//var on, path = s.root.findNodeDupPath(k)
+	// path is duped and stiched, but not anchored to s.root
+
+	var on, path = s.root.findNodeWithPath(k)
+	// path is the current path to on
 
 	if on != nil {
 		return s, false
 	}
 
-	var nm = s.copy()
-	nm.insert(k, path)
+	path = path.dup()
+	log.Printf("path =\n%s", path.String())
 
-	return nm, true
+	var ns = s.copy()
+	var pon, pnn, ppath = ns.insert(k, path)
+	ns.establishRoot(pon, pnn, ppath)
+
+	return ns, true
+}
+
+func (s *Set) addInplace(k sorted.Key) bool {
+	var on, path = s.root.findNodeWithPath(k)
+
+	if on != nil {
+		return false
+	}
+
+	var nn *node
+	on, nn, path = s.insert(k, path)
+	s.establishRoot(on, nn, path)
+
+	return true
 }
 
 //insert() inserts a new node into the tip of the path, then balances and
@@ -103,12 +125,12 @@ func (s *Set) Add(k sorted.Key) (*Set, bool) {
 //path MUST be non-zero length.
 //
 //insert() MUST be called on a new *Set.
-func (s *Set) insert(k sorted.Key, path *nodeStack) {
+func (s *Set) insert(k sorted.Key, path *nodeStack) (*node, *node, *nodeStack) {
 	var on *node        // = nil
 	var nn = newNode(k) //nn.isRed ALWAYS!
 
-	s.insertRepair(on, nn, path)
 	s.numEnts++
+	return s.insertRepair(on, nn, path)
 }
 
 //persist() takes a duped path and sets the first element of the path to the
@@ -116,6 +138,30 @@ func (s *Set) insert(k sorted.Key, path *nodeStack) {
 //the case where the path is empty, it simply sets the set's root to the new
 //node.
 func (s *Set) persist(on, nn *node, path *nodeStack) {
+	if path.len() == 0 {
+		s.root = nn
+		return
+	}
+
+	s.root = path.head()
+
+	var parent = path.peek()
+	if on == nil {
+		if sorted.Less(nn.key, parent.key) {
+			parent.ln = nn
+		} else {
+			parent.rn = nn
+		}
+	} else {
+		if on.isLeftChildOf(parent) {
+			parent.ln = nn
+		} else {
+			parent.rn = nn
+		}
+	}
+}
+
+func (s *Set) establishRoot(on, nn *node, path *nodeStack) {
 	if path.len() == 0 {
 		s.root = nn
 		return
@@ -214,7 +260,9 @@ func (s *Set) rotateRight(n, p *node) (*node, *node) {
 }
 
 // insertRepair() MUST be called on a new *Set.
-func (s *Set) insertRepair(on, nn *node, path *nodeStack) {
+func (s *Set) insertRepair(on, nn *node, path *nodeStack) (
+	*node, *node, *nodeStack,
+) {
 	_ = assertOn && assert(nn != nil, "nn == nil")
 
 	var parent, gp, uncle *node
@@ -228,42 +276,50 @@ func (s *Set) insertRepair(on, nn *node, path *nodeStack) {
 	}
 
 	if parent == nil {
-		s.insertCase1(on, nn, path)
+		return s.insertCase1(on, nn, path)
 	} else if parent.isBlack() {
 		// we know:
 		// parent exists and is black
-		s.insertCase2(on, nn, path)
+		return s.insertCase2(on, nn, path)
 	} else if uncle.isRed() {
 		// we know:
 		// parent.isRed becuase of the previous condition
 		// grandparent exists because root is never Red
 		// grandparent is black because parent is Red
-		s.insertCase3(on, nn, path)
-	} else {
-		//we know:
-		//  grandparent is black because parent is Red
-		//  parent.isRed
-		//  uncle.isBlack
-		//  nn.isRed and
-		s.insertCase4(on, nn, path)
+		return s.insertCase3(on, nn, path)
 	}
+	//else {
+	// we know:
+	//   grandparent is black because parent is Red
+	//   parent.isRed
+	//   uncle.isBlack
+	//   nn.isRed and
+	return s.insertCase4(on, nn, path)
 }
 
 // insertCase1() MUST be called on a new *Set.
-func (s *Set) insertCase1(on, nn *node, path *nodeStack) {
+func (s *Set) insertCase1(on, nn *node, path *nodeStack) (
+	*node, *node, *nodeStack,
+) {
 	_ = assertOn && assert(path.len() == 0, "path.peek()==nil BUT path.len() != 0")
 
 	nn.setBlack()
-	s.persist(on, nn, path)
+	//s.persist(on, nn, path)
+	return on, nn, path
 }
 
 // insertCase2() MUST be called on a new *Set.
-func (s *Set) insertCase2(on, nn *node, path *nodeStack) {
-	s.persist(on, nn, path)
+func (s *Set) insertCase2(on, nn *node, path *nodeStack) (
+	*node, *node, *nodeStack,
+) {
+	//s.persist(on, nn, path)
+	return on, nn, path
 }
 
 // insertCase3() MUST be called on a new *Set.
-func (s *Set) insertCase3(on, nn *node, path *nodeStack) {
+func (s *Set) insertCase3(on, nn *node, path *nodeStack) (
+	*node, *node, *nodeStack,
+) {
 	var oparent = path.pop()
 	var ogp = path.pop() //gp means grandparent
 
@@ -298,11 +354,13 @@ func (s *Set) insertCase3(on, nn *node, path *nodeStack) {
 		ngp.rn = nparent
 	}
 
-	s.insertRepair(ogp, ngp, path)
+	return s.insertRepair(ogp, ngp, path)
 }
 
 // insertCase4() MUST be called on a new *Set.
-func (s *Set) insertCase4(on, nn *node, path *nodeStack) {
+func (s *Set) insertCase4(on, nn *node, path *nodeStack) (
+	*node, *node, *nodeStack,
+) {
 	var parent = path.peek()
 	var gp = path.peekN(1) //ogp means grandparent
 
@@ -328,10 +386,12 @@ func (s *Set) insertCase4(on, nn *node, path *nodeStack) {
 		nn = nn.ln //nn.ln == parent
 	}
 
-	s.insertCase4pt2(on, nn, path)
+	return s.insertCase4pt2(on, nn, path)
 }
 
-func (s *Set) insertCase4pt2(on, nn *node, path *nodeStack) {
+func (s *Set) insertCase4pt2(on, nn *node, path *nodeStack) (
+	*node, *node, *nodeStack,
+) {
 	var parent = path.pop()
 	var gp = path.pop()
 
@@ -372,7 +432,8 @@ func (s *Set) insertCase4pt2(on, nn *node, path *nodeStack) {
 		gp = t
 	}
 
-	s.persist(gp, gp, path)
+	//s.persist(gp, gp, path)
+	return gp, gp, path
 }
 
 // Del() calls Remove() but only returns the modified *Set.
@@ -729,23 +790,22 @@ func (s *Set) RangeLimit(start, end sorted.Key, fn func(sorted.Key) bool) {
 	}
 }
 
-//Range() executes the given function on every key, value pair in order. If the
-//function returns false the traversal of key, value pairs will stop.
+// Range applies the given function on every sorted.Key in the *Set in sorted
+// order. If the function returns false the Range operation stops.
 func (s *Set) Range(fn func(sorted.Key) bool) {
 	s.RangeLimit(sorted.InfKey(-1), sorted.InfKey(1), fn)
 }
 
-//func (s *Set) Keys() []sorted.Key {
-//	var keys = make([]sorted.Key, s.NumEntries())
-//	var i int
-//	var fn = func(k sorted.Key) bool {
-//		keys[i] = k
-//		i++
-//		return true
-//	}
-//	s.Range(fn)
-//	return keys
-//}
+func (s *Set) Keys() []sorted.Key {
+	var keys = make([]sorted.Key, s.NumEntries())
+	var i int
+	s.Range(func(k sorted.Key) bool {
+		keys[i] = k
+		i++
+		return true
+	})
+	return keys
+}
 
 //func (s *Set) walkPreOrder(fn func(*node, *nodeStack) bool) bool {
 //	if s.root != nil {
@@ -763,19 +823,19 @@ func (s *Set) Range(fn func(sorted.Key) bool) {
 //	return true
 //}
 
-//dup() is for testing only. It is a recusive copy.
-func (s *Set) dup() *Set {
+// DeepCopy does a complete deep copy of a *Set returning an entirely new *Set.
+func (s *Set) DeepCopy() *Set {
 	var nm = &Set{
 		numEnts: s.numEnts,
-		root:    s.root.dup(),
+		root:    s.root.deepCopy(),
 	}
 	nm.numEnts = s.numEnts
-	nm.root = s.root.dup()
+	nm.root = s.root.deepCopy()
 	return nm
 }
 
-//equiv() is for testing only. It is a equal-by-value method.
-func (s *Set) equiv(m0 *Set) bool {
+// Equiv compares two *Set's by value.
+func (s *Set) Equiv(m0 *Set) bool {
 	return s.numEnts == m0.numEnts && s.root.equiv(m0.root)
 }
 
@@ -801,7 +861,9 @@ func (s *Set) treeString() string {
 	//s.walkPreOrder(fn)
 	//
 	//return strings.Join(strs, "\n")
-	return s.root.treeString()
+	return fmt.Sprintf("Set{numEnts: %d,\nroot: %s}",
+		s.numEnts, s.root.treeString())
+	//return s.root.treeString()
 }
 
 func (s *Set) String() string {
@@ -823,4 +885,123 @@ func (s *Set) String() string {
 	}
 
 	return "{" + strings.Join(strs, ", ") + "}"
+}
+
+// Count recursively traverses the HAMT data structure to count every key.
+func (s *Set) Count() int {
+	return s.root.count()
+}
+
+// NewFromList constructs a new *Set structure containing all the keys
+// of the given hash.Key slice.
+//
+// NewFromList is implemented more efficiently than repeated calls to Add.
+func NewFromList(keys []sorted.Key) *Set {
+	var s = New()
+	for _, k := range keys {
+		s.addInplace(k) //ingnoring return bool value
+	}
+	return s
+}
+
+// BulkInsert stores all the given keys from the argument hash.Key slice  into
+// the receiver Set.
+//
+// The returned Set maintains the structure sharing relationship with the
+// receiver Set.
+//
+// BulkInsert is implemented more efficiently than repeated calls to Add.
+func BulkInsert(keys []sorted.Key) *Set {
+	log.Println("not implemented")
+	return nil
+}
+
+// Merge returns a Set that contains all the entries from the receiver Set and
+// the argument Set.
+func Merge(other *Set) *Set {
+	log.Println("not implemented")
+	return nil
+}
+
+// BulkDelete removes all the keys in the given hash.Key slice. It returns a new
+// persistent Set and a slice of the keys not found in the in the original Set.
+//
+// BulkDelete is implemented more efficiently than repeated calls to Remove.
+func BulkDelete(keys []sorted.Key) (*Set, []sorted.Key) {
+	log.Println("not implemented")
+	return nil, nil
+}
+
+// BulkDelete2 removes all the keys in the given hash.Key slice. It returns a
+// new persistent Set.
+//
+// BulkDelete2 is implemented more efficiently than repeated calls to Remove.
+func BulkDelete2(key []sorted.Key) *Set {
+	log.Println("not implemented")
+	return nil
+}
+
+// Union returns a Set that contains all entries of all given Sets.
+//
+// First it sorts all the sets from largest to smallest then progressively
+// calculates the union of the biggest Set with each smaller Set.
+//
+//    var resultSet = sets[0] // biggest *Set
+//    for _, s := range sets[1:] {
+//      resultSet = resultSet.Union(s)
+//    }
+//    return resultSet
+//
+func Union(sets ...*Set) *Set {
+	log.Println("not implemented")
+	return nil
+}
+
+// Union returns a Set that contains all entries for the receiver Set and the
+// argument Set.
+func (s *Set) Union(other *Set) *Set {
+	log.Println("not implemented")
+	return nil
+}
+
+// Intersection returns a Set that is the Intersection  of all the given sets.
+//
+// First it sorts all the sets from largest to smallest then progressively
+// calculates the intersection of the biggest Set with each smaller Set.
+//
+//    var resultSet = sets[0] // biggest *Set
+//    for _, s := range sets[1:] {
+//      resultSet = resultSet.Intersect(s)
+//    }
+//    return resultSet
+//
+func Intersection(sets ...*Set) *Set {
+	log.Println("not implemented")
+	return nil
+}
+
+// Intersect returns a Set that contains only the entries that the receiver Set
+// and the argument Set have in common.
+//
+// There is no structural sharing with either the receiver Set or argument Set.
+func (s *Set) Intersect(other *Set) *Set {
+	log.Println("not implemented")
+	return nil
+}
+
+// Difference returns a new Set based on the receiver Set that contains none of
+// the entries from the argument Set.
+//
+// Difference is implemented by repeated calls to Unset.
+// OR
+// Difference2 is implemented by repeated calls to removePersist, the basic
+// function of BulkDelete.
+// OR
+// Difference1 is calculated by creating a list of shared keys, then doing a
+// BulkDelete2 of those shared keys from the receiver Set.
+//
+// NOTE: a.Difference(b) != b.Difference(a)
+func (s *Set) Difference(other *Set) *Set {
+	log.Println("not implemented")
+	return nil
 }

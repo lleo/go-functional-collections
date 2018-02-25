@@ -2,6 +2,7 @@ package set
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/lleo/go-functional-collections/hash"
@@ -99,6 +100,31 @@ func (l *collisionLeaf) keys() []hash.Key {
 	//return l.ks
 }
 
-func (l *collisionLeaf) visit(fn visitFn, depth uint) (bool, error) {
-	return fn(l, depth), nil
+func (l *collisionLeaf) walkPreOrder(fn visitFunc, depth uint) bool {
+	return fn(l, depth)
+}
+
+// equiv comparse this *collisionLeaf against another node by value.
+func (l *collisionLeaf) equiv(other nodeI) bool {
+	var ol, ok = other.(*collisionLeaf)
+	if !ok {
+		log.Println("other is not a *collisionLeaf")
+		return false
+	}
+	if len(l.ks) != len(ol.ks) {
+		log.Printf("len(l.ks),%d != len(ol.ks),%d", len(l.ks), len(ol.ks))
+		return false
+	}
+	// This assumes the ks are in the same order.
+	for i, key := range l.ks {
+		if !key.Equals(ol.ks[i]) {
+			log.Printf("l.ks[%d],%s != ol.ks[%d],%s", i, l.ks[i], i, ol.ks[i])
+			return false
+		}
+	}
+	return true
+}
+
+func (l *collisionLeaf) count() int {
+	return len(l.ks)
 }

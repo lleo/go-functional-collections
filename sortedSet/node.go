@@ -99,16 +99,16 @@ func (n *node) valid() (int, error) {
 	return lcount, nil
 }
 
-//dup() is for testing only. It is a recursive copy().
-func (n *node) dup() *node {
+//deepCopy is for testing only. It is a recursive copy().
+func (n *node) deepCopy() *node {
 	if n == nil {
 		return nil
 	}
 	var nn = &node{
 		key:   n.key,
 		color: n.color,
-		ln:    n.ln.dup(),
-		rn:    n.rn.dup(),
+		ln:    n.ln.deepCopy(),
+		rn:    n.rn.deepCopy(),
 	}
 	return nn
 }
@@ -220,6 +220,7 @@ func (n *node) findNodeDupPath(k sorted.Key) (*node, *nodeStack) {
 		return nil, path
 	}
 
+	// This is an unrolled do-while loop. Golang doesn't have do-while loop.
 	var cur = n
 	var ocur = cur
 	switch {

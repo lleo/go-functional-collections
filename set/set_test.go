@@ -25,23 +25,7 @@ func init() {
 
 var Inc = stringutil.Lower.Inc
 
-type StringKey string
-
-func (sk StringKey) Hash() hash.Val {
-	return hash.CalcHash([]byte(sk))
-}
-
-func (sk StringKey) Equals(other hash.Key) bool {
-	var osk, ok = other.(StringKey)
-	if !ok {
-		return false
-	}
-	return sk == osk
-}
-
-func (sk StringKey) String() string {
-	return string(sk)
-}
+type StringKey = hash.StringKey
 
 func buildKeys(num int) []hash.Key {
 	var keys = make([]hash.Key, num)
@@ -50,6 +34,20 @@ func buildKeys(num int) []hash.Key {
 	for i := 0; i < num; i++ {
 		keys[i] = StringKey(keyStr)
 		keyStr = Inc(keyStr)
+	}
+
+	return keys
+}
+
+func buildKeysByN(num int, n int) []hash.Key {
+	var keys = make([]hash.Key, num)
+
+	var keyStr = "a"
+	for i := 0; i < num; i++ {
+		keys[i] = StringKey(keyStr)
+		for j := 0; j < n; j++ {
+			keyStr = Inc(keyStr)
+		}
 	}
 
 	return keys

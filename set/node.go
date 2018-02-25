@@ -6,16 +6,18 @@ import (
 	"github.com/lleo/go-functional-collections/hash"
 )
 
-// visitFn will be passed a value for every slot in the Hamt; this includes
+// visitFunc will be passed a value for every slot in the Hamt; this includes
 // leafs, tables, and nil.
 //
-// If the visitFn returns false then the tree walk should stop.
+// If the visitFunc returns false then the tree walk should stop.
 //
-type visitFn func(nodeI, uint) bool
+type visitFunc func(nodeI, uint) bool
 
 type nodeI interface {
 	hash() hash.Val
-	visit(fn visitFn, depth uint) (bool, error)
+	walkPreOrder(fn visitFunc, depth uint) bool
+	equiv(nodeI) bool
+	count() int
 	String() string
 }
 
@@ -41,9 +43,18 @@ type tableI interface {
 
 	get(idx uint) nodeI
 
-	insert(idx uint, n nodeI)
-	replace(idx uint, n nodeI)
-	remove(idx uint)
+	insertInplace(idx uint, n nodeI)
+	replaceInplace(idx uint, n nodeI)
+	removeInplace(idx uint)
+
+	insert(idx uint, n nodeI) tableI
+	replace(idx uint, n nodeI) tableI
+	remove(idx uint) tableI
+
+	needsUpgrade() bool
+	needsDowngrade() bool
+	upgrade() tableI
+	downgrade() tableI
 
 	iter() tableIterFunc
 

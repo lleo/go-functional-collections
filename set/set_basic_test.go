@@ -1,14 +1,14 @@
 package set_test
 
 import (
-	"log"
+	"sort"
 	"testing"
 
 	"github.com/lleo/go-functional-collections/hash"
 	"github.com/lleo/go-functional-collections/set"
 )
 
-func TestBasicButildSimpleSet(t *testing.T) {
+func TestBasicBuildSimpleSet(t *testing.T) {
 	var s = set.New()
 	s = s.
 		Set(StringKey("a")).
@@ -133,6 +133,34 @@ func TestBasicRemove(t *testing.T) {
 	}
 }
 
+func TestBasicRange(t *testing.T) {
+	var s = set.New().
+		Set(StringKey("a")).
+		Set(StringKey("b")).
+		Set(StringKey("c"))
+
+	var keys = make([]hash.Key, s.NumEntries())
+	var i int
+	s.Range(func(k hash.Key) bool {
+		keys[i] = k
+		i++
+		return true
+	})
+	sort.Slice(keys, func(i, j int) bool {
+		ki := keys[i].(StringKey)
+		kj := keys[j].(StringKey)
+		return string(ki) < string(kj)
+	})
+	var str = "a"
+	for _, k := range keys {
+		var sk = StringKey(str)
+		if !k.Equals(sk) {
+			t.Fatalf("k,%s != sk,%s", s.String(), sk.String())
+		}
+		str = Inc(str)
+	}
+}
+
 func TestBasicString(t *testing.T) {
 	var s = set.New()
 	s = s.
@@ -141,10 +169,263 @@ func TestBasicString(t *testing.T) {
 		Set(StringKey("c"))
 
 	var str = s.String()
-	log.Printf("s.String()=%s\n", str)
+	//log.Printf("s.String()=%s\n", str)
 
 	var expectedStr = "Set{\"c\",\"b\",\"a\"}"
 	if str != expectedStr {
 		t.Fatalf("str,%q != expectedStr,%q", str, expectedStr)
 	}
 }
+
+func TestBasicCount(t *testing.T) {
+	//var s = set.New().
+	//	Set(StringKey("a")).
+	//	Set(StringKey("b")).
+	//	Set(StringKey("c"))
+
+	var s = set.New()
+	var str = "a"
+	for i := 0; i < 100000; i++ {
+		s = s.Set(StringKey(str))
+		str = Inc(str)
+	}
+
+	if s.NumEntries() != s.Count() {
+		t.Fatalf("s.NumEntries(),%d != s.Count(),%d", s.NumEntries(), s.Count())
+	}
+}
+
+func TestBasicNewFromList(t *testing.T) {
+	var keys = buildKeys(100)
+
+	var s = set.NewFromList(keys)
+
+	for _, k := range keys {
+		var isSet = s.IsSet(k)
+		if !isSet {
+			t.Fatalf("key=%s is not set", k)
+		}
+	}
+}
+
+func TestBasicBulkInsert(t *testing.T) {
+	var keys = buildKeys(100)
+	var s = set.NewFromList(keys[:50])
+
+	s = s.BulkInsert(keys[50:])
+
+	if s.NumEntries() != 100 {
+		t.Fatalf("s.NumEntries(),%d != 100", s.NumEntries())
+	}
+
+	for _, k := range keys {
+		var isSet = s.IsSet(k)
+		if !isSet {
+			t.Fatalf("key=%s is not set", k)
+		}
+	}
+}
+
+func TestBasicBulkInsertConflict(t *testing.T) {
+	var keys = buildKeys(100)
+	var s = set.NewFromList(keys[:70])
+	var s0 = s.BulkInsert(keys[50:])
+
+	if s0.NumEntries() != 100 {
+		t.Fatalf("s0.NumEntries(),%d != 100", s0.NumEntries())
+	}
+
+	for _, k := range keys {
+		var isSet = s0.IsSet(k)
+		if !isSet {
+			t.Fatalf("key=%s is not set", k)
+		}
+	}
+}
+
+func TestBasicMerge(t *testing.T) {
+	var keys = buildKeys(100)
+
+	var s0 = set.NewFromList(keys[:50])
+	var s1 = set.NewFromList(keys[50:])
+	var s = s0.Merge(s1)
+
+	for _, k := range keys {
+		var isSet = s.IsSet(k)
+		if !isSet {
+			t.Fatalf("k=%s is not set", k)
+		}
+	}
+}
+
+func TestBasicMergeConflict(t *testing.T) {
+	var keys = buildKeys(100)
+
+	var s0 = set.NewFromList(keys[:60])
+	var s1 = set.NewFromList(keys[50:])
+	var s = s0.Merge(s1)
+
+	for _, k := range keys {
+		var isSet = s.IsSet(k)
+		if !isSet {
+			t.Fatalf("k=%s is not set", k)
+		}
+	}
+}
+
+func TestBasicBulkDelete(t *testing.T) {
+	var keys = buildKeys(100)
+
+	var origSet = set.NewFromList(keys)
+	var copySet = origSet.DeepCopy()
+
+	if !origSet.Equiv(copySet) {
+		t.Fatal("origSet != copySet")
+	}
+
+	var s *set.Set
+	var notFound []hash.Key
+	s, notFound = origSet.BulkDelete(keys[50:])
+
+	if !origSet.Equiv(copySet) {
+		t.Fatal("origSet != copySet after BulkDelete")
+	}
+
+	if len(notFound) != 0 {
+		t.Fatalf("len(notFound),%d != 0", len(notFound))
+	}
+
+	if numEnts := s.NumEntries(); numEnts != 50 {
+		t.Fatalf("s.NumEntries(),%d != 50", numEnts)
+	}
+
+	if count := s.Count(); count != 50 {
+		t.Fatalf("s.Count(),%d != 50", count)
+	}
+
+	for _, k := range keys[:50] {
+		var isSet = s.IsSet(k)
+		if !isSet {
+			t.Fatalf("k=%s is not set", k)
+		}
+	}
+}
+
+func isMember(k hash.Key, keys []hash.Key) bool {
+	for _, key := range keys {
+		if k.Equals(key) {
+			return true
+		}
+	}
+	return false
+}
+
+func TestBasicBulkDeleteNotFound(t *testing.T) {
+	var keys = buildKeys(100)
+
+	var s = set.NewFromList(keys[:70])
+
+	//log.Println(s.TreeString(""))
+
+	var notFound []hash.Key
+	s, notFound = s.BulkDelete(keys)
+
+	if len(notFound) != 30 {
+		t.Fatalf("len(notFound),%d != 30", len(notFound))
+	}
+
+	if s.NumEntries() != 0 {
+		t.Fatalf("s.NumEntries(),%d != 0", s.NumEntries())
+	}
+
+	if count := s.Count(); count != 0 {
+		t.Fatalf("s.Count(),%d != 0", count)
+	}
+
+	// slice keys[70:] not added to s *Map.
+	for _, k := range keys[70:] {
+		if !isMember(k, notFound) {
+			t.Fatalf("expected to find k=%s in notFound", k)
+		}
+	}
+}
+
+func TestBasicDifference(t *testing.T) {
+	var tot = 10
+	var big, sml = tot * 6 / 10, tot * 4 / 10
+	var keys = buildKeys(tot)
+	var setA = set.NewFromList(keys[:big])
+	var copySetA = setA.DeepCopy()
+	var setB = set.NewFromList(keys[sml:])
+	var copySetB = setB.DeepCopy()
+
+	var diffSet = setA.Difference(setB)
+	var diffKeys = diffSet.Keys()
+	sort.Slice(diffKeys, func(i, j int) bool {
+		var ki = diffKeys[i].(StringKey)
+		var kj = diffKeys[j].(StringKey)
+		return string(ki) < string(kj)
+	})
+	for i, k := range diffKeys {
+		var expectedK = keys[i]
+		//log.Printf("i=%d; k=%q ?= expectedK=%q",
+		//	i, k.String(), expectedK.String())
+		if k.String() != expectedK.String() {
+			t.Fatalf("%q != %q", k.String(), expectedK.String())
+		}
+	}
+	var diffLen = len(diffKeys)
+	var expectedLen = len(keys[:big]) - len(keys[sml:big])
+	//log.Printf("(len(keys[:%d]),%d-len(keys[%d:%d]),%d),%d ?= len(diffKeys),%d",
+	//	big, len(keys[:big]), sml, big, len(keys[sml:big]), expectedLen, diffLen)
+	if diffLen != expectedLen {
+		t.Fatalf("diffLen,%d != expectedLen,%d", diffLen, expectedLen)
+	}
+
+	if !copySetA.Equiv(setA) {
+		t.Fatal("!copySetA.Equiv(setA)")
+	}
+	if !copySetB.Equiv(setB) {
+		t.Fatal("!copySetB.Equiv(setB)")
+	}
+}
+
+//func TestBasicDifference2(t *testing.T) {
+//	var tot = 10
+//	var big, sml = tot * 6 / 10, tot * 4 / 10
+//	var keys = buildKeys(tot)
+//	var setA = set.NewFromList(keys[:big])
+//	var copySetA = setA.DeepCopy()
+//	var setB = set.NewFromList(keys[sml:])
+//	var copySetB = setB.DeepCopy()
+//
+//	var diffSet = setA.Difference2(setB)
+//	var diffKeys = diffSet.Keys()
+//	sort.Slice(diffKeys, func(i, j int) bool {
+//		var ki = diffKeys[i].(StringKey)
+//		var kj = diffKeys[j].(StringKey)
+//		return string(ki) < string(kj)
+//	})
+//	for i, k := range diffKeys {
+//		var expectedK = keys[i]
+//		//log.Printf("i=%d; k=%q ?= expectedK=%q",
+//		//	i, k.String(), expectedK.String())
+//		if k.String() != expectedK.String() {
+//			t.Fatalf("%q != %q", k.String(), expectedK.String())
+//		}
+//	}
+//	var diffLen = len(diffKeys)
+//	var expectedLen = len(keys[:big]) - len(keys[sml:big])
+//	//log.Printf("(len(keys[:%d]),%d-len(keys[%d:%d]),%d),%d ?= len(diffKeys),%d",
+//	//	big, len(keys[:big]), sml, big, len(keys[sml:big]), expectedLen, diffLen)
+//	if diffLen != expectedLen {
+//		t.Fatalf("diffLen,%d != expectedLen,%d", diffLen, expectedLen)
+//	}
+//
+//	if !copySetA.Equiv(setA) {
+//		t.Fatal("!copySetA.Equiv(setA)")
+//	}
+//	if !copySetB.Equiv(setB) {
+//		t.Fatal("!copySetB.Equiv(setB)")
+//	}
+//}

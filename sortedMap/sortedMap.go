@@ -846,8 +846,8 @@ func (m *Map) dup() *Map {
 		numEnts: m.numEnts,
 		root:    m.root.dup(),
 	}
-	nm.numEnts = m.numEnts
-	nm.root = m.root.dup()
+	//nm.numEnts = m.numEnts
+	//nm.root = m.root.dup()
 	return nm
 }
 

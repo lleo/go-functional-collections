@@ -2,6 +2,7 @@ package set
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/lleo/go-functional-collections/hash"
 )
@@ -61,6 +62,24 @@ func (l *flatLeaf) keys() []hash.Key {
 	return []hash.Key{l.key}
 }
 
-func (l *flatLeaf) visit(fn visitFn, depth uint) (bool, error) {
-	return fn(l, depth), nil
+func (l *flatLeaf) walkPreOrder(fn visitFunc, depth uint) bool {
+	return fn(l, depth)
+}
+
+// equiv comparse this *flatLeaf against another node by value.
+func (l *flatLeaf) equiv(other nodeI) bool {
+	var ol, ok = other.(*flatLeaf)
+	if !ok {
+		log.Println("other is not a *flatLeaf")
+		return false
+	}
+	if !l.key.Equals(ol.key) {
+		log.Println("l.key != ol.key")
+		return false
+	}
+	return true
+}
+
+func (l *flatLeaf) count() int {
+	return 1
 }
