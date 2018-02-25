@@ -18,6 +18,13 @@ func newFlatLeaf(key hash.Key, val interface{}) *flatLeaf {
 	return fl
 }
 
+func (l *flatLeaf) copy() leafI {
+	var nl = new(flatLeaf)
+	nl.key = l.key
+	nl.val = l.val
+	return nl
+}
+
 func (l *flatLeaf) hash() hash.Val {
 	return l.key.Hash()
 }
@@ -33,11 +40,42 @@ func (l *flatLeaf) get(key hash.Key) (interface{}, bool) {
 	return nil, false
 }
 
-// put() maintains the functional behavior that any modification returns a new
-// leaf and the original remains unaltered. It returns the new leafI and a bool
-// indicating if the key,val was added ontop of the current leaf key,val or if
-// the val mearly replaced the current key's val (either way a new leafI is
-// allocated and returned).
+// putResolve maintains the functional behavior that any modification returns a
+// new leaf and the original remains unaltered.
+//
+// If the given current key Equals() the given key, then the resolve function
+// is used to generate a new value that is used to generate a new flatLeaf.
+//
+// If the current key does not equal the given key, then a new collisionLeaf is
+// generated which adds the current flatLeaf's key,val pair to the given key,val
+// pair in the returned collisionLeaf.
+func (l *flatLeaf) putResolve(
+	key hash.Key,
+	val interface{},
+	resolve ResolveConflictFunc,
+) (leafI, bool) {
+	var nl leafI
+
+	if l.key.Equals(key) {
+		// maintain functional behavior of flatLeaf
+		var newVal = resolve(l.key, l.val, val)
+		nl = newFlatLeaf(l.key, newVal)
+		return nl, false // replaced
+	}
+
+	nl = newCollisionLeaf([]KeyVal{{l.key, l.val}, {key, val}})
+	return nl, true // key,val was added
+}
+
+// put maintains the functional behavior that any modification returns a new
+// leaf and the original remains unaltered.
+//
+// If the current key Equals() the given key, then a new flatLeaf is generate
+// to replace the current flatLeaf's value with the given value.
+//
+// If the current key does not equal the given key, then a new collisionLeaf is
+// generated which adds the current flatLeaf's key,val pair to the given key,val
+// pair in the returned collisionLeaf.
 func (l *flatLeaf) put(key hash.Key, val interface{}) (leafI, bool) {
 	var nl leafI
 
@@ -62,6 +100,25 @@ func (l *flatLeaf) keyVals() []KeyVal {
 	return []KeyVal{{l.key, l.val}}
 }
 
-func (l *flatLeaf) walkPreOrder(fn visitFn, depth uint) (bool, error) {
-	return fn(l, depth), nil
+func (l *flatLeaf) walkPreOrder(fn visitFunc, depth uint) bool {
+	return fn(l, depth)
+}
+
+// equiv comparse this *flatLeaf against another node by value.
+func (l *flatLeaf) equiv(other nodeI) bool {
+	var ol, ok = other.(*flatLeaf)
+	if !ok {
+		return false
+	}
+	if !l.key.Equals(ol.key) {
+		return false
+	}
+	if l.val != ol.val {
+		return false
+	}
+	return true
+}
+
+func (l *flatLeaf) count() int {
+	return 1
 }

@@ -1,7 +1,6 @@
 package fmap_test
 
 import (
-	"log"
 	"testing"
 
 	"github.com/lleo/go-functional-collections/fmap"
@@ -188,7 +187,7 @@ func TestBasicString(t *testing.T) {
 		Put(hash.StringKey("c"), 3)
 
 	var str = m.String()
-	log.Printf("m.String()=%s\n", str)
+	//log.Printf("m.String()=%s\n", str)
 
 	var expectedStr = "Map{\"c\":3,\"b\":2,\"a\":1}"
 	if str != expectedStr {
@@ -213,7 +212,6 @@ func TestBasicNewFromList(t *testing.T) {
 	}
 }
 
-//FIXME: need more; test conflict
 func TestBasicBulkInsert(t *testing.T) {
 	var kvs = buildKvs(100)
 	var m = fmap.NewFromList(kvs[:50])
@@ -236,39 +234,35 @@ func TestBasicBulkInsert(t *testing.T) {
 	}
 }
 
-//FIXME: need more; test not found
-func TestBasicBulkDelete(t *testing.T) {
+func resolveAddInts(k hash.Key, origVal, newVal interface{}) interface{} {
+	var oi, ni = origVal.(int), newVal.(int)
+	//log.Printf("resolveAddInts: oridVal,%d + newVal,%d = %d", oi, ni, oi+ni)
+	return oi + ni
+}
+
+func TestBasicBulkInsertConflict(t *testing.T) {
 	var kvs = buildKvs(100)
-	var keys = make([]hash.Key, len(kvs))
+	//var kvsF70 = kvs[:70]
+	//var kvsL50 = kvs[50:]
+	//var kvsM20 = kvs[50:70]
+	var m = fmap.NewFromList(kvs[:70])
+	var m0 = m.BulkInsert(kvs[50:], resolveAddInts)
 	for i, kv := range kvs {
-		keys[i] = kv.Key
-	}
-	var m = fmap.NewFromList(kvs)
-
-	var notFound []hash.Key
-	m, notFound = m.BulkDelete(keys[50:])
-
-	if len(notFound) != 0 {
-		t.Fatalf("len(notFound),%d != 0", len(notFound))
-	}
-
-	if m.NumEntries() != 50 {
-		t.Fatalf("m.NumEntries(),%d != 50", m.NumEntries())
-	}
-
-	for _, kv := range kvs[:50] {
 		var k, v = kv.Key, kv.Val
-		var val, found = m.Load(k)
-		if !found {
-			t.Fatalf("k=%s not found", k)
-		}
-		if v != val {
-			t.Fatalf("v,%d != val,%d", v, val)
+		var val = m0.Get(k)
+		if i >= 50 && i < 70 {
+			var expectedVal = 2 * v.(int)
+			if expectedVal != val {
+				t.Fatalf("expectedVal,%d != val,%d", expectedVal, val)
+			}
+		} else {
+			if val != v {
+				t.Fatalf("val,%d != v,%d\n", val, v)
+			}
 		}
 	}
 }
 
-//FIXME: need more; test conflict
 func TestBasicMerge(t *testing.T) {
 	var kvs = buildKvs(100)
 
@@ -284,6 +278,110 @@ func TestBasicMerge(t *testing.T) {
 		}
 		if val != v {
 			t.Fatalf("val,%d != v,%d", val, v)
+		}
+	}
+}
+
+func TestBasicMergeConflict(t *testing.T) {
+	var kvs = buildKvs(100)
+
+	var m0 = fmap.NewFromList(kvs[:60])
+	var m1 = fmap.NewFromList(kvs[50:])
+	var m = m0.Merge(m1, resolveAddInts)
+
+	for _, kv := range kvs {
+		var k, v = kv.Key, kv.Val
+		var val, found = m.Load(k)
+		if !found {
+			t.Fatalf("k=%s not found", k)
+		}
+		var v0, f0 = m0.Load(k)
+		var v1, f1 = m1.Load(k)
+		if f0 && f1 {
+			var expectedVal = v0.(int) + v1.(int)
+			if val != expectedVal {
+				t.Fatalf("val,%d != expectedVal,%d", val, expectedVal)
+			}
+		} else {
+			if val != v {
+				t.Fatalf("val,%d != v,%d", val, v)
+			}
+		}
+	}
+}
+
+func TestBasicBulkDelete(t *testing.T) {
+	var kvs = buildKvs(100)
+	var keys = make([]hash.Key, len(kvs))
+	for i, kv := range kvs {
+		keys[i] = kv.Key
+	}
+	var m = fmap.NewFromList(kvs)
+
+	var notFound []hash.Key
+	m, notFound = m.BulkDelete(keys[50:])
+
+	if len(notFound) != 0 {
+		t.Fatalf("len(notFound),%d != 0", len(notFound))
+	}
+
+	if numEnts := m.NumEntries(); numEnts != 50 {
+		t.Fatalf("m.NumEntries(),%d != 50", numEnts)
+	}
+
+	if count := m.Count(); count != 50 {
+		t.Fatalf("m.Count(),%d != 50", count)
+	}
+
+	for _, kv := range kvs[:50] {
+		var k, v = kv.Key, kv.Val
+		var val, found = m.Load(k)
+		if !found {
+			t.Fatalf("k=%s not found", k)
+		}
+		if v != val {
+			t.Fatalf("v,%d != val,%d", v, val)
+		}
+	}
+}
+
+func isMember(k hash.Key, keys []hash.Key) bool {
+	for _, key := range keys {
+		if k.Equals(key) {
+			return true
+		}
+	}
+	return false
+}
+
+func TestBasicBulkDeleteNotFound(t *testing.T) {
+	var kvs = buildKvs(100)
+	var keys = make([]hash.Key, len(kvs))
+	for i, kv := range kvs {
+		keys[i] = kv.Key
+	}
+	var m = fmap.NewFromList(kvs[:70])
+
+	var notFound []hash.Key
+	m, notFound = m.BulkDelete(keys)
+
+	if len(notFound) != 30 {
+		t.Fatalf("len(notFound),%d != 30", len(notFound))
+	}
+
+	if numEnts := m.NumEntries(); numEnts != 0 {
+		t.Fatalf("m.NumEntries(),%d != 0", numEnts)
+	}
+
+	if count := m.Count(); count != 0 {
+		t.Fatalf("m.Count(),%d != 0", count)
+	}
+
+	// slice kvs[70:] not added to m *Map.
+	for _, kv := range kvs[70:] {
+		var k = kv.Key
+		if !isMember(k, notFound) {
+			t.Fatalf("expected to find k=%s in notFound", k)
 		}
 	}
 }

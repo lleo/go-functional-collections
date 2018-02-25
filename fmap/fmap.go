@@ -55,9 +55,49 @@ type Map struct {
 func New() *Map {
 	var m = new(Map)
 	m.root = newRootTable()
-	//m.root = newFixedTable(0, 0)
-	//m.root = newSparseTable(0, 0, 0)
 	return m
+}
+
+func newRootTable() tableI {
+	// fixedTable at root makes a noticable perf diff on small & large Maps.
+	return newFixedTable(0, 0)
+	//return newSparseTable(0, 0, 0)
+}
+
+// newTable is a generic version of newSparseTable & newFixedTable
+func newTable(depth uint, hashVal hash.Val) tableI {
+	//return newFixedTable(depth, hashVal)
+	return newSparseTable(depth, hashVal, 0)
+}
+
+// createTable is a  generic version of createSparseTable & createFixedTable
+func createTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
+	if assertOn {
+		assert(depth > 0, "createTable(): depth < 1")
+		assertf(leaf1.hash().HashPath(depth) == leaf2.hash().HashPath(depth),
+			"createTable(): hp1,%s != hp2,%s",
+			leaf1.hash().HashPath(depth),
+			leaf2.hash().HashPath(depth))
+	}
+
+	var retTable = newTable(depth, leaf1.hash())
+
+	var idx1 = leaf1.hash().Index(depth)
+	var idx2 = leaf2.hash().Index(depth)
+	if idx1 != idx2 {
+		retTable.insertInplace(idx1, leaf1)
+		retTable.insertInplace(idx2, leaf2)
+	} else { // idx1 == idx2
+		var node nodeI
+		if depth == hash.MaxDepth {
+			node = newCollisionLeaf(append(leaf1.keyVals(), leaf2.keyVals()...))
+		} else {
+			node = createTable(depth+1, leaf1, leaf2)
+		}
+		retTable.insertInplace(idx1, node)
+	}
+
+	return retTable
 }
 
 // copy creates a shallow copy of the Map data structure and returns a pointer
@@ -87,7 +127,7 @@ func (m *Map) Load(key hash.Key) (interface{}, bool) {
 	}
 
 	var hv = key.Hash()
-	var curTable tableI = m.root
+	var curTable = m.root
 
 	var val interface{}
 	var found bool
@@ -117,7 +157,7 @@ DepthIter:
 // containted in the *tableStack path) and the Index in the current table the
 // leaf is at.
 func (m *Map) find(hv hash.Val) (*tableStack, leafI, uint) {
-	var curTable tableI = m.root
+	var curTable = m.root
 
 	var path = newTableStack()
 	var leaf leafI
@@ -148,6 +188,13 @@ DepthIter:
 // Hence, modifying it is allowed.
 func (m *Map) persist(oldTable, newTable tableI, path *tableStack) {
 	assert(m.root != nil, "m.root == nil")
+
+	// downgrade() & upgrade() can return an unmodified table in NewFromList(),
+	// BulkInsert(), BulkDelete(), and Merge(). Hence persist() is unnecessary.
+	if newTable == oldTable {
+		return
+	}
+
 	if m.root == oldTable {
 		m.root = newTable
 		return
@@ -168,49 +215,6 @@ func (m *Map) persist(oldTable, newTable tableI, path *tableStack) {
 	}
 
 	m.persist(oldParent, newParent, path)
-}
-
-func newRootTable() tableI {
-	return newTable(0, 0)
-	//return newFixedTable(0, 0)
-	//return newSparseTable(0, 0, 0)
-}
-
-// FIXME: generic version of newSparseTable & newFixedTable
-func newTable(depth uint, hashVal hash.Val) tableI {
-	return newFixedTable(depth, hashVal)
-	//return newSparseTable(depth, hashVal, 0)
-}
-
-// FIXME: generic version of createSparseTable & createFixedTable
-// FIXME: This should obviate createSparseTable & createFixedTable.
-func createTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
-	if assertOn {
-		assert(depth > 0, "createTable(): depth < 1")
-		assertf(leaf1.hash().HashPath(depth) == leaf2.hash().HashPath(depth),
-			"createTable(): hp1,%s != hp2,%s",
-			leaf1.hash().HashPath(depth),
-			leaf2.hash().HashPath(depth))
-	}
-
-	var retTable = newTable(depth, leaf1.hash())
-
-	var idx1 = leaf1.hash().Index(depth)
-	var idx2 = leaf2.hash().Index(depth)
-	if idx1 != idx2 {
-		retTable.insertInplace(idx1, leaf1)
-		retTable.insertInplace(idx2, leaf2)
-	} else { // idx1 == idx2
-		var node nodeI
-		if depth == hash.MaxDepth {
-			node = newCollisionLeaf(append(leaf1.keyVals(), leaf2.keyVals()...))
-		} else {
-			node = createTable(depth+1, leaf1, leaf2)
-		}
-		retTable.insertInplace(idx1, node)
-	}
-
-	return retTable
 }
 
 // LoadOrStore returns the existing value for the key if present. Otherwise,
@@ -384,12 +388,8 @@ func (m *Map) Remove(key hash.Key) (*Map, interface{}, bool) {
 	return nm, val, deleted
 }
 
-func (m *Map) walkPreOrder(fn visitFn) bool {
-	var keepOn, err = m.root.walkPreOrder(fn, 0)
-	if err != nil {
-		panic(err)
-	}
-	return keepOn
+func (m *Map) walkPreOrder(fn visitFunc) bool {
+	return m.root.walkPreOrder(fn, 0)
 }
 
 // Iter returns an *Iter structure. You can call the Next() method on the *Iter
@@ -439,7 +439,7 @@ func (m *Map) Range(fn func(hash.Key, interface{}) bool) {
 	//		}
 	//	}
 	//	return true
-	//} // end: visitLeafsFn = func(nodeI)
+	//} // end: visitLeafs = func(nodeI)
 	//m.walkPreOrder(visitLeafs)
 	var it = m.Iter()
 	for k, v := it.Next(); k != nil; k, v = it.Next() {
@@ -478,7 +478,7 @@ func (m *Map) String() string {
 	return "Map{" + strings.Join(ents, ",") + "}"
 }
 
-// treeString returns a (potentially very large) string that represets the
+// TreeString returns a (potentially very large) string that represets the
 // entire Map data structure. It is for print debugging.
 func (m *Map) TreeString(indent string) string {
 	var str string
@@ -491,11 +491,29 @@ func (m *Map) TreeString(indent string) string {
 	return str
 }
 
-// Dup does a complete deep copy of a *Map returning an entirely new *Map.
-func (m *Map) Dup() *Map {
+// DeepCopy does a complete deep copy of a *Map returning an entirely new *Map.
+func (m *Map) DeepCopy() *Map {
 	var nm = m.copy()
 	nm.root = m.root.deepCopy()
 	return nm
+}
+
+// Equiv compares two *Map's by value.
+func (m *Map) Equiv(m0 *Map) bool {
+	if m.NumEntries() != m0.NumEntries() {
+		return false
+	}
+	if !m.root.equiv(m0.root) {
+		return false
+	}
+	return true
+	//return m.NumEntries() == m0.NumEntries() && m.root.equiv(m0.root)
+}
+
+// Count recursively traverses the HAMT data structure to count every key,value
+// pair.
+func (m *Map) Count() int {
+	return m.root.count()
 }
 
 // NewFromList constructs a new *Map structure containing all the key,value
@@ -511,6 +529,13 @@ func NewFromList(kvs []KeyVal) *Map {
 		var added bool
 		if leaf == nil {
 			curTable.insertInplace(idx, newFlatLeaf(k, v))
+			//var _, isSparseTable = curTable.(*sparseTable)
+			//if isSparseTable && curTable.slotsUsed() == upgradeThreshold {
+			//if curTable.slotsUsed() == upgradeThreshold {
+			if curTable.needsUpgrade() {
+				var newTable = curTable.upgrade()
+				m.persist(curTable, newTable, path)
+			}
 			added = true
 		} else {
 			var node nodeI
@@ -528,26 +553,6 @@ func NewFromList(kvs []KeyVal) *Map {
 		}
 	}
 	return m
-}
-
-// ResolveConflictFunc is the signature of functions used to choose between, or
-// create a new value from, two key,value pairs where the keys are equal (this
-// is defined by k0.Equal(k1), hence only the Map key is passed in).
-type ResolveConflictFunc func(
-	key hash.Key,
-	origVal, newVal interface{},
-) interface{}
-
-// KeepOrigVal is an implementation of ResolveConflictFunc type which returns
-// the first (origVal) value.
-func KeepOrigVal(key hash.Key, origVal, newVal interface{}) interface{} {
-	return origVal
-}
-
-// TakeNewVal is an implementation of ResolveConflictFunc type which returns
-// the second (newVal) value.
-func TakeNewVal(key hash.Key, origVal, newVal interface{}) interface{} {
-	return newVal
 }
 
 func insertPersist(
@@ -574,9 +579,7 @@ func insertPersist(
 				node = createTable(depth+1, leaf, newFlatLeaf(k, v))
 				added = true
 			} else {
-				// FIXME: does any of the keys in the leaf Equal() leaf?
-				// If is does, replace the value with the result of resolve.
-				node, added = leaf.put(k, v)
+				node, added = leaf.putResolve(k, v, resolve)
 			}
 			newTable = curTable.replace(idx, node)
 		}
@@ -584,6 +587,13 @@ func insertPersist(
 	} else {
 		if leaf == nil {
 			curTable.insertInplace(idx, newFlatLeaf(k, v))
+			//var _, isSparseTable = curTable.(*sparseTable)
+			//if isSparseTable && curTable.slotsUsed() == upgradeThreshold {
+			//if curTable.slotsUsed() == upgradeThreshold {
+			if curTable.needsUpgrade() {
+				var newTable = curTable.upgrade()
+				m.persist(curTable, newTable, path)
+			}
 			added = true
 		} else {
 			var node nodeI
@@ -592,9 +602,7 @@ func insertPersist(
 				node = createTable(depth+1, leaf, newFlatLeaf(k, v))
 				added = true
 			} else {
-				// FIXME: does any of the keys in the leaf Equal() leaf?
-				// If is does, replace the value with the result of resolve.
-				node, added = leaf.put(k, v)
+				node, added = leaf.putResolve(k, v, resolve)
 			}
 			curTable.replaceInplace(idx, node)
 		}
@@ -604,9 +612,13 @@ func insertPersist(
 	}
 }
 
-// BulkInsert stores all the given key,value pairs into the *Map while
-// resolving any conflict with the given resolve function. The returned *Map
-// maintains the structure sharing relationship with the original *Map.
+// BulkInsert stores all the given key,value pairs into the Map while
+// resolving any conflict with the given resolve function.
+//
+// The returned Map maintains the structure sharing relationship with the
+// original Map.
+//
+// BulkInsert is implemented more efficiently than repeated calls to Store.
 func (m *Map) BulkInsert(kvs []KeyVal, resolve ResolveConflictFunc) *Map {
 	var isOrigTable = make(map[tableI]bool)
 	m.walkPreOrder(func(n nodeI, depth uint) bool {
@@ -620,51 +632,38 @@ func (m *Map) BulkInsert(kvs []KeyVal, resolve ResolveConflictFunc) *Map {
 	for _, kv := range kvs {
 		var k, v = kv.Key, kv.Val
 		insertPersist(nm, isOrigTable, resolve, k, v)
-		//var hv = k.Hash()
-		//var path, leaf, idx = nm.find(hv)
-		//var curTable = path.pop()
-		//var depth = uint(path.len())
-		//var added bool
-		//if isOrigTable[curTable] {
-		//	var newTable tableI
-		//	if leaf == nil {
-		//		newTable = curTable.insert(idx, newFlatLeaf(k, v))
-		//		added = true
-		//	} else {
-		//		var node nodeI
-		//		if leaf.hash() != hv {
-		//			//node = createSparseTable(depth+1, leaf, newFlatLeaf(k, v))
-		//			node = createTable(depth+1, leaf, newFlatLeaf(k, v))
-		//			added = true
-		//		} else {
-		//			node, added = leaf.put(k, v)
-		//		}
-		//		newTable = curTable.replace(idx, node)
-		//	}
-		//	nm.persist(curTable, newTable, path)
-		//} else {
-		//	if leaf == nil {
-		//		curTable.insertInplace(idx, newFlatLeaf(k, v))
-		//		added = true
-		//	} else {
-		//		var node nodeI
-		//		if leaf.hash() != hv {
-		//			//node = createSparseTable(depth+1, leaf, newFlatLeaf(k, v))
-		//			node = createTable(depth+1, leaf, newFlatLeaf(k, v))
-		//			added = true
-		//		} else {
-		//			node, added = leaf.put(k, v)
-		//		}
-		//		curTable.replaceInplace(idx, node)
-		//	}
-		//}
-		//if added {
-		//	nm.numEnts++
-		//}
 	}
 	return nm
 }
 
+// Merge inserts all the key,value pairs from the Map provided as an argument.
+//
+// If the argument Map has a key that is Equal to a key in the receiver Map,
+// then the receiver key, its corrosponding value, and the value for the Equal
+// key in the argument Map, will be passed into the ResolveConflictFunc; the
+// result of which will be stored as the new key,value pair in the resulting
+// Map.
+func (m *Map) Merge(om *Map, resolve ResolveConflictFunc) *Map {
+	var isOrigTable = make(map[tableI]bool)
+	m.walkPreOrder(func(n nodeI, depth uint) bool {
+		if t, isTable := n.(tableI); isTable {
+			isOrigTable[t] = true
+		}
+		return true
+	})
+
+	var nm = m.copy()
+	var it = om.Iter()
+	for k, v := it.Next(); k != nil; k, v = it.Next() {
+		insertPersist(nm, isOrigTable, resolve, k, v)
+	}
+	return nm
+}
+
+// BulkDelete removes all the keys in the given hash.Key slice. It then returns
+// a new persistent Map and a slice of the keys not found in the in the
+// original Map. BulkDelete is implemented more efficiently than repeated calls
+// to Remove.
 func (m *Map) BulkDelete(keys []hash.Key) (*Map, []hash.Key) {
 	var isOrigTable = make(map[tableI]bool)
 	m.walkPreOrder(func(n nodeI, depth uint) bool {
@@ -698,74 +697,27 @@ KEYSLOOP:
 			} else {
 				newTable = curTable.replace(idx, newLeaf)
 			}
-			nm.persist(newTable, curTable, path)
+			nm.persist(curTable, newTable, path)
 		} else {
 			if newLeaf == nil {
-				curTable.removeInplace(idx)
+				if curTable.slotsUsed()-1 > 0 {
+					curTable.removeInplace(idx)
+					//if curTable.slotsUsed() == downgradeThreshold {
+					if curTable.needsDowngrade() {
+						var newTable = curTable.downgrade()
+						nm.persist(curTable, newTable, path)
+					}
+				} else { // curTable.slotsUsed()-1 <= 0
+					// we need to use persist cuz this will shrink empty tables
+					var newTable = curTable.remove(idx)
+					nm.persist(curTable, newTable, path)
+				}
 			} else {
-				curTable.replace(idx, newLeaf)
+				curTable.replaceInplace(idx, newLeaf)
 			}
 		}
 	}
 	return nm, notFound
-}
-
-func (m *Map) Merge(om *Map, resolve ResolveConflictFunc) *Map {
-	var isOrigTable = make(map[tableI]bool)
-	m.walkPreOrder(func(n nodeI, depth uint) bool {
-		if t, isTable := n.(tableI); isTable {
-			isOrigTable[t] = true
-		}
-		return true
-	})
-
-	var nm = m.copy()
-	var it = om.Iter()
-	for k, v := it.Next(); k != nil; k, v = it.Next() {
-		insertPersist(nm, isOrigTable, resolve, k, v)
-		//var hv = k.Hash()
-		//var path, leaf, idx = nm.find(hv)
-		//var curTable = path.pop()
-		//var depth = uint(path.len())
-		//var added bool
-		//if isOrigTable[curTable] {
-		//	var newTable tableI
-		//	if leaf == nil {
-		//		newTable = curTable.insert(idx, newFlatLeaf(k, v))
-		//		added = true
-		//	} else {
-		//		var node nodeI
-		//		if leaf.hash() != hv {
-		//			//node = createSparseTable(depth+1, leaf, newFlatLeaf(k, v))
-		//			node = createTable(depth+1, leaf, newFlatLeaf(k, v))
-		//			added = true
-		//		} else {
-		//			node, added = leaf.put(k, v)
-		//		}
-		//		newTable = curTable.replace(idx, node)
-		//	}
-		//	nm.persist(curTable, newTable, path)
-		//} else {
-		//	if leaf == nil {
-		//		curTable.insertInplace(idx, newFlatLeaf(k, v))
-		//		added = true
-		//	} else {
-		//		var node nodeI
-		//		if leaf.hash() != hv {
-		//			//node = createSparseTable(depth+1, leaf, newFlatLeaf(k, v))
-		//			node = createTable(depth+1, leaf, newFlatLeaf(k, v))
-		//			added = true
-		//		} else {
-		//			node, added = leaf.put(k, v)
-		//		}
-		//		curTable.replaceInplace(idx, node)
-		//	}
-		//}
-		//if added {
-		//	nm.numEnts++
-		//}
-	}
-	return nm
 }
 
 //type Stats struct {

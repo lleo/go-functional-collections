@@ -62,6 +62,46 @@ func (t *fixedTable) deepCopy() tableI {
 	return nt
 }
 
+// equiv compares the *fixedTable to another node by value. This ultimately
+// becomes a deep comparison of tables.
+func (t *fixedTable) equiv(other nodeI) bool {
+	var ot, ok = other.(*fixedTable)
+	if !ok {
+		log.Println("other is not a *fixedTable")
+		return false
+	}
+	if t.depth != ot.depth {
+		log.Printf("t.depth,%d != ot.depth,%d", t.depth, ot.depth)
+		return false
+	}
+	if t.usedSlots != ot.usedSlots {
+		log.Printf("t.usedSlots,%d != ot.usedSlots,%d", t.usedSlots, ot.usedSlots)
+		return false
+	}
+	if t.hashPath != ot.hashPath {
+		log.Printf("t.hashPath,%s != ot.hashPath,%s", t.hashPath, ot.hashPath)
+		return false
+	}
+	//ok = ok && t.depth == ot.depth
+	//ok = ok && t.usedSlots == ot.usedSlots
+	//ok = ok && t.hashPath == ot.hashPath
+	//if !ok {
+	//	log.Printf("t,%s != ot,%s", t, ot)
+	//	return false
+	//}
+	for i, n := range t.nodes {
+		if n == nil && n != ot.nodes[i] {
+			log.Printf("n == nil && n != ot.nodes[%d],%s", i, ot.nodes[i])
+			return false
+		}
+		if n != nil && !n.equiv(ot.nodes[i]) {
+			log.Printf("!n.equiv(ot.nodes[%d])", i)
+			return false
+		}
+	}
+	return true
+}
+
 func createFixedTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
 	if assertOn {
 		assertf(depth > 0, "createFixedTable(): depth,%d < 1", depth)
@@ -174,6 +214,29 @@ func (t *fixedTable) get(idx uint) nodeI {
 	return t.nodes[idx]
 }
 
+func (t *fixedTable) needsUpgrade() bool {
+	return false
+}
+
+func (t *fixedTable) needsDowngrade() bool {
+	return t.slotsUsed() == downgradeThreshold
+}
+
+func (t *fixedTable) upgrade() tableI {
+	//panic("upgrade() invalid op")
+	return t
+}
+
+func (t *fixedTable) downgrade() tableI {
+	var nt = newSparseTable(t.depth, t.hashPath, t.slotsUsed())
+	for idx := uint(0); idx < hash.IndexLimit; idx++ {
+		if t.nodes[idx] != nil {
+			nt.insertInplace(idx, t.nodes[idx])
+		}
+	}
+	return nt
+}
+
 func (t *fixedTable) insertInplace(idx uint, n nodeI) {
 	t.nodes[idx] = n
 	t.usedSlots++
@@ -208,39 +271,11 @@ func (t *fixedTable) removeInplace(idx uint) {
 	t.usedSlots--
 }
 
-func (t *fixedTable) needsUpgrade() bool {
-	return false
-}
-
-func (t *fixedTable) needsDowngrade() bool {
-	if t.slotsUsed() <= downgradeThreshold {
-		return true
-	}
-	return false
-}
-
-func (t *fixedTable) upgrade() tableI {
-	panic("upgrade() invalid op")
-	return t
-}
-
-func (t *fixedTable) downgrade() tableI {
-	var nt = newSparseTable(t.depth, t.hashPath, t.slotsUsed())
-	var j uint
-	for i := uint(0); i < hash.IndexLimit; i++ {
-		if t.nodes[i] != nil {
-			nt.insertInplace(i, t.nodes[i])
-			j++
-		}
-	}
-	return nt
-}
-
 func (t *fixedTable) remove(idx uint) tableI {
 	_ = assertOn && assert(t.nodes[idx] != nil,
 		"t.remove(idx) where idx slot is already empty")
 
-	if t.depth > 0 {
+	if t.depth > 0 { //non-root table
 		if t.slotsUsed() == 1 {
 			return nil
 		}
@@ -259,31 +294,28 @@ func (t *fixedTable) remove(idx uint) tableI {
 	return nt
 }
 
-// walkPreOrder executes the visitFn in pre-order traversal. If there is no node for
-// a given node slot, walkPreOrder calls the visitFn on nil.
+// walkPreOrder executes the visitFunc in pre-order traversal. If there is no
+// node for a given idx, walkPreOrder skips that idx.
 //
-// The traversal stops if the visitFn function returns false.
-func (t *fixedTable) walkPreOrder(fn visitFn, depth uint) (bool, error) {
-	if depth != t.depth {
-		var err = fmt.Errorf("depth,%d != t.depth=%d; t=%s", depth, t.depth, t)
-		return false, err
-	}
+// The traversal stops if the visitFunc function returns false.
+func (t *fixedTable) walkPreOrder(fn visitFunc, depth uint) bool {
+	_ = assertOn && assertf(depth == t.depth, "depth,%d != t.depth=%d; t=%s", depth, t.depth, t)
 
-	if !fn(t, depth+1) {
-		return false, nil
+	depth++
+
+	if !fn(t, depth) {
+		return false
 	}
 
 	for _, n := range t.nodes {
-		if n == nil {
-			if !fn(n, depth+1) {
-				return false, nil
+		if n != nil {
+			if !n.walkPreOrder(fn, depth) {
+				return false
 			}
-		} else if keepOn, err := n.walkPreOrder(fn, depth+1); !keepOn || err != nil {
-			return keepOn, err
 		}
 	}
 
-	return true, nil
+	return true
 }
 
 func (t *fixedTable) iter() tableIterFunc {
@@ -299,4 +331,14 @@ func (t *fixedTable) iter() tableIterFunc {
 
 		return nil
 	}
+}
+
+func (t *fixedTable) count() int {
+	var i int
+	for _, n := range t.nodes {
+		if n != nil {
+			i += n.count()
+		}
+	}
+	return i
 }

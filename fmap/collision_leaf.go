@@ -22,7 +22,7 @@ func newCollisionLeaf(kvs []KeyVal) *collisionLeaf {
 	return leaf
 }
 
-func (l *collisionLeaf) copy() *collisionLeaf {
+func (l *collisionLeaf) copy() leafI {
 	var nl = new(collisionLeaf)
 	nl.kvs = append(nl.kvs, l.kvs...)
 	return nl
@@ -52,10 +52,30 @@ func (l *collisionLeaf) get(key hash.Key) (interface{}, bool) {
 	return nil, false
 }
 
+func (l *collisionLeaf) putResolve(
+	key hash.Key,
+	val interface{},
+	resolve ResolveConflictFunc,
+) (leafI, bool) {
+	for i, kv := range l.kvs {
+		if kv.Key.Equals(key) {
+			var nl = l.copy().(*collisionLeaf)
+			var newVal = resolve(kv.Key, kv.Val, val)
+			nl.kvs[i].Val = newVal
+			return nl, false // replaced
+		}
+	}
+	var nl = new(collisionLeaf)
+	nl.kvs = make([]KeyVal, len(l.kvs)+1)
+	copy(nl.kvs, l.kvs)
+	nl.kvs[len(l.kvs)] = KeyVal{key, val}
+	return nl, true // k,v was added
+}
+
 func (l *collisionLeaf) put(key hash.Key, val interface{}) (leafI, bool) {
 	for i, kv := range l.kvs {
 		if kv.Key.Equals(key) {
-			var nl = l.copy()
+			var nl = l.copy().(*collisionLeaf)
 			nl.kvs[i].Val = val
 			return nl, false // replaced
 		}
@@ -79,7 +99,7 @@ func (l *collisionLeaf) del(key hash.Key) (leafI, interface{}, bool) {
 				// think about the index... it works, really :)
 				nl = newFlatLeaf(l.kvs[1-i].Key, l.kvs[1-i].Val)
 			} else {
-				var cl = l.copy()
+				var cl = l.copy().(*collisionLeaf)
 				cl.kvs = append(cl.kvs[:i], cl.kvs[i+1:]...)
 				nl = cl // needed access to cl.kvs; nl is type leafI
 			}
@@ -98,6 +118,31 @@ func (l *collisionLeaf) keyVals() []KeyVal {
 	//return l.kvs
 }
 
-func (l *collisionLeaf) walkPreOrder(fn visitFn, depth uint) (bool, error) {
-	return fn(l, depth), nil
+func (l *collisionLeaf) walkPreOrder(fn visitFunc, depth uint) bool {
+	return fn(l, depth)
+}
+
+// equiv comparse this *collisionLeaf against another node by value.
+func (l *collisionLeaf) equiv(other nodeI) bool {
+	var ol, ok = other.(*collisionLeaf)
+	if !ok {
+		return false
+	}
+	if len(l.kvs) != len(ol.kvs) {
+		return false
+	}
+	// This assumes the kvs are in the same order.
+	for i, kv := range l.kvs {
+		if !kv.Key.Equals(ol.kvs[i].Key) {
+			return false
+		}
+		if kv.Val != ol.kvs[i].Val {
+			return false
+		}
+	}
+	return true
+}
+
+func (l *collisionLeaf) count() int {
+	return len(l.kvs)
 }

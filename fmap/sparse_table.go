@@ -81,6 +81,31 @@ func (t *sparseTable) deepCopy() tableI {
 	return nt
 }
 
+// equiv compares the *sparseTable to another node by value. This ultimately
+// becomes a deep comparison of tables.
+func (t *sparseTable) equiv(other nodeI) bool {
+	var ot, ok = other.(*sparseTable)
+	if !ok {
+		return false
+	}
+	ok = ok && t.depth == ot.depth
+	ok = ok && t.hashPath == ot.hashPath
+	ok = ok && t.nodeMap == ot.nodeMap
+	ok = ok && len(t.nodes) == len(ot.nodes)
+	if !ok {
+		return false
+	}
+	for i, n := range t.nodes {
+		if n == nil && n != ot.nodes[i] {
+			return false
+		}
+		if !n.equiv(ot.nodes[i]) {
+			return false
+		}
+	}
+	return true
+}
+
 func createSparseTable(depth uint, leaf1 leafI, leaf2 *flatLeaf) tableI {
 	if assertOn {
 		assert(depth > 0, "createSparseTable(): depth < 1")
@@ -206,27 +231,8 @@ func (t *sparseTable) get(idx uint) nodeI {
 	return t.nodes[j]
 }
 
-func (t *sparseTable) insertInplace(idx uint, n nodeI) {
-	var j = int(t.nodeMap.count(idx))
-	if j == len(t.nodes) {
-		t.nodes = append(t.nodes, n)
-	} else {
-		// slower and more obscure method
-		//t.nodes = append(t.nodes[:j], append([]nodeI{n}, t.nodes[j:]...)...)
-
-		// faster and more understandable method
-		t.nodes = append(t.nodes, nodeI(nil))
-		copy(t.nodes[j+1:], t.nodes[j:])
-		t.nodes[j] = n
-	}
-	t.nodeMap.set(idx)
-}
-
 func (t *sparseTable) needsUpgrade() bool {
-	if t.slotsUsed() >= upgradeThreshold {
-		return true
-	}
-	return false
+	return t.slotsUsed() == upgradeThreshold
 }
 
 func (t *sparseTable) needsDowngrade() bool {
@@ -244,8 +250,24 @@ func (t *sparseTable) upgrade() tableI {
 }
 
 func (t *sparseTable) downgrade() tableI {
-	panic("downgrade() invalid op")
+	//panic("downgrade() invalid op")
 	return t
+}
+
+func (t *sparseTable) insertInplace(idx uint, n nodeI) {
+	var j = int(t.nodeMap.count(idx))
+	if j == len(t.nodes) {
+		t.nodes = append(t.nodes, n)
+	} else {
+		// slower and more obscure method
+		//t.nodes = append(t.nodes[:j], append([]nodeI{n}, t.nodes[j:]...)...)
+
+		// faster and more understandable method
+		t.nodes = append(t.nodes, nodeI(nil))
+		copy(t.nodes[j+1:], t.nodes[j:])
+		t.nodes[j] = n
+	}
+	t.nodeMap.set(idx)
 }
 
 func (t *sparseTable) insert(idx uint, n nodeI) tableI {
@@ -317,32 +339,27 @@ func (t *sparseTable) remove(idx uint) tableI {
 	return nt
 }
 
-// walkPreOrder executes the visitFn in pre-order traversal. If there is no node for
-// a given node, slot walkPreOrder calls the visitFn on nil.
+// walkPreOrder executes the visitFunc in pre-order traversal. If there is no
+// node for a given idx, walkPreOrder skips that idx.
 //
-// The traversal stops if the visitFn function returns false.
-func (t *sparseTable) walkPreOrder(fn visitFn, depth uint) (bool, error) {
-	if depth != t.depth {
-		var err = fmt.Errorf("depth,%d != t.depth=%d; t=%s", depth, t.depth, t)
-		return false, err
+// The traversal stops if the visitFunc function returns false.
+func (t *sparseTable) walkPreOrder(fn visitFunc, depth uint) bool {
+	_ = assertOn && assertf(depth == t.depth, "depth,%d != t.depth=%d; t=%s", depth, t.depth, t)
+
+	depth++
+
+	if !fn(t, depth) {
+		return false
 	}
 
-	if !fn(t, depth+1) {
-		return false, nil
-	}
-
-	for idx := uint(0); idx < hash.IndexLimit; idx++ {
-		var n = t.get(idx)
-		if n == nil {
-			if !fn(n, depth+1) {
-				return false, nil
-			}
-		} else if keepOn, err := n.walkPreOrder(fn, depth+1); !keepOn || err != nil {
-			return keepOn, err
+	for j, n := range t.nodes {
+		_ = assertOn && assertf(n != nil, "n == nil; j=%d", j)
+		if !n.walkPreOrder(fn, depth) {
+			return false
 		}
 	}
 
-	return true, nil
+	return true
 }
 
 func (t *sparseTable) iter() tableIterFunc {
@@ -355,4 +372,12 @@ func (t *sparseTable) iter() tableIterFunc {
 		}
 		return nil
 	}
+}
+
+func (t *sparseTable) count() int {
+	var i int
+	for _, n := range t.nodes {
+		i += n.count()
+	}
+	return i
 }

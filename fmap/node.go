@@ -6,25 +6,50 @@ import (
 	"github.com/lleo/go-functional-collections/hash"
 )
 
-// visitFn will be passed a value for every slot in the Hamt; this includes
+// visitFunc will be passed a value for every slot in the Hamt; this includes
 // leafs, tables, and nil.
 //
-// If the visitFn returns false then the tree walk should stop.
+// If the visitFunc returns false then the tree walk should stop.
 //
-type visitFn func(nodeI, uint) bool
+type visitFunc func(nodeI, uint) bool
 
 type nodeI interface {
 	hash() hash.Val
-	walkPreOrder(fn visitFn, depth uint) (bool, error)
+	walkPreOrder(fn visitFunc, depth uint) bool
+	equiv(nodeI) bool
+	count() int
 	String() string
+}
+
+// ResolveConflictFunc is the signature of functions used to choose between, or
+// create a new value from, two key,value pairs where the keys are equal (this
+// is defined by k0.Equal(k1), hence only the Map key is passed in).
+type ResolveConflictFunc func(
+	key hash.Key,
+	origVal, newVal interface{},
+) interface{}
+
+// KeepOrigVal is an implementation of ResolveConflictFunc type which returns
+// the first (origVal) value.
+func KeepOrigVal(key hash.Key, origVal, newVal interface{}) interface{} {
+	return origVal
+}
+
+// TakeNewVal is an implementation of ResolveConflictFunc type which returns
+// the second (newVal) value.
+func TakeNewVal(key hash.Key, origVal, newVal interface{}) interface{} {
+	return newVal
 }
 
 type leafI interface {
 	nodeI
 
 	get(key hash.Key) (interface{}, bool)
+	putResolve(key hash.Key, val interface{}, resolve ResolveConflictFunc) (leafI, bool)
 	put(key hash.Key, val interface{}) (leafI, bool)
 	del(key hash.Key) (leafI, interface{}, bool)
+
+	copy() leafI
 	keyVals() []KeyVal
 }
 

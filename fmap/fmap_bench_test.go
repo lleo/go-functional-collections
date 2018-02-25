@@ -76,6 +76,7 @@ func BenchmarkPutOne10(b *testing.B) {
 		m = buildMap(kvs)
 		XtraKvs10 = xtra
 		FMap10 = m
+		log.Println("BenchmarkPutOne10: built XtraKvs10 & FMap10.")
 	}
 	b.ResetTimer()
 
@@ -96,6 +97,7 @@ func BenchmarkPutOne100(b *testing.B) {
 		m = buildMap(kvs)
 		XtraKvs100 = xtra
 		FMap100 = m
+		log.Println("BenchmarkPutOne100: built XtraKvs100 & FMap100.")
 	}
 	b.ResetTimer()
 
@@ -116,6 +118,7 @@ func BenchmarkPutOne1M(b *testing.B) {
 		m = buildMap(kvs)
 		XtraKvs1M = xtra
 		FMap1M = m
+		log.Println("BenchmarkPutOne1M: built XtraKvs1M & FMap1M.")
 	}
 	b.ResetTimer()
 
@@ -136,6 +139,7 @@ func BenchmarkPutOne10M(b *testing.B) {
 		m = buildMap(kvs)
 		XtraKvs10M = xtra
 		FMap10M = m
+		log.Println("BenchmarkPutOne10M: built XtraKvs10M & FMap10M.")
 	}
 	b.ResetTimer()
 
@@ -156,6 +160,7 @@ func BenchmarkPutOne100M(b *testing.B) {
 		m = buildMap(kvs)
 		XtraKvs100M = xtra
 		FMap100M = m
+		log.Println("BenchmarkPutOne100M: built XtraKvs100M & FMap100M.")
 	}
 	b.ResetTimer()
 
@@ -176,6 +181,7 @@ func BenchmarkPutOne1MM(b *testing.B) {
 		m = buildMap(kvs)
 		XtraKvs1MM = xtra
 		FMap1MM = m
+		log.Println("BenchmarkPutOne1MM: built XtraKvs1MM & FMap1MM.")
 	}
 	b.ResetTimer()
 
@@ -196,6 +202,7 @@ func BenchmarkPutOne10MM(b *testing.B) {
 		m = buildMap(kvs)
 		XtraKvs10MM = xtra
 		FMap10MM = m
+		log.Println("BenchmarkPutOne10MM: built XtraKvs10MM & FMap10MM.")
 	}
 	b.ResetTimer()
 
@@ -216,6 +223,7 @@ func xBenchmarkPutOne100MM(b *testing.B) {
 		m = buildMap(kvs)
 		XtraKvs100MM = xtra
 		FMap100MM = m
+		log.Println("BenchmarkPutOne100MM: built XtraKvs100MM & FMap100MM.")
 	}
 	b.ResetTimer()
 
@@ -223,6 +231,198 @@ func xBenchmarkPutOne100MM(b *testing.B) {
 		var j = rand.Int() % len(xtra)
 		var kv = xtra[j]
 		_ = m.Put(kv.Key, kv.Val)
+	}
+}
+
+func BenchmarkIterNext10(b *testing.B) {
+	log.Printf("BenchmarkIterNext10: b.N=%d\n", b.N)
+	var xtra = XtraKvs10
+	var m = FMap10
+	if m == nil {
+		var kvs []KeyVal
+		kvs, xtra = buildKvs2(NumKvs10, NumKvsExtra10)
+		m = buildMap(kvs)
+		XtraKvs10 = xtra
+		FMap10 = m
+		log.Println("BenchmarkPutOne10: built XtraKvs10 & FMap10.")
+	}
+	b.ResetTimer()
+
+	var it = m.Iter()
+	for i := 0; i < b.N; i++ {
+		var k, _ = it.Next()
+		if k == nil {
+			it = m.Iter()
+			k, _ = it.Next()
+		}
+	}
+}
+
+func BenchmarkIterNext100(b *testing.B) {
+	log.Printf("BenchmarkIterNext100: b.N=%d\n", b.N)
+	var xtra = XtraKvs100
+	var m = FMap100
+	if m == nil {
+		var kvs []KeyVal
+		kvs, xtra = buildKvs2(NumKvs100, NumKvsExtra100)
+		m = buildMap(kvs)
+		XtraKvs100 = xtra
+		FMap100 = m
+		log.Println("BenchmarkPutOne100: built XtraKvs100 & FMap100.")
+	}
+	b.ResetTimer()
+
+	var it = m.Iter()
+	for i := 0; i < b.N; i++ {
+		var k, _ = it.Next()
+		if k == nil {
+			it = m.Iter()
+			k, _ = it.Next()
+		}
+	}
+}
+
+func BenchmarkIterNext1M(b *testing.B) {
+	log.Printf("BenchmarkIterNext1M: b.N=%d\n", b.N)
+	var xtra = XtraKvs1M
+	var m = FMap1M
+	if m == nil {
+		var kvs []KeyVal
+		kvs, xtra = buildKvs2(NumKvs1M, NumKvsExtra1M)
+		m = buildMap(kvs)
+		XtraKvs1M = xtra
+		FMap1M = m
+		log.Println("BenchmarkPutOne1M: built XtraKvs1M & FMap1M.")
+	}
+	b.ResetTimer()
+
+	var it = m.Iter()
+	for i := 0; i < b.N; i++ {
+		var k, _ = it.Next()
+		if k == nil {
+			it = m.Iter()
+			k, _ = it.Next()
+		}
+	}
+}
+
+func BenchmarkIterNext10M(b *testing.B) {
+	log.Printf("BenchmarkIterNext10M: b.N=%d\n", b.N)
+	var xtra = XtraKvs10M
+	var m = FMap10M
+	if m == nil {
+		var kvs []KeyVal
+		kvs, xtra = buildKvs2(NumKvs10M, NumKvsExtra10M)
+		m = buildMap(kvs)
+		XtraKvs10M = xtra
+		FMap10M = m
+		log.Println("BenchmarkPutOne10M: built XtraKvs10M & FMap10M.")
+	}
+	b.ResetTimer()
+
+	var it = m.Iter()
+	for i := 0; i < b.N; i++ {
+		var k, _ = it.Next()
+		if k == nil {
+			it = m.Iter()
+			k, _ = it.Next()
+		}
+	}
+}
+
+func BenchmarkIterNext100M(b *testing.B) {
+	log.Printf("BenchmarkIterNext100M: b.N=%d\n", b.N)
+	var xtra = XtraKvs100M
+	var m = FMap100M
+	if m == nil {
+		var kvs []KeyVal
+		kvs, xtra = buildKvs2(NumKvs100M, NumKvsExtra100M)
+		m = buildMap(kvs)
+		XtraKvs100M = xtra
+		FMap100M = m
+		log.Println("BenchmarkPutOne100M: built XtraKvs100M & FMap100M.")
+	}
+	b.ResetTimer()
+
+	var it = m.Iter()
+	for i := 0; i < b.N; i++ {
+		var k, _ = it.Next()
+		if k == nil {
+			it = m.Iter()
+			k, _ = it.Next()
+		}
+	}
+}
+
+func BenchmarkIterNext1MM(b *testing.B) {
+	log.Printf("BenchmarkIterNext1MM: b.N=%d\n", b.N)
+	var xtra = XtraKvs1MM
+	var m = FMap1MM
+	if m == nil {
+		var kvs []KeyVal
+		kvs, xtra = buildKvs2(NumKvs1MM, NumKvsExtra1MM)
+		m = buildMap(kvs)
+		XtraKvs1MM = xtra
+		FMap1MM = m
+		log.Println("BenchmarkPutOne1MM: built XtraKvs1MM & FMap1MM.")
+	}
+	b.ResetTimer()
+
+	var it = m.Iter()
+	for i := 0; i < b.N; i++ {
+		var k, _ = it.Next()
+		if k == nil {
+			it = m.Iter()
+			k, _ = it.Next()
+		}
+	}
+}
+
+func BenchmarkIterNext10MM(b *testing.B) {
+	log.Printf("BenchmarkIterNext10MM: b.N=%d\n", b.N)
+	var xtra = XtraKvs10MM
+	var m = FMap10MM
+	if m == nil {
+		var kvs []KeyVal
+		kvs, xtra = buildKvs2(NumKvs10MM, NumKvsExtra10MM)
+		m = buildMap(kvs)
+		XtraKvs10MM = xtra
+		FMap10MM = m
+		log.Println("BenchmarkPutOne10MM: built XtraKvs10MM & FMap10MM.")
+	}
+	b.ResetTimer()
+
+	var it = m.Iter()
+	for i := 0; i < b.N; i++ {
+		var k, _ = it.Next()
+		if k == nil {
+			it = m.Iter()
+			k, _ = it.Next()
+		}
+	}
+}
+
+func xBenchmarkIterNext100MM(b *testing.B) {
+	log.Printf("BenchmarkIterNext100MM: b.N=%d\n", b.N)
+	var xtra = XtraKvs100MM
+	var m = FMap100MM
+	if m == nil {
+		var kvs []KeyVal
+		kvs, xtra = buildKvs2(NumKvs100MM, NumKvsExtra100MM)
+		m = buildMap(kvs)
+		XtraKvs100MM = xtra
+		FMap100MM = m
+		log.Println("BenchmarkPutOne100MM: built XtraKvs100MM & FMap100MM.")
+	}
+	b.ResetTimer()
+
+	var it = m.Iter()
+	for i := 0; i < b.N; i++ {
+		var k, _ = it.Next()
+		if k == nil {
+			it = m.Iter()
+			k, _ = it.Next()
+		}
 	}
 }
 
