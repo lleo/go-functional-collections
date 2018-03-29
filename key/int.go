@@ -1,15 +1,17 @@
-package hash
+package key
 
 import (
 	"log"
 	"strconv"
+
+	"github.com/lleo/go-functional-collections/hash"
 )
 
-// IntKey defines a type of 'int' that has the methods that satisfy the hash.Key
-// interface.
-type IntKey int
+type Int int
 
-const uintSize = 4 << (^uint(0) >> 32 & 1) // 32 or 64
+const uintSizeBits = 32 << (^uint(0) >> 32 & 1)
+
+//const uintSizeBytes = 4 << (^uint(0) >> 32 & 1)
 
 // Int2ByteSlice is a function that gets initialized at runtime based on the
 // size of a 'int'.
@@ -19,8 +21,8 @@ const uintSize = 4 << (^uint(0) >> 32 & 1) // 32 or 64
 var Int2ByteSlice func(int) []byte
 
 func init() {
-	switch uintSize {
-	case 4:
+	switch uintSizeBits {
+	case 32:
 		Int2ByteSlice = func(i int) []byte {
 			return []byte{
 				byte(i),
@@ -29,7 +31,7 @@ func init() {
 				byte((uint(i) >> 24)),
 			}
 		}
-	case 8:
+	case 64:
 		Int2ByteSlice = func(i int) []byte {
 			return []byte{
 				byte(i),
@@ -44,21 +46,31 @@ func init() {
 		}
 	default:
 		Int2ByteSlice = func(i int) []byte {
-			log.Panicf("Int2ByteSlice not defined for uintSize=%d\n", uintSize)
+			log.Panicf("Int2ByteSlice not defined for uintSizeBits=%d\n",
+				uintSizeBits)
 			return nil
 		}
 	}
 }
 
-// Hash calculates the hash.Val of the IntKey receiver every time it is called.
-func (ik IntKey) Hash() Val {
+func (ik Int) Less(okey Sort) bool {
+	var oik, ok = okey.(Int)
+	if !ok {
+		panic("okey is not a key.Int")
+		//return false
+	}
+	return ik < oik
+}
+
+// Hash calculates the hash.Val of the Int receiver every time it is called.
+func (ik Int) Hash() hash.Val {
 	var ib = Int2ByteSlice(int(ik))
-	return CalcHash(ib)
+	return hash.Calculate(ib)
 }
 
 // Equals determines if the given Key is equivalent, by value, to the receiver.
-func (ik IntKey) Equals(okey Key) bool {
-	var oik, ok = okey.(IntKey)
+func (ik Int) Equals(okey Hash) bool {
+	var oik, ok = okey.(Int)
 	if !ok {
 		return false
 	}
@@ -66,6 +78,6 @@ func (ik IntKey) Equals(okey Key) bool {
 }
 
 // String returns a string representation of the receiver.
-func (ik IntKey) String() string {
+func (ik Int) String() string {
 	return strconv.FormatInt(int64(ik), 10)
 }
