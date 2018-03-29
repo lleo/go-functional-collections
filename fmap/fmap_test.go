@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/lleo/go-functional-collections/fmap"
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key"
 	"github.com/lleo/stringutil"
 	"github.com/pkg/errors"
 )
@@ -31,7 +31,7 @@ func buildKvs(num int) []KeyVal {
 
 	var keyStr = "a"
 	for i := 0; i < num; i++ {
-		kvs[i].Key = hash.StringKey(keyStr)
+		kvs[i].Key = key.Str(keyStr)
 		kvs[i].Val = i
 		keyStr = Inc(keyStr)
 	}
@@ -51,10 +51,10 @@ func buildStrings(num int) []string {
 	return strs
 }
 
-func buildKeys(num int) []hash.Key {
-	var keys = make([]hash.Key, num)
+func buildKeys(num int) []key.Hash {
+	var keys = make([]key.Hash, num)
 	for i, s := range buildStrings(num) {
-		keys[i] = hash.StringKey(s)
+		keys[i] = key.Str(s)
 	}
 	return keys
 }
@@ -63,7 +63,7 @@ func buildKvsFromStrings(strs []string) []KeyVal {
 	var kvs = make([]KeyVal, len(strs))
 
 	for i := 0; i < len(strs); i++ {
-		kvs[i].Key = hash.StringKey(strs[i])
+		kvs[i].Key = key.Str(strs[i])
 		kvs[i].Val = i
 	}
 

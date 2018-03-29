@@ -4,17 +4,17 @@ import (
 	"fmt"
 
 	"github.com/lleo/go-functional-collections/fmap"
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key"
 )
 
 func ExampleMap_Range() {
 	var m = fmap.New().
-		Put(hash.StringKey("a"), 1).
-		Put(hash.StringKey("b"), 2).
-		Put(hash.StringKey("c"), 3)
+		Put(key.Str("a"), 1).
+		Put(key.Str("b"), 2).
+		Put(key.Str("c"), 3)
 
-	m.Range(func(k hash.Key, v interface{}) bool {
-		// Does not provide hash.Key entries in string order.
+	m.Range(func(k key.Hash, v interface{}) bool {
+		// Does not provide key.Hash entries in string order.
 		fmt.Println(k, v)
 		return true
 	})

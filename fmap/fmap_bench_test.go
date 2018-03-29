@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/lleo/go-functional-collections/fmap"
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key"
 )
 
 func buildKvs2(numMapKvs, numKvsXtra int) ([]KeyVal, []KeyVal) {
@@ -14,7 +14,7 @@ func buildKvs2(numMapKvs, numKvsXtra int) ([]KeyVal, []KeyVal) {
 
 	var s = "a"
 	for i := 0; i < numMapKvs+numKvsXtra; i++ {
-		kvs[i] = KeyVal{hash.StringKey(s), i}
+		kvs[i] = KeyVal{key.Str(s), i}
 		s = Inc(s)
 	}
 

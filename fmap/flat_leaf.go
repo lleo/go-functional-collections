@@ -3,15 +3,16 @@ package fmap
 import (
 	"fmt"
 
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key"
+	"github.com/lleo/go-functional-collections/key/hash"
 )
 
 type flatLeaf struct {
-	key hash.Key
+	key key.Hash
 	val interface{}
 }
 
-func newFlatLeaf(key hash.Key, val interface{}) *flatLeaf {
+func newFlatLeaf(key key.Hash, val interface{}) *flatLeaf {
 	var fl = new(flatLeaf)
 	fl.key = key
 	fl.val = val
@@ -33,7 +34,7 @@ func (l *flatLeaf) String() string {
 	return fmt.Sprintf("flatLeaf{key: %s, val: %v}", l.key, l.val)
 }
 
-func (l *flatLeaf) get(key hash.Key) (interface{}, bool) {
+func (l *flatLeaf) get(key key.Hash) (interface{}, bool) {
 	if l.key.Equals(key) {
 		return l.val, true
 	}
@@ -50,7 +51,7 @@ func (l *flatLeaf) get(key hash.Key) (interface{}, bool) {
 // generated which adds the current flatLeaf's key,val pair to the given key,val
 // pair in the returned collisionLeaf.
 func (l *flatLeaf) putResolve(
-	key hash.Key,
+	key key.Hash,
 	val interface{},
 	resolve ResolveConflictFunc,
 ) (leafI, bool) {
@@ -76,7 +77,7 @@ func (l *flatLeaf) putResolve(
 // If the current key does not equal the given key, then a new collisionLeaf is
 // generated which adds the current flatLeaf's key,val pair to the given key,val
 // pair in the returned collisionLeaf.
-func (l *flatLeaf) put(key hash.Key, val interface{}) (leafI, bool) {
+func (l *flatLeaf) put(key key.Hash, val interface{}) (leafI, bool) {
 	var nl leafI
 
 	if l.key.Equals(key) {
@@ -89,7 +90,7 @@ func (l *flatLeaf) put(key hash.Key, val interface{}) (leafI, bool) {
 	return nl, true // key,val was added
 }
 
-func (l *flatLeaf) del(key hash.Key) (leafI, interface{}, bool) {
+func (l *flatLeaf) del(key key.Hash) (leafI, interface{}, bool) {
 	if l.key.Equals(key) {
 		return nil, l.val, true // found
 	}

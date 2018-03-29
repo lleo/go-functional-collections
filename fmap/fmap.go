@@ -16,7 +16,7 @@
 // Each method call that potentially modifies the Map, returns a new Map data
 // structure in addition to the other pertinent return values.
 //
-// Every key in the key/value mapping must implement the hash.Key interface.
+// Every key in the key/value mapping must implement the key.Hash interface.
 //
 // Any value can be stored in the key/value mapping, because values are treated
 // and returned at interface{} values. That means the values returned from
@@ -28,7 +28,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key"
+	"github.com/lleo/go-functional-collections/key/hash"
 )
 
 // downgradeThreshold is the constant that sets the threshold for the size of a
@@ -112,16 +113,16 @@ func (m *Map) copy() *Map {
 // Map a nil is returned. If you need to store nil values and want to
 // distinguish between a found existing mapping of the key to nil and a
 // non-existent mapping for the key, you must use the Load method.
-func (m *Map) Get(key hash.Key) interface{} {
+func (m *Map) Get(key key.Hash) interface{} {
 	var v, _ = m.Load(key)
 	return v
 }
 
-// Load retrieves the value related to the hash.Key in the Map data structure.
+// Load retrieves the value related to the key.Hash in the Map data structure.
 // It also return a bool to indicate the value was found. This allows you to
 // store nil values in the Map data structure and distinguish between a found
 // nil key/value mapping and a non-existant key/value mapping.
-func (m *Map) Load(key hash.Key) (interface{}, bool) {
+func (m *Map) Load(key key.Hash) (interface{}, bool) {
 	if m.NumEntries() == 0 {
 		return nil, false
 	}
@@ -223,7 +224,7 @@ func (m *Map) persist(oldTable, newTable tableI, path *tableStack) {
 // was created. Lastly, if an existing key/value mapping was loaded then the
 // returned map is the original *Map, if the a new key/value mapping was
 // created returned *Map is a new persistent *Map.
-func (m *Map) LoadOrStore(key hash.Key, val interface{}) (
+func (m *Map) LoadOrStore(key key.Hash, val interface{}) (
 	*Map, interface{}, bool,
 ) {
 	var hv = key.Hash()
@@ -278,7 +279,7 @@ func (m *Map) LoadOrStore(key hash.Key, val interface{}) (
 
 // Put stores a new key/value mapping. It returns a new persistent *Map data
 // structure.
-func (m *Map) Put(key hash.Key, val interface{}) *Map {
+func (m *Map) Put(key key.Hash, val interface{}) *Map {
 	m, _ = m.Store(key, val)
 	return m
 }
@@ -288,7 +289,7 @@ func (m *Map) Put(key hash.Key, val interface{}) *Map {
 // or if the value merely replaced a prior value (false). Regardless of
 // whether a new key/value mapping was created or mearly replaced, a new
 // *Map is created.
-func (m *Map) Store(key hash.Key, val interface{}) (*Map, bool) {
+func (m *Map) Store(key key.Hash, val interface{}) (*Map, bool) {
 	var nm = m.copy()
 
 	var hv = key.Hash()
@@ -333,7 +334,7 @@ func (m *Map) Store(key hash.Key, val interface{}) (*Map, bool) {
 // Del deletes any entry with the given key, but does not indicate if the key
 // existed or not. However, if the key did not exist the returned *Map will be
 // the original *Map.
-func (m *Map) Del(key hash.Key) *Map {
+func (m *Map) Del(key key.Hash) *Map {
 	m, _, _ = m.Remove(key)
 	return m
 }
@@ -342,7 +343,7 @@ func (m *Map) Del(key hash.Key) *Map {
 // *Map data structure, the possible value that was stored for that key,
 // and a boolean idicating if the key was found and deleted. If the key didn't
 // exist, then the value is set nil, and the original *Map is returned.
-func (m *Map) Remove(key hash.Key) (*Map, interface{}, bool) {
+func (m *Map) Remove(key key.Hash) (*Map, interface{}, bool) {
 	//if m.numEnts == 0 {
 	//if m.root == nil {
 	if m.NumEntries() == 0 {
@@ -429,7 +430,7 @@ LOOP:
 // Range applies the given function for every key/value mapping in the *Map
 // data structure. Given that the *Map is immutable there is no danger with
 // concurrent use of the *Map while the Range method is executing.
-func (m *Map) Range(fn func(hash.Key, interface{}) bool) {
+func (m *Map) Range(fn func(key.Hash, interface{}) bool) {
 	//var visitLeafs = func(n nodeI, depth uint) bool {
 	//	if leaf, ok := n.(leafI); ok {
 	//		for _, kv := range leaf.keyVals() {
@@ -469,7 +470,7 @@ func (m *Map) String() string {
 		i++
 	}
 
-	//m.Range(func(k hash.Key, v interface{}) bool {
+	//m.Range(func(k key.Hash, v interface{}) bool {
 	//	ents[i] = fmt.Sprintf("%#v:%#v", k, v)
 	//	i++
 	//	return true
@@ -559,7 +560,7 @@ func insertPersist(
 	m *Map,
 	isOrigTable map[tableI]bool,
 	resolve ResolveConflictFunc,
-	k hash.Key,
+	k key.Hash,
 	v interface{},
 ) {
 	var hv = k.Hash()
@@ -660,11 +661,11 @@ func (m *Map) Merge(om *Map, resolve ResolveConflictFunc) *Map {
 	return nm
 }
 
-// BulkDelete removes all the keys in the given hash.Key slice. It then returns
+// BulkDelete removes all the keys in the given key.Hash slice. It then returns
 // a new persistent Map and a slice of the keys not found in the in the
 // original Map. BulkDelete is implemented more efficiently than repeated calls
 // to Remove.
-func (m *Map) BulkDelete(keys []hash.Key) (*Map, []hash.Key) {
+func (m *Map) BulkDelete(keys []key.Hash) (*Map, []key.Hash) {
 	var isOrigTable = make(map[tableI]bool)
 	m.walkPreOrder(func(n nodeI, depth uint) bool {
 		if t, isTable := n.(tableI); isTable {
@@ -673,7 +674,7 @@ func (m *Map) BulkDelete(keys []hash.Key) (*Map, []hash.Key) {
 		return true
 	})
 
-	var notFound []hash.Key
+	var notFound []key.Hash
 	var nm = m.copy()
 KEYSLOOP:
 	for _, k := range keys {
@@ -722,7 +723,7 @@ KEYSLOOP:
 
 //type Stats struct {
 //	DeepestKeys struct {
-//		Keys  []hash.Key
+//		Keys  []key.Hash
 //		Depth uint
 //	}
 //

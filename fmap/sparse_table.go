@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key/hash"
 )
 
 // sparseTableInitCap constant sets the default capacity of a new

@@ -41,12 +41,12 @@ const IndexLimit = 1 << NumIndexBits
 // MaxDepth is the maximum value of a depth variable. MaxDepth = DepthLimit - 1
 const MaxDepth = DepthLimit - 1
 
-// maxIndex is the maximum value of a Index variable. maxIndex = IndexLimit - 1
+// MaxIndex is the maximum value of a Index variable. maxIndex = IndexLimit - 1
 const MaxIndex = IndexLimit - 1
 
-// CalcHash deterministically calculates a randomized Val of a given byte
+// Calculate deterministically calculates a randomized Val of a given byte
 // slice .
-func CalcHash(bs []byte) Val {
+func Calculate(bs []byte) Val {
 	return Val(fold(hash(bs), remainder))
 }
 
@@ -92,15 +92,14 @@ func (v Val) HashPath(depth uint) Val {
 	}
 
 	return v & hashPathMask(depth)
-
 }
 
-// BuildHashPath method adds a idx at depth level of the HashPath. Given a
-// hash Path = "/11/07/13" and you call HashPath.BuildHashPath(23, 3) the method
+// buildHashPath method adds a idx at depth level of the HashPath. Given a
+// hash Path = "/11/07/13" and you call HashPath.buildHashPath(23, 3) the method
 // will return HashPath "/11/07/13/23". HashPath is shown here in the string
 // representation, but the real value is Val (aka uint64).
-func (v Val) BuildHashPath(idx, depth uint) Val {
-	_ = assertOn && assert(idx < DepthLimit, "BuildHashPath: idx > maxIndex")
+func (v Val) buildHashPath(idx, depth uint) Val {
+	_ = assertOn && assert(idx < DepthLimit, "buildHashPath: idx > maxIndex")
 
 	v &= hashPathMask(depth)
 	return v | Val(idx<<(depth*NumIndexBits))
@@ -131,7 +130,7 @@ func (v Val) HashPathString(limit uint) string {
 	return "/" + strings.Join(strs, "/")
 }
 
-// bitString returns a Val as a string of bits separated into groups of
+// BitString returns a Val as a string of bits separated into groups of
 // NumIndexBits bits.
 func (v Val) BitString() string {
 	var strs = make([]string, DepthLimit)
@@ -153,14 +152,17 @@ func (v Val) BitString() string {
 // v.HashPathString(DepthLimit).
 func (v Val) String() string {
 	return v.HashPathString(DepthLimit)
-	//return v.HashPathString(MaxDepth)
 }
 
-// parseHashPath
+// ParseHashPath is an unnecessary utility function to take the string
+// representation of a hash.Val (something like "/02/12/13/09/00/01/15/07" for
+// NumIndexBits==4 or "/02/12/19/27/00/31" for NumIndexBits==5) and converts it
+// into a hash.Val and an error if there was a failure in the string
+// representation.
 func ParseHashPath(s string) (Val, error) {
 	if !strings.HasPrefix(s, "/") {
 		return 0, errors.Errorf(
-			"parseHashPath: input, %q, does not start with '/'", s)
+			"ParseHashPath: input, %q, does not start with '/'", s)
 	}
 
 	if len(s) == 1 { // s="/"
@@ -178,11 +180,11 @@ func ParseHashPath(s string) (Val, error) {
 		var idx, err = strconv.ParseUint(idxStr, 10, int(NumIndexBits))
 		if err != nil {
 			return 0, errors.Wrapf(err,
-				"parseHashPath: the %d'th Index string failed to parse.", i)
+				"ParseHashPath: the %d'th Index string failed to parse.", i)
 		}
 
 		//v |= Val(idx << (uint(i) * NumIndexBits))
-		v = v.BuildHashPath(uint(idx), uint(i))
+		v = v.buildHashPath(uint(idx), uint(i))
 	}
 
 	return v, nil

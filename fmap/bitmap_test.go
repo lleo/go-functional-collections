@@ -3,7 +3,7 @@ package fmap
 import (
 	"testing"
 
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key/hash"
 )
 
 func TestBitmapIsSet(t *testing.T) {

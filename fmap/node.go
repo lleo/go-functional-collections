@@ -3,7 +3,8 @@ package fmap
 import (
 	"fmt"
 
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key"
+	"github.com/lleo/go-functional-collections/key/hash"
 )
 
 // visitFunc will be passed a value for every slot in the Hamt; this includes
@@ -25,29 +26,29 @@ type nodeI interface {
 // create a new value from, two key,value pairs where the keys are equal (this
 // is defined by k0.Equal(k1), hence only the Map key is passed in).
 type ResolveConflictFunc func(
-	key hash.Key,
+	key key.Hash,
 	origVal, newVal interface{},
 ) interface{}
 
 // KeepOrigVal is an implementation of ResolveConflictFunc type which returns
 // the first (origVal) value.
-func KeepOrigVal(key hash.Key, origVal, newVal interface{}) interface{} {
+func KeepOrigVal(key key.Hash, origVal, newVal interface{}) interface{} {
 	return origVal
 }
 
 // TakeNewVal is an implementation of ResolveConflictFunc type which returns
 // the second (newVal) value.
-func TakeNewVal(key hash.Key, origVal, newVal interface{}) interface{} {
+func TakeNewVal(key key.Hash, origVal, newVal interface{}) interface{} {
 	return newVal
 }
 
 type leafI interface {
 	nodeI
 
-	get(key hash.Key) (interface{}, bool)
-	putResolve(key hash.Key, val interface{}, resolve ResolveConflictFunc) (leafI, bool)
-	put(key hash.Key, val interface{}) (leafI, bool)
-	del(key hash.Key) (leafI, interface{}, bool)
+	get(key key.Hash) (interface{}, bool)
+	putResolve(key key.Hash, val interface{}, resolve ResolveConflictFunc) (leafI, bool)
+	put(key key.Hash, val interface{}) (leafI, bool)
+	del(key key.Hash) (leafI, interface{}, bool)
 
 	copy() leafI
 	keyVals() []KeyVal

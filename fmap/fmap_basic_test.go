@@ -4,37 +4,37 @@ import (
 	"testing"
 
 	"github.com/lleo/go-functional-collections/fmap"
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key"
 )
 
 func TestBasicButildSimpleMap(t *testing.T) {
 	var m = fmap.New()
 	m = m.
-		Put(hash.StringKey("a"), 1).
-		Put(hash.StringKey("b"), 2).
-		Put(hash.StringKey("c"), 3)
+		Put(key.Str("a"), 1).
+		Put(key.Str("b"), 2).
+		Put(key.Str("c"), 3)
 
-	if m.Get(hash.StringKey("a")) != 1 {
+	if m.Get(key.Str("a")) != 1 {
 		t.Fatal("m.Get(\"a\") != 1")
 	}
 
-	if m.Get(hash.StringKey("b")) != 2 {
+	if m.Get(key.Str("b")) != 2 {
 		t.Fatal("m.Get(\"b\") != 2")
 	}
 
-	if m.Get(hash.StringKey("c")) != 3 {
+	if m.Get(key.Str("c")) != 3 {
 		t.Fatal("m.Get(\"c\") != 3")
 	}
 }
 
 func TestBasicLoad(t *testing.T) {
 	var m = fmap.New()
-	m = m.Put(hash.StringKey("a"), nil)
+	m = m.Put(key.Str("a"), nil)
 
 	var val interface{}
 	var found bool
 
-	val, found = m.Load(hash.StringKey("a"))
+	val, found = m.Load(key.Str("a"))
 	if !found {
 		t.Fatal("failed to m.Load(\"a\")")
 	} else {
@@ -43,7 +43,7 @@ func TestBasicLoad(t *testing.T) {
 		}
 	}
 
-	val, found = m.Load(hash.StringKey("b"))
+	val, found = m.Load(key.Str("b"))
 	if found {
 		t.Fatal("WTF! \"b\" found")
 	} else {
@@ -55,12 +55,12 @@ func TestBasicLoad(t *testing.T) {
 
 func TestBasicLoadOrStore(t *testing.T) {
 	var m = fmap.New()
-	m = m.Put(hash.StringKey("a"), 1)
+	m = m.Put(key.Str("a"), 1)
 
 	var val interface{}
 	var loaded bool
 
-	m, val, loaded = m.LoadOrStore(hash.StringKey("b"), 2)
+	m, val, loaded = m.LoadOrStore(key.Str("b"), 2)
 	if loaded {
 		t.Fatal("failed to store (!loaded) (\"b\",2)")
 	} else {
@@ -69,7 +69,7 @@ func TestBasicLoadOrStore(t *testing.T) {
 		}
 	}
 
-	m, val, loaded = m.LoadOrStore(hash.StringKey("a"), 3)
+	m, val, loaded = m.LoadOrStore(key.Str("a"), 3)
 	if !loaded {
 		t.Fatal("failed to load m.LoadOrStore(\"b\", 3)")
 	} else {
@@ -78,7 +78,7 @@ func TestBasicLoadOrStore(t *testing.T) {
 		}
 	}
 
-	val = m.Get(hash.StringKey("a"))
+	val = m.Get(key.Str("a"))
 	if val != 1 {
 		t.Fatalf("val != 1 prior call to m.LoadOrStore(\"b\", 3) changed val=%d", val)
 	}
@@ -88,21 +88,21 @@ func TestBasicStore(t *testing.T) {
 	var m = fmap.New()
 
 	var added bool
-	m, added = m.Store(hash.StringKey("a"), 1)
+	m, added = m.Store(key.Str("a"), 1)
 
 	if !added {
 		t.Fatal("added for m.Store(\"a\", 1)")
 	} else {
-		if m.Get(hash.StringKey("a")) != 1 {
+		if m.Get(key.Str("a")) != 1 {
 			t.Fatal("m.Get(\"a\") != 1")
 		}
 	}
 
-	m, added = m.Store(hash.StringKey("a"), 2)
+	m, added = m.Store(key.Str("a"), 2)
 	if added {
 		t.Fatal("added == true for second m.Store(\"a\", 2)")
 	} else {
-		if m.Get(hash.StringKey("a")) != 2 {
+		if m.Get(key.Str("a")) != 2 {
 			t.Fatal("m.Get(\"a\") != 2")
 		}
 	}
@@ -116,26 +116,26 @@ func TestBasicDelete(t *testing.T) {
 	}
 
 	m = m.
-		Put(hash.StringKey("a"), 1).
-		Put(hash.StringKey("b"), 2).
-		Put(hash.StringKey("c"), 3)
+		Put(key.Str("a"), 1).
+		Put(key.Str("b"), 2).
+		Put(key.Str("c"), 3)
 
 	if m.NumEntries() != 3 {
 		t.Fatal("m.NumEntries() != 3")
 	}
 
-	m = m.Del(hash.StringKey("b"))
+	m = m.Del(key.Str("b"))
 
 	if m.NumEntries() != 2 {
 		t.Fatal("m.NumEntries() != 2")
 	}
 
-	var _, found = m.Load(hash.StringKey("b"))
+	var _, found = m.Load(key.Str("b"))
 	if found {
 		t.Fatal("found \"b\" after m.Del(\"b\")")
 	}
 
-	m = m.Del(hash.StringKey("a")).Del(hash.StringKey("c"))
+	m = m.Del(key.Str("a")).Del(key.Str("c"))
 
 	if m.NumEntries() != 0 {
 		t.Fatal("m.NumEntries() != 0")
@@ -146,9 +146,9 @@ func TestBasicRemove(t *testing.T) {
 	var m = fmap.New()
 
 	m = m.
-		Put(hash.StringKey("a"), 1).
-		Put(hash.StringKey("b"), 2).
-		Put(hash.StringKey("c"), 3)
+		Put(key.Str("a"), 1).
+		Put(key.Str("b"), 2).
+		Put(key.Str("c"), 3)
 
 	if m.NumEntries() != 3 {
 		t.Fatal("m.NumEntries() != 3")
@@ -156,15 +156,15 @@ func TestBasicRemove(t *testing.T) {
 
 	var val interface{}
 	var found bool
-	var key hash.Key
+	var key = key.Str("d")
+	//var key key.Str = "d" //works also
 
-	key = hash.StringKey("d")
 	m, val, found = m.Remove(key)
 	if found {
 		t.Fatalf("found val=%#v for key=%#v that does not exist.", val, key)
 	}
 
-	key = hash.StringKey("b")
+	key = "b" // variable 'key' already set to type key.Str
 	m, val, found = m.Remove(key)
 	if !found {
 		t.Fatalf("failed to find & remove key=%#v", key)
@@ -182,9 +182,9 @@ func TestBasicRemove(t *testing.T) {
 func TestBasicString(t *testing.T) {
 	var m = fmap.New()
 	m = m.
-		Put(hash.StringKey("a"), 1).
-		Put(hash.StringKey("b"), 2).
-		Put(hash.StringKey("c"), 3)
+		Put(key.Str("a"), 1).
+		Put(key.Str("b"), 2).
+		Put(key.Str("c"), 3)
 
 	var str = m.String()
 	//log.Printf("m.String()=%s\n", str)
@@ -234,7 +234,7 @@ func TestBasicBulkInsert(t *testing.T) {
 	}
 }
 
-func resolveAddInts(k hash.Key, origVal, newVal interface{}) interface{} {
+func resolveAddInts(k key.Hash, origVal, newVal interface{}) interface{} {
 	var oi, ni = origVal.(int), newVal.(int)
 	//log.Printf("resolveAddInts: oridVal,%d + newVal,%d = %d", oi, ni, oi+ni)
 	return oi + ni
@@ -312,13 +312,13 @@ func TestBasicMergeConflict(t *testing.T) {
 
 func TestBasicBulkDelete(t *testing.T) {
 	var kvs = buildKvs(100)
-	var keys = make([]hash.Key, len(kvs))
+	var keys = make([]key.Hash, len(kvs))
 	for i, kv := range kvs {
 		keys[i] = kv.Key
 	}
 	var m = fmap.NewFromList(kvs)
 
-	var notFound []hash.Key
+	var notFound []key.Hash
 	m, notFound = m.BulkDelete(keys[50:])
 
 	if len(notFound) != 0 {
@@ -345,7 +345,7 @@ func TestBasicBulkDelete(t *testing.T) {
 	}
 }
 
-func isMember(k hash.Key, keys []hash.Key) bool {
+func isMember(k key.Hash, keys []key.Hash) bool {
 	for _, key := range keys {
 		if k.Equals(key) {
 			return true
@@ -356,13 +356,13 @@ func isMember(k hash.Key, keys []hash.Key) bool {
 
 func TestBasicBulkDeleteNotFound(t *testing.T) {
 	var kvs = buildKvs(100)
-	var keys = make([]hash.Key, len(kvs))
+	var keys = make([]key.Hash, len(kvs))
 	for i, kv := range kvs {
 		keys[i] = kv.Key
 	}
 	var m = fmap.NewFromList(kvs[:70])
 
-	var notFound []hash.Key
+	var notFound []key.Hash
 	m, notFound = m.BulkDelete(keys)
 
 	if len(notFound) != 30 {

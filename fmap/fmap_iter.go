@@ -3,7 +3,7 @@ package fmap
 import (
 	"fmt"
 
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key"
 )
 
 // Iter struct maintains the current state for walking the *Map data structure.
@@ -24,10 +24,10 @@ func newIter(root tableI) *Iter {
 }
 
 // Next returns each sucessive key/value mapping in the *Map. When all enrties
-// have been returned it will return a nil hash.Key.
-func (it *Iter) Next() (hash.Key, interface{}) {
+// have been returned it will return a nil key.Hash.
+func (it *Iter) Next() (key.Hash, interface{}) {
 	//log.Printf("it.Next: called. it=%s", it)
-	var key hash.Key
+	var key key.Hash
 	var val interface{}
 
 LOOP:

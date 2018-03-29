@@ -1,7 +1,7 @@
 package key
 
 import (
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key/hash"
 )
 
 // Str is a type wrapper of string values that implements the hash.Key and
