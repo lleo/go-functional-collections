@@ -3,7 +3,7 @@ package set_test
 import (
 	"testing"
 
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key"
 	"github.com/lleo/go-functional-collections/set"
 )
 
@@ -14,7 +14,7 @@ func TestIntensiveButildSetBig(t *testing.T) {
 
 	var keyStr = "a"
 	for i := 0; i < sizeBig; i++ {
-		s = s.Set(StringKey(keyStr))
+		s = s.Set(key.Str(keyStr))
 		keyStr = Inc(keyStr)
 	}
 
@@ -27,11 +27,11 @@ func TestIntensiveButildSetBig(t *testing.T) {
 
 func TestIntensiveDestroySetBig(t *testing.T) {
 	var s = set.New()
-	var keys = make([]StringKey, sizeBig)
+	var keys = make([]key.Str, sizeBig)
 
 	var keyStr = "a"
 	for i := 0; i < sizeBig; i++ {
-		var k = StringKey(keyStr)
+		var k = key.Str(keyStr)
 		keys[i] = k
 		s = s.Set(k)
 		keyStr = Inc(keyStr)
@@ -53,7 +53,7 @@ func TestIntensiveDestroySetBig(t *testing.T) {
 
 //findAndRemove is just here to demonstrate how slow array O(n) remove is versus
 //HAMT O(log16(n)) remove is.
-func findAndRemove(k hash.Key, keys *[]hash.Key) bool {
+func findAndRemove(k key.Hash, keys *[]key.Hash) bool {
 	for i := 0; i < len(*keys); i++ {
 		if k.Equals((*keys)[i]) {
 			(*keys)[i] = (*keys)[len(*keys)-1]

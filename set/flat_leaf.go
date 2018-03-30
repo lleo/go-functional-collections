@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key"
+	"github.com/lleo/go-functional-collections/key/hash"
 )
 
 type flatLeaf struct {
-	key hash.Key
+	key key.Hash
 }
 
-func newFlatLeaf(key hash.Key) *flatLeaf {
+func newFlatLeaf(key key.Hash) *flatLeaf {
 	var fl = new(flatLeaf)
 	fl.key = key
 	return fl
@@ -25,7 +26,7 @@ func (l *flatLeaf) String() string {
 	return fmt.Sprintf("flatLeaf{key: %s}", l.key)
 }
 
-func (l *flatLeaf) get(key hash.Key) bool {
+func (l *flatLeaf) get(key key.Hash) bool {
 	if l.key.Equals(key) {
 		return true
 	}
@@ -37,29 +38,29 @@ func (l *flatLeaf) get(key hash.Key) bool {
 // indicating if the key was added ontop of the current leaf key or if
 // the val mearly replaced the current key's val (either way a new leafI is
 // allocated and returned).
-func (l *flatLeaf) put(key hash.Key) (leafI, bool) {
+func (l *flatLeaf) put(k key.Hash) (leafI, bool) {
 	var nl leafI
 
-	if l.key.Equals(key) {
+	if l.key.Equals(k) {
 		// maintain functional behavior of flatLeaf
-		//nl = newFlatLeaf(key)
+		//nl = newFlatLeaf(k)
 		//return nl, false //replaced
 		return l, false
 	}
 
-	nl = newCollisionLeaf([]hash.Key{l.key, key})
+	nl = newCollisionLeaf([]key.Hash{l.key, k})
 	return nl, true // key,val was added
 }
 
-func (l *flatLeaf) del(key hash.Key) (leafI, bool) {
+func (l *flatLeaf) del(key key.Hash) (leafI, bool) {
 	if l.key.Equals(key) {
 		return nil, true //found
 	}
 	return l, false //not found
 }
 
-func (l *flatLeaf) keys() []hash.Key {
-	return []hash.Key{l.key}
+func (l *flatLeaf) keys() []key.Hash {
+	return []key.Hash{l.key}
 }
 
 func (l *flatLeaf) walkPreOrder(fn visitFunc, depth uint) bool {

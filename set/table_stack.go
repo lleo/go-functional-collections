@@ -3,7 +3,7 @@ package set
 import (
 	"strings"
 
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key/hash"
 )
 
 type tableStack []tableI

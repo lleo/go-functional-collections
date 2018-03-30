@@ -5,16 +5,17 @@ import (
 	"log"
 	"strings"
 
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key"
+	"github.com/lleo/go-functional-collections/key/hash"
 )
 
 // implements nodeI
 // implements leafI
 type collisionLeaf struct {
-	ks []hash.Key
+	ks []key.Hash
 }
 
-func newCollisionLeaf(keys []hash.Key) *collisionLeaf {
+func newCollisionLeaf(keys []key.Hash) *collisionLeaf {
 	var leaf = new(collisionLeaf)
 	leaf.ks = append(leaf.ks, keys...)
 
@@ -40,11 +41,11 @@ func (l *collisionLeaf) String() string {
 	}
 	var jkeystr = strings.Join(keystrs, ",")
 
-	return fmt.Sprintf("collisionLeaf{hash:%s, keys:[]hash.Key{%s}}",
+	return fmt.Sprintf("collisionLeaf{hash:%s, keys:[]key.Hash{%s}}",
 		l.ks[0].Hash(), jkeystr)
 }
 
-func (l *collisionLeaf) get(key hash.Key) bool {
+func (l *collisionLeaf) get(key key.Hash) bool {
 	for _, keyN := range l.ks {
 		if keyN.Equals(key) {
 			return true
@@ -53,18 +54,18 @@ func (l *collisionLeaf) get(key hash.Key) bool {
 	return false
 }
 
-func (l *collisionLeaf) put(key hash.Key) (leafI, bool) {
+func (l *collisionLeaf) put(k key.Hash) (leafI, bool) {
 	for _, keyN := range l.ks {
-		if keyN.Equals(key) {
+		if keyN.Equals(k) {
 			//var nl = l.copy()
 			//return nl, false //replaced
 			return l, false
 		}
 	}
 	var nl = new(collisionLeaf)
-	nl.ks = make([]hash.Key, len(l.ks)+1)
+	nl.ks = make([]key.Hash, len(l.ks)+1)
 	copy(nl.ks, l.ks)
-	nl.ks[len(l.ks)] = key
+	nl.ks[len(l.ks)] = k
 	// v-- this, instead of that --^ make&copy&assign
 	//nl.ks = append(nl.ks, append(l.ks, k)...)
 
@@ -73,7 +74,7 @@ func (l *collisionLeaf) put(key hash.Key) (leafI, bool) {
 	return nl, true // k,v was added
 }
 
-func (l *collisionLeaf) del(key hash.Key) (leafI, bool) {
+func (l *collisionLeaf) del(key key.Hash) (leafI, bool) {
 	for i, lkey := range l.ks {
 		if lkey.Equals(key) {
 			var nl leafI
@@ -93,8 +94,8 @@ func (l *collisionLeaf) del(key hash.Key) (leafI, bool) {
 	return l, false
 }
 
-func (l *collisionLeaf) keys() []hash.Key {
-	var r = make([]hash.Key, 0, len(l.ks))
+func (l *collisionLeaf) keys() []key.Hash {
+	var r = make([]key.Hash, 0, len(l.ks))
 	r = append(r, l.ks...)
 	return r
 	//return l.ks

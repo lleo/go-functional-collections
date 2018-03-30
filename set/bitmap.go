@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key/hash"
 )
 
 // bitmapShift is 3 because we are using uint8 as the base bitmap type.

@@ -3,7 +3,7 @@ package set
 import (
 	"fmt"
 
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key"
 )
 
 // Iter struct maintins the current state of walking the *Set data structure.
@@ -23,11 +23,11 @@ func newIter(root tableI) *Iter {
 	return it
 }
 
-// Next returns each sucessive hash.Key entry in the *Set. When all enrties
+// Next returns each sucessive key.Hash entry in the *Set. When all enrties
 // have been returned it will return nil.
-func (it *Iter) Next() hash.Key {
+func (it *Iter) Next() key.Hash {
 	//log.Printf("it.Next: called. it=%s", it)
-	var key hash.Key
+	var key key.Hash
 
 LOOP:
 	for {

@@ -4,40 +4,40 @@ import (
 	"sort"
 	"testing"
 
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key"
 	"github.com/lleo/go-functional-collections/set"
 )
 
 func TestBasicBuildSimpleSet(t *testing.T) {
 	var s = set.New()
 	s = s.
-		Set(StringKey("a")).
-		Set(StringKey("b")).
-		Set(StringKey("c"))
+		Set(key.Str("a")).
+		Set(key.Str("b")).
+		Set(key.Str("c"))
 
-	if !s.IsSet(StringKey("a")) {
+	if !s.IsSet(key.Str("a")) {
 		t.Fatal("s.IsSet(\"a\") not true")
 	}
 
-	if !s.IsSet(StringKey("b")) {
+	if !s.IsSet(key.Str("b")) {
 		t.Fatal("s.IsSet(\"b\") not true")
 	}
 
-	if !s.IsSet(StringKey("c")) {
+	if !s.IsSet(key.Str("c")) {
 		t.Fatal("s.IsSet(\"c\") not true")
 	}
 }
 
 func TestBasicIsSet(t *testing.T) {
 	var s = set.New()
-	s = s.Set(StringKey("a"))
+	s = s.Set(key.Str("a"))
 
-	var found = s.IsSet(StringKey("a"))
+	var found = s.IsSet(key.Str("a"))
 	if !found {
 		t.Fatal("failed to s.IsSet(\"a\")")
 	}
 
-	found = s.IsSet(StringKey("b"))
+	found = s.IsSet(key.Str("b"))
 	if found {
 		t.Fatal("WTF! \"b\" found")
 	}
@@ -47,21 +47,21 @@ func TestBasicAdd(t *testing.T) {
 	var s = set.New()
 
 	var added bool
-	s, added = s.Add(StringKey("a"))
+	s, added = s.Add(key.Str("a"))
 
 	if !added {
 		t.Fatal("added for s.Add(\"a\") is false")
 	} else {
-		if !s.IsSet(StringKey("a")) {
+		if !s.IsSet(key.Str("a")) {
 			t.Fatal("s.Add(\"a\") was added, but s.IsSet(\"a\") not true")
 		}
 	}
 
-	s, added = s.Add(StringKey("a"))
+	s, added = s.Add(key.Str("a"))
 	if added {
 		t.Fatal("added == true for second s.Add(\"a\")")
 	} else {
-		if !s.IsSet(StringKey("a")) {
+		if !s.IsSet(key.Str("a")) {
 			t.Fatal("s.Add(\"a\") was added, but s.IsSet(\"a\") not true")
 		}
 	}
@@ -75,25 +75,25 @@ func TestBasicUnset(t *testing.T) {
 	}
 
 	s = s.
-		Set(StringKey("a")).
-		Set(StringKey("b")).
-		Set(StringKey("c"))
+		Set(key.Str("a")).
+		Set(key.Str("b")).
+		Set(key.Str("c"))
 
 	if s.NumEntries() != 3 {
 		t.Fatal("s.NumEntries() != 3")
 	}
 
-	s = s.Unset(StringKey("b"))
+	s = s.Unset(key.Str("b"))
 
 	if s.NumEntries() != 2 {
 		t.Fatal("s.NumEntries() != 2")
 	}
 
-	if s.IsSet(StringKey("b")) {
+	if s.IsSet(key.Str("b")) {
 		t.Fatal("found \"b\" after s.Unset(\"b\")")
 	}
 
-	s = s.Unset(StringKey("a")).Unset(StringKey("c"))
+	s = s.Unset(key.Str("a")).Unset(key.Str("c"))
 
 	if s.NumEntries() != 0 {
 		t.Fatal("s.NumEntries() != 0")
@@ -104,24 +104,24 @@ func TestBasicRemove(t *testing.T) {
 	var s = set.New()
 
 	s = s.
-		Set(StringKey("a")).
-		Set(StringKey("b")).
-		Set(StringKey("c"))
+		Set(key.Str("a")).
+		Set(key.Str("b")).
+		Set(key.Str("c"))
 
 	if s.NumEntries() != 3 {
 		t.Fatal("s.NumEntries() != 3")
 	}
 
 	var found bool
-	var key hash.Key
+	var key key.Str
 
-	key = StringKey("d")
+	key = "d"
 	s, found = s.Remove(key)
 	if found {
 		t.Fatalf("found key=%#v that does not exist.", key)
 	}
 
-	key = StringKey("b")
+	key = "b"
 	s, found = s.Remove(key)
 	if !found {
 		t.Fatalf("failed to find & remove key=%#v", key)
@@ -135,25 +135,25 @@ func TestBasicRemove(t *testing.T) {
 
 func TestBasicRange(t *testing.T) {
 	var s = set.New().
-		Set(StringKey("a")).
-		Set(StringKey("b")).
-		Set(StringKey("c"))
+		Set(key.Str("a")).
+		Set(key.Str("b")).
+		Set(key.Str("c"))
 
-	var keys = make([]hash.Key, s.NumEntries())
+	var keys = make([]key.Hash, s.NumEntries())
 	var i int
-	s.Range(func(k hash.Key) bool {
+	s.Range(func(k key.Hash) bool {
 		keys[i] = k
 		i++
 		return true
 	})
 	sort.Slice(keys, func(i, j int) bool {
-		ki := keys[i].(StringKey)
-		kj := keys[j].(StringKey)
+		ki := keys[i].(key.Str)
+		kj := keys[j].(key.Str)
 		return string(ki) < string(kj)
 	})
 	var str = "a"
 	for _, k := range keys {
-		var sk = StringKey(str)
+		var sk = key.Str(str)
 		if !k.Equals(sk) {
 			t.Fatalf("k,%s != sk,%s", s.String(), sk.String())
 		}
@@ -164,9 +164,9 @@ func TestBasicRange(t *testing.T) {
 func TestBasicString(t *testing.T) {
 	var s = set.New()
 	s = s.
-		Set(StringKey("a")).
-		Set(StringKey("b")).
-		Set(StringKey("c"))
+		Set(key.Str("a")).
+		Set(key.Str("b")).
+		Set(key.Str("c"))
 
 	var str = s.String()
 	//log.Printf("s.String()=%s\n", str)
@@ -179,14 +179,14 @@ func TestBasicString(t *testing.T) {
 
 func TestBasicCount(t *testing.T) {
 	//var s = set.New().
-	//	Set(StringKey("a")).
-	//	Set(StringKey("b")).
-	//	Set(StringKey("c"))
+	//	Set(key.Str("a")).
+	//	Set(key.Str("b")).
+	//	Set(key.Str("c"))
 
 	var s = set.New()
 	var str = "a"
 	for i := 0; i < 100000; i++ {
-		s = s.Set(StringKey(str))
+		s = s.Set(key.Str(str))
 		str = Inc(str)
 	}
 
@@ -284,7 +284,7 @@ func TestBasicBulkDelete(t *testing.T) {
 	}
 
 	var s *set.Set
-	var notFound []hash.Key
+	var notFound []key.Hash
 	s, notFound = origSet.BulkDelete(keys[50:])
 
 	if !origSet.Equiv(copySet) {
@@ -311,7 +311,7 @@ func TestBasicBulkDelete(t *testing.T) {
 	}
 }
 
-func isMember(k hash.Key, keys []hash.Key) bool {
+func isMember(k key.Hash, keys []key.Hash) bool {
 	for _, key := range keys {
 		if k.Equals(key) {
 			return true
@@ -327,7 +327,7 @@ func TestBasicBulkDeleteNotFound(t *testing.T) {
 
 	//log.Println(s.TreeString(""))
 
-	var notFound []hash.Key
+	var notFound []key.Hash
 	s, notFound = s.BulkDelete(keys)
 
 	if len(notFound) != 30 {
@@ -362,8 +362,8 @@ func TestBasicDifference(t *testing.T) {
 	var diffSet = setA.Difference(setB)
 	var diffKeys = diffSet.Keys()
 	sort.Slice(diffKeys, func(i, j int) bool {
-		var ki = diffKeys[i].(StringKey)
-		var kj = diffKeys[j].(StringKey)
+		var ki = diffKeys[i].(key.Str)
+		var kj = diffKeys[j].(key.Str)
 		return string(ki) < string(kj)
 	})
 	for i, k := range diffKeys {
@@ -402,8 +402,8 @@ func TestBasicDifference(t *testing.T) {
 //	var diffSet = setA.Difference2(setB)
 //	var diffKeys = diffSet.Keys()
 //	sort.Slice(diffKeys, func(i, j int) bool {
-//		var ki = diffKeys[i].(StringKey)
-//		var kj = diffKeys[j].(StringKey)
+//		var ki = diffKeys[i].(key.Str)
+//		var kj = diffKeys[j].(key.Str)
 //		return string(ki) < string(kj)
 //	})
 //	for i, k := range diffKeys {

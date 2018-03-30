@@ -14,7 +14,7 @@
 // Each method call that potentially modifies the Set, returns a new Set data
 // structure in addition to the other pertinent return values.
 //
-// The unique values stored in a Set must implement the hash.Key interface.
+// The unique values stored in a Set must implement the key.Hash interface.
 package set
 
 import (
@@ -22,7 +22,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key"
+	"github.com/lleo/go-functional-collections/key/hash"
 )
 
 // downgradeThreshold is the constant that sets the threshold for the size of a
@@ -39,7 +40,7 @@ const downgradeThreshold uint = hash.IndexLimit / 2
 // upgradeThreshold = 20 for hash.numIndexBits=5 aka hash.IndexLimit=32
 const upgradeThreshold uint = hash.IndexLimit * 5 / 8
 
-// Set struct mainains an immutable collection of hash.Key entries.
+// Set struct mainains an immutable collection of key.Hash entries.
 type Set struct {
 	root    tableI
 	numEnts int
@@ -103,10 +104,10 @@ func (s *Set) copy() *Set {
 	return ns
 }
 
-// IsSet searches the Set for a hash.Key value where the given key (k) matches
+// IsSet searches the Set for a key.Hash value where the given key (k) matches
 // a key in the Set (k0) such that k.Equals(k0) returns true. If the given
 // key is found IsSet return true, otherwise it returns false.
-func (s *Set) IsSet(key hash.Key) bool {
+func (s *Set) IsSet(key key.Hash) bool {
 	if s.NumEntries() == 0 {
 		return false
 	}
@@ -203,13 +204,13 @@ func (s *Set) persist(oldTable, newTable tableI, path *tableStack) {
 	return
 }
 
-// Set inserts the give hash.Key into the Set and returns a new *Set. If an
+// Set inserts the give key.Hash into the Set and returns a new *Set. If an
 // equivalent key exists in the receiver *Set nothing is done to the *Set and
 // the original receiver *Set is returned.
 //
 // Equivalentcy of keys is determined by k.Equals(k0) where k is the given
-// hash.Key and k0 is the hash.Key already stored in the *Set.
-func (s *Set) Set(key hash.Key) *Set {
+// key.Hash and k0 is the key.Hash already stored in the *Set.
+func (s *Set) Set(key key.Hash) *Set {
 	var ns, _ = s.Add(key)
 	return ns
 }
@@ -221,8 +222,8 @@ func (s *Set) Set(key hash.Key) *Set {
 // indicates that the given key was not added.
 //
 // Equivalentcy of keys is determined by k.Equals(k0) where k is the given
-// hash.Key and k0 is the hash.Key already stored in the *Set.
-func (s *Set) Add(key hash.Key) (*Set, bool) {
+// key.Hash and k0 is the key.Hash already stored in the *Set.
+func (s *Set) Add(key key.Hash) (*Set, bool) {
 	var ns = s.copy()
 
 	var hv = key.Hash()
@@ -263,19 +264,19 @@ func (s *Set) Add(key hash.Key) (*Set, bool) {
 	return ns, added
 }
 
-// Unset removes the any hash.Key that is equivalent to the given hash.Key and
-// returns the new *Set. If the hash.Key does not exist in the *Set, then
+// Unset removes the any key.Hash that is equivalent to the given key.Hash and
+// returns the new *Set. If the key.Hash does not exist in the *Set, then
 // nothing will occur and the original *Set will be returned.
-func (s *Set) Unset(key hash.Key) *Set {
+func (s *Set) Unset(key key.Hash) *Set {
 	s, _ = s.Remove(key)
 	return s
 }
 
-// Remove deletes the given hash.Key, if it exists and returns a new *Set
-// reflecting that change and a true value indicating the hash.Key was found.
-// If the hash.Key does not exist in the *Set then the original *Set is returned
-// with a false value indicating that the hash.Key was not found.
-func (s *Set) Remove(key hash.Key) (*Set, bool) {
+// Remove deletes the given key.Hash, if it exists and returns a new *Set
+// reflecting that change and a true value indicating the key.Hash was found.
+// If the key.Hash does not exist in the *Set then the original *Set is returned
+// with a false value indicating that the key.Hash was not found.
+func (s *Set) Remove(key key.Hash) (*Set, bool) {
 	//if m.numEnts == 0 {
 	//if m.root == nil {
 	if s.NumEntries() == 0 {
@@ -359,9 +360,9 @@ LOOP:
 	return it
 }
 
-// Range applies the given function to every hash.Key in the *Set. If the
+// Range applies the given function to every key.Hash in the *Set. If the
 // function returns false the Range operation stops.
-func (s *Set) Range(fn func(hash.Key) bool) {
+func (s *Set) Range(fn func(key.Hash) bool) {
 	//var visitLeafs = func(n nodeI, depth uint) bool {
 	//	if leaf, ok := n.(leafI); ok {
 	//		for _, key := range leaf.keys() {
@@ -381,11 +382,11 @@ func (s *Set) Range(fn func(hash.Key) bool) {
 	}
 }
 
-// Keys returns a hash.Key slice that contains all the entries in Set.
-func (s *Set) Keys() []hash.Key {
-	var keys = make([]hash.Key, s.NumEntries())
+// Keys returns a key.Hash slice that contains all the entries in Set.
+func (s *Set) Keys() []key.Hash {
+	var keys = make([]key.Hash, s.NumEntries())
 	var i int
-	s.Range(func(k hash.Key) bool {
+	s.Range(func(k key.Hash) bool {
 		keys[i] = k
 		i++
 		return true
@@ -393,7 +394,7 @@ func (s *Set) Keys() []hash.Key {
 	return keys
 }
 
-// NumEntries returns the number of hash.Keys in the *Set. This operation is
+// NumEntries returns the number of key.Hashs in the *Set. This operation is
 // O(1) because the count is maintained at the top level for the *Set and does
 // not require a walk of the *Set data structure to return the count.
 func (s *Set) NumEntries() int {
@@ -412,7 +413,7 @@ func (s *Set) String() string {
 		i++
 	}
 
-	//s.Range(func(k hash.Key) bool {
+	//s.Range(func(k key.Hash) bool {
 	//	//log.Printf("i=%d, k=%#v\n", i, k)
 	//	ents[i] = fmt.Sprintf("%#v", k)
 	//	i++
@@ -463,10 +464,10 @@ func (s *Set) Count() int {
 }
 
 // NewFromList constructs a new *Set structure containing all the keys
-// of the given hash.Key slice.
+// of the given key.Hash slice.
 //
 // NewFromList is implemented more efficiently than repeated calls to Add.
-func NewFromList(keys []hash.Key) *Set {
+func NewFromList(keys []key.Hash) *Set {
 	var s = New()
 	for _, k := range keys {
 		var hv = k.Hash()
@@ -505,7 +506,7 @@ func NewFromList(keys []hash.Key) *Set {
 func insertPersist(
 	s *Set,
 	isOrigTable map[tableI]bool,
-	k hash.Key,
+	k key.Hash,
 ) {
 	var hv = k.Hash()
 	var path, leaf, idx = s.find(hv)
@@ -557,14 +558,14 @@ func insertPersist(
 	}
 }
 
-// BulkInsert stores all the given keys from the argument hash.Key slice  into
+// BulkInsert stores all the given keys from the argument key.Hash slice  into
 // the receiver Set.
 //
 // The returned Set maintains the structure sharing relationship with the
 // receiver Set.
 //
 // BulkInsert is implemented more efficiently than repeated calls to Add.
-func (s *Set) BulkInsert(keys []hash.Key) *Set {
+func (s *Set) BulkInsert(keys []key.Hash) *Set {
 	var isOrigTable = make(map[tableI]bool)
 	s.walkPreOrder(func(n nodeI, depth uint) bool {
 		if t, isTable := n.(tableI); isTable {
@@ -608,7 +609,7 @@ func (s *Set) Merge(other *Set) *Set {
 func removePersist(
 	s *Set,
 	isOrigTable map[tableI]bool,
-	k hash.Key,
+	k key.Hash,
 ) bool {
 	var hv = k.Hash()
 	var path, leaf, idx = s.find(hv)
@@ -649,11 +650,11 @@ func removePersist(
 	return true // removed k
 }
 
-// BulkDelete removes all the keys in the given hash.Key slice. It returns a new
+// BulkDelete removes all the keys in the given key.Hash slice. It returns a new
 // persistent Set and a slice of the keys not found in the in the original Set.
 //
 // BulkDelete is implemented more efficiently than repeated calls to Remove.
-func (s *Set) BulkDelete(keys []hash.Key) (*Set, []hash.Key) {
+func (s *Set) BulkDelete(keys []key.Hash) (*Set, []key.Hash) {
 	var isOrigTable = make(map[tableI]bool)
 	s.walkPreOrder(func(n nodeI, depth uint) bool {
 		if t, isTable := n.(tableI); isTable {
@@ -662,7 +663,7 @@ func (s *Set) BulkDelete(keys []hash.Key) (*Set, []hash.Key) {
 		return true
 	})
 
-	var notFound []hash.Key
+	var notFound []key.Hash
 	var ns = s.copy()
 	//KEYSLOOP:
 	for _, k := range keys {
@@ -673,11 +674,11 @@ func (s *Set) BulkDelete(keys []hash.Key) (*Set, []hash.Key) {
 	return ns, notFound
 }
 
-// BulkDelete2 removes all the keys in the given hash.Key slice. It returns a
+// BulkDelete2 removes all the keys in the given key.Hash slice. It returns a
 // new persistent Set.
 //
 // BulkDelete2 is implemented more efficiently than repeated calls to Remove.
-func (s *Set) BulkDelete2(keys []hash.Key) *Set {
+func (s *Set) BulkDelete2(keys []key.Hash) *Set {
 	var isOrigTable = make(map[tableI]bool)
 	s.walkPreOrder(func(n nodeI, depth uint) bool {
 		if t, isTable := n.(tableI); isTable {
@@ -780,7 +781,7 @@ func Intersection(sets ...*Set) *Set {
 //
 // There is no structural sharing with either the receiver Set or argument Set.
 func (s *Set) Intersect(other *Set) *Set {
-	var intersectKeys []hash.Key
+	var intersectKeys []key.Hash
 	var it = other.Iter()
 	for k := it.Next(); k != nil; k = it.Next() {
 		if s.IsSet(k) {
@@ -857,7 +858,7 @@ func (s *Set) Difference(other *Set) *Set {
 
 //type Stats struct {
 //	DeepestKeys struct {
-//		Keys  []hash.Key
+//		Keys  []key.Hash
 //		Depth uint
 //	}
 //
