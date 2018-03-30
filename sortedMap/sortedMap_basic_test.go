@@ -53,7 +53,7 @@ func TestBasicLoadOrStoreTree0(t *testing.T) {
 	}
 
 	if val != 10 {
-		t.Fatal("val,%d != expected val,%v,", val, m0.root.ln.val)
+		t.Fatalf("val,%d != expected val,%v,", val, m0.root.ln.val)
 	}
 
 	if m1 != m0 {
@@ -85,7 +85,7 @@ func TestBasicLoadOrStoreTree1(t *testing.T) {
 	}
 
 	if val != nil {
-		t.Fatal("val,%d != expected val,%v,", val, nil)
+		t.Fatalf("val,%d != expected val,%v,", val, nil)
 	}
 
 	if m1.NumEntries() != 3 {
@@ -121,7 +121,7 @@ func TestBasicLoadOrStoreTree2(t *testing.T) {
 	}
 
 	if val != nil {
-		t.Fatal("val,%d != expected val,%v,", val, nil)
+		t.Fatalf("val,%d != expected val,%v,", val, nil)
 	}
 
 	if m1.NumEntries() != 3 {
@@ -150,7 +150,7 @@ func TestBasicLoadOrStoreTree3(t *testing.T) {
 				mknod(90, red, nil, nil))))
 
 	if err := m0.valid(); err != nil {
-		t.Fatal("m0 is invalid; err=%s", err)
+		t.Fatalf("m0 is invalid; err=%s", err)
 	}
 
 	var origM = m0
@@ -167,7 +167,7 @@ func TestBasicLoadOrStoreTree3(t *testing.T) {
 	}
 
 	if val != nil {
-		t.Fatal("val,%d != expected val,%v,", val, nil)
+		t.Fatalf("val,%d != expected val,%v,", val, nil)
 	}
 
 	if m1.NumEntries() != 9 {
@@ -646,7 +646,7 @@ func TestBasicDelTwoChildTree1(t *testing.T) {
 	}
 
 	if m.NumEntries() != 5 {
-		t.Fatal("m.NumEntries(),%d != 5", m.NumEntries())
+		t.Fatalf("m.NumEntries(),%d != 5", m.NumEntries())
 	}
 
 	for _, kv := range shouldHaveKvs {
