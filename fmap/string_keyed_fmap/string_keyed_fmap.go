@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/lleo/go-functional-collections/fmap"
-	"github.com/lleo/go-functional-collections/hash"
+	"github.com/lleo/go-functional-collections/key"
 )
 
 // StringKeyedMap is a wrapper of the fmap.Map structure that stores/returns
@@ -14,8 +14,9 @@ type StringKeyedMap fmap.Map
 
 // New return a properly initialize pointer to a StringKeyedMap struct.
 func New() *StringKeyedMap {
-	var m = new(StringKeyedMap)
-	return m
+	//var m = new(StringKeyedMap) //DOESN'T WORK; there is no root table init.
+	var m = fmap.New()
+	return (*StringKeyedMap)(m)
 }
 
 // Get loads the value stored for the given key. If the key doesn't exist in the
@@ -29,7 +30,7 @@ func (m *StringKeyedMap) Get(k string) interface{} {
 	if k == "" {
 		panic("key is empty string")
 	}
-	return (*fmap.Map)(m).Get(hash.StringKey(k))
+	return (*fmap.Map)(m).Get(key.Str(k))
 }
 
 // Load retrieves the value related to the string key in the Map data structure.
@@ -43,7 +44,7 @@ func (m *StringKeyedMap) Load(k string) (interface{}, bool) {
 	if k == "" {
 		panic("key is empty string")
 	}
-	return (*fmap.Map)(m).Load(hash.StringKey(k))
+	return (*fmap.Map)(m).Load(key.Str(k))
 }
 
 // LoadOrStore returns the existing value for the key if present. Otherwise,
@@ -61,7 +62,7 @@ func (m *StringKeyedMap) LoadOrStore(k string, v interface{}) (
 	if k == "" {
 		panic("key is empty string")
 	}
-	var nm, val, found = (*fmap.Map)(m).LoadOrStore(hash.StringKey(k), v)
+	var nm, val, found = (*fmap.Map)(m).LoadOrStore(key.Str(k), v)
 	return (*StringKeyedMap)(nm), val, found
 }
 
@@ -74,7 +75,7 @@ func (m *StringKeyedMap) Put(k string, v interface{}) *StringKeyedMap {
 	if k == "" {
 		panic("key is empty string")
 	}
-	return (*StringKeyedMap)((*fmap.Map)(m).Put(hash.StringKey(k), v))
+	return (*StringKeyedMap)((*fmap.Map)(m).Put(key.Str(k), v))
 }
 
 // Store stores a new key/value mapping. It returns a new persistent
@@ -91,7 +92,7 @@ func (m *StringKeyedMap) Store(k string, v interface{}) (
 	if k == "" {
 		panic("key is empty string")
 	}
-	var nm, added = (*fmap.Map)(m).Store(hash.StringKey(k), v)
+	var nm, added = (*fmap.Map)(m).Store(key.Str(k), v)
 	return (*StringKeyedMap)(nm), added
 }
 
@@ -105,7 +106,7 @@ func (m *StringKeyedMap) Del(k string) *StringKeyedMap {
 	if k == "" {
 		panic("key is empty string")
 	}
-	return (*StringKeyedMap)((*fmap.Map)(m).Del(hash.StringKey(k)))
+	return (*StringKeyedMap)((*fmap.Map)(m).Del(key.Str(k)))
 }
 
 // Remove deletes any key/value mapping for the given key. It returns a
@@ -121,7 +122,7 @@ func (m *StringKeyedMap) Remove(k string) (
 	if k == "" {
 		panic("key is empty string")
 	}
-	var nm, val, removed = (*fmap.Map)(m).Remove(hash.StringKey(k))
+	var nm, val, removed = (*fmap.Map)(m).Remove(key.Str(k))
 	return (*StringKeyedMap)(nm), val, removed
 }
 
@@ -132,13 +133,13 @@ type Iter fmap.Iter
 // have been returned it will return an empty string as the key.
 func (it *Iter) Next() (string, interface{}) {
 	var k, val = (*fmap.Iter)(it).Next()
-	var sk hash.StringKey
+	var sk key.Str
 	var s string
 
 	if k == nil {
 		s = ""
 	} else {
-		sk = k.(hash.StringKey)
+		sk = k.(key.Str)
 		s = string(sk)
 
 	}
@@ -157,13 +158,13 @@ func (m *StringKeyedMap) Iter() *Iter {
 // data structure. Given that the *Map is immutable there is no danger with
 // concurrent use of the *Map while the Range method is executing.
 func (m *StringKeyedMap) Range(f func(string, interface{}) bool) {
-	var fn = func(k hash.Key, v interface{}) bool {
-		var sk hash.StringKey
+	var fn = func(k key.Hash, v interface{}) bool {
+		var sk key.Str
 		var s string
 		if k == nil {
 			s = ""
 		} else {
-			sk = k.(hash.StringKey)
+			sk = k.(key.Str)
 			s = string(sk)
 		}
 		return f(s, v)
@@ -176,7 +177,7 @@ func (m *StringKeyedMap) Range(f func(string, interface{}) bool) {
 // operation is O(1), because a current count of the number of entries is
 // maintained at the top level of the *Map data structure, so walking the data
 // structure is not required to get the current count of key/value entries.
-func (m *StringKeyedMap) NumEntries() uint {
+func (m *StringKeyedMap) NumEntries() int {
 	return (*fmap.Map)(m).NumEntries()
 }
 
@@ -192,7 +193,7 @@ func (m *StringKeyedMap) String() string {
 		i++
 	}
 
-	//m.Range(func(k hash.Key, v interface{}) bool {
+	//m.Range(func(k key.Hash, v interface{}) bool {
 	//	ents[i] = fmt.Sprintf("%q:%#v", k, v)
 	//	i++
 	//	return true
