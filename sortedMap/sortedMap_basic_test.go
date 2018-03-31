@@ -4,7 +4,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/lleo/go-functional-collections/sorted"
+	"github.com/lleo/go-functional-collections/key"
 )
 
 func TestBasicGetPos(t *testing.T) {
@@ -13,10 +13,10 @@ func TestBasicGetPos(t *testing.T) {
 			mknod(10, red, nil, nil),
 			mknod(30, red, nil, nil)))
 
-	var val = m.Get(sorted.IntKey(20))
+	var val = m.Get(key.Int(20))
 
 	if val != 20 {
-		t.Fatal("m.Get(sorted.IntKey(20)) did not return a val==20")
+		t.Fatal("m.Get(key.Int(20)) did not return a val==20")
 	}
 }
 
@@ -26,10 +26,10 @@ func TestBasicGetNeg(t *testing.T) {
 			mknod(10, red, nil, nil),
 			mknod(30, red, nil, nil)))
 
-	var val = m.Get(sorted.IntKey(40))
+	var val = m.Get(key.Int(40))
 
 	if val != nil {
-		t.Fatal("m.Get(sorted.IntKey(40)) did not return a val==nil")
+		t.Fatal("m.Get(key.Int(40)) did not return a val==nil")
 	}
 }
 
@@ -44,7 +44,7 @@ func TestBasicLoadOrStoreTree0(t *testing.T) {
 
 	//log.Printf("Before LoadOrStore: m0=\n%s", m0.treeString())
 
-	var m1, val, found = m0.LoadOrStore(sorted.IntKey(10), 10)
+	var m1, val, found = m0.LoadOrStore(key.Int(10), 10)
 
 	//log.Printf("After LoadOrStore: m1=\n%s", m1.treeString())
 
@@ -76,7 +76,7 @@ func TestBasicLoadOrStoreTree1(t *testing.T) {
 
 	//log.Printf("Before LoadOrStore: m0=\n%s", m0.treeString())
 
-	var m1, val, found = m0.LoadOrStore(sorted.IntKey(10), 10)
+	var m1, val, found = m0.LoadOrStore(key.Int(10), 10)
 
 	//log.Printf("After LoadOrStore: m1=\n%s", m1.treeString())
 
@@ -112,7 +112,7 @@ func TestBasicLoadOrStoreTree2(t *testing.T) {
 
 	//log.Printf("Before LoadOrStore: m0=\n%s", m0.treeString())
 
-	var m1, val, found = m0.LoadOrStore(sorted.IntKey(20), 20)
+	var m1, val, found = m0.LoadOrStore(key.Int(20), 20)
 
 	//log.Printf("After LoadOrStore: m1=\n%s", m1.treeString())
 
@@ -158,7 +158,7 @@ func TestBasicLoadOrStoreTree3(t *testing.T) {
 
 	//log.Printf("Before LoadOrStore: m0=\n%s", m0.treeString())
 
-	var m1, val, found = m0.LoadOrStore(sorted.IntKey(30), 30)
+	var m1, val, found = m0.LoadOrStore(key.Int(30), 30)
 
 	//log.Printf("After LoadOrStore: m1=\n%s", m1.treeString())
 
@@ -192,15 +192,15 @@ func TestBasicStoreReplace(t *testing.T) {
 	var origM0 = m0
 	var dupM0 = m0.dup()
 
-	var m1, added = m0.Store(sorted.IntKey(30), 31)
+	var m1, added = m0.Store(key.Int(30), 31)
 
 	if added {
 		t.Fatal("Store added new entry when it should not")
 	}
 
-	var val = m1.Get(sorted.IntKey(30))
+	var val = m1.Get(key.Int(30))
 	if val != 31 {
-		t.Fatal("new map did not return value of 31 for a lookup of sorted.IntKey(31)")
+		t.Fatal("new map did not return value of 31 for a lookup of key.Int(31)")
 	}
 
 	if !origM0.equiv(dupM0) {
@@ -216,7 +216,7 @@ func TestBasicPutCase1(t *testing.T) {
 
 	//log.Printf("BEFORE Put m =\n%s", m.treeString())
 
-	m = m.Put(sorted.IntKey(10), 10)
+	m = m.Put(key.Int(10), 10)
 
 	//log.Printf("AFTER Put m =\n%s", m.treeString())
 
@@ -244,7 +244,7 @@ func TestBasicPutCase2(t *testing.T) {
 
 	//log.Printf("BEFORE Put m =\n%s", m.treeString())
 
-	m = m.Put(sorted.IntKey(30), 30)
+	m = m.Put(key.Int(30), 30)
 
 	//log.Printf("AFTER Put m =\n%s", m.treeString())
 
@@ -277,7 +277,7 @@ func TestBasicPutCase3(t *testing.T) {
 
 	//log.Printf("BEFORE Put m =\n%s", m.treeString())
 
-	m = m.Put(sorted.IntKey(60), 60)
+	m = m.Put(key.Int(60), 60)
 
 	//log.Printf("AFTER Put m =\n%s", m.treeString())
 
@@ -320,8 +320,8 @@ func TestBasicPutCase4(t *testing.T) {
 
 	//log.Printf("BEFORE Put m =\n%s", m.treeString())
 
-	//m = m.Put(sorted.IntKey(5310), 5310)
-	m = m.Put(sorted.IntKey(30), 30)
+	//m = m.Put(key.Int(5310), 5310)
+	m = m.Put(key.Int(30), 30)
 
 	//log.Printf("AFTER Put m =\n%s", m.treeString())
 
@@ -344,7 +344,7 @@ func TestBasicRemoveNeg(t *testing.T) {
 			mknod(10, red, nil, nil),
 			mknod(30, red, nil, nil)))
 
-	var m1, val, found = m0.Remove(sorted.IntKey(40))
+	var m1, val, found = m0.Remove(key.Int(40))
 
 	if found {
 		t.Fatal("found a key that does not exist")
@@ -366,7 +366,7 @@ func TestBasicDelCase1Tree0(t *testing.T) {
 	var then = m0.treeString()
 	//var dupM0 = m0.dup()
 
-	var m1 = m0.Del(sorted.IntKey(10))
+	var m1 = m0.Del(key.Int(10))
 
 	if m1.NumEntries() != 0 {
 		t.Fatal("m.NumEntries() != 0")
@@ -393,7 +393,7 @@ func TestBasicDelCase1Tree1(t *testing.T) {
 
 	var then = m0.treeString()
 
-	var m1 = m0.Del(sorted.IntKey(10))
+	var m1 = m0.Del(key.Int(10))
 
 	if m1.NumEntries() != 1 {
 		t.Fatal("m.NumEntries() != 1")
@@ -416,7 +416,7 @@ func TestBasicDelCase1Tree2(t *testing.T) {
 
 	var then = m0.treeString()
 
-	var m1 = m0.Del(sorted.IntKey(20))
+	var m1 = m0.Del(key.Int(20))
 
 	if m1.NumEntries() != 1 {
 		t.Fatal("m.NumEntries() != 1")
@@ -441,7 +441,7 @@ func TestBasicDelCase2Tree0(t *testing.T) {
 
 	//log.Printf("BEFORE REMOVE: Map m=\n%s", m.treeString())
 
-	m = m.Del(sorted.IntKey(30))
+	m = m.Del(key.Int(30))
 
 	//log.Printf("AFTER REMOVE Map m=\n%s", m.treeString())
 
@@ -471,7 +471,7 @@ func TestBasicDelCase2Tree1(t *testing.T) {
 
 	//log.Printf("BEFORE REMOVE: Map m=\n%s", m.treeString())
 
-	m = m.Del(sorted.IntKey(10))
+	m = m.Del(key.Int(10))
 
 	//log.Printf("AFTER REMOVE Map m=\n%s", m.treeString())
 
@@ -499,7 +499,7 @@ func TestBasicDelCase3Tree0(t *testing.T) {
 			mknod(30, black, nil, nil),
 		))
 
-	m = m.Del(sorted.IntKey(30))
+	m = m.Del(key.Int(30))
 	if m.NumEntries() != 2 {
 		t.Fatalf("m.NumEntries(),%d != 2", m.NumEntries())
 	}
@@ -533,7 +533,7 @@ func TestBasicDelCase6Tree0(t *testing.T) {
 
 	//log.Printf("origMapStr0 =\n%s", origMapStr0)
 
-	m = m.Del(sorted.IntKey(30))
+	m = m.Del(key.Int(30))
 
 	if m.NumEntries() != 5 {
 		t.Fatalf("m.NumEntries(),%d != 5", m.NumEntries())
@@ -561,12 +561,12 @@ func TestBasicDelTwoChildTree0(t *testing.T) {
 				mknod(80, black, nil, nil))))
 
 	var shouldHaveKvs = []KeyVal{
-		{sorted.IntKey(10), 10},
-		{sorted.IntKey(30), 30},
-		{sorted.IntKey(40), 40},
-		{sorted.IntKey(50), 50},
-		{sorted.IntKey(70), 70},
-		{sorted.IntKey(80), 80},
+		{key.Int(10), 10},
+		{key.Int(30), 30},
+		{key.Int(40), 40},
+		{key.Int(50), 50},
+		{key.Int(70), 70},
+		{key.Int(80), 80},
 	}
 
 	var origM = m
@@ -575,12 +575,12 @@ func TestBasicDelTwoChildTree0(t *testing.T) {
 
 	//log.Printf("BEFORE DEL m = \n%s", m.treeString())
 
-	m = m.Del(sorted.IntKey(20))
+	m = m.Del(key.Int(20))
 
 	//log.Printf("AFTER DEL m = \n%s", m.treeString())
 
 	if err := m.valid(); err != nil {
-		t.Fatalf("INVALID TREE AFTER Del(sorted.IntKey(20)); err=%s\n", err)
+		t.Fatalf("INVALID TREE AFTER Del(key.Int(20)); err=%s\n", err)
 	}
 
 	if m.NumEntries() != 6 {
@@ -624,11 +624,11 @@ func TestBasicDelTwoChildTree1(t *testing.T) {
 
 	//shouldHave after Del(70)
 	var shouldHaveKvs = []KeyVal{
-		{sorted.IntKey(10), 10},
-		{sorted.IntKey(30), 30},
-		{sorted.IntKey(40), 40},
-		{sorted.IntKey(50), 50},
-		{sorted.IntKey(80), 80},
+		{key.Int(10), 10},
+		{key.Int(30), 30},
+		{key.Int(40), 40},
+		{key.Int(50), 50},
+		{key.Int(80), 80},
 	}
 
 	var origM = m
@@ -637,12 +637,12 @@ func TestBasicDelTwoChildTree1(t *testing.T) {
 
 	//log.Printf("BEFORE DEL m = \n%s", m.treeString())
 
-	m = m.Del(sorted.IntKey(70))
+	m = m.Del(key.Int(70))
 
 	//log.Printf("AFTER DEL m = \n%s", m.treeString())
 
 	if err := m.valid(); err != nil {
-		t.Fatalf("INVALID TREE AFTER Del(sorted.IntKey(70)); err=%s\n", err)
+		t.Fatalf("INVALID TREE AFTER Del(key.Int(70)); err=%s\n", err)
 	}
 
 	if m.NumEntries() != 5 {
@@ -683,10 +683,10 @@ func TestBasicDelTwoChildTree2(t *testing.T) {
 
 	//shouldHave after Del(70)
 	var shouldHaveKvs = []KeyVal{
-		{sorted.IntKey(10), 10},
-		{sorted.IntKey(50), 50},
-		{sorted.IntKey(70), 70},
-		{sorted.IntKey(80), 80},
+		{key.Int(10), 10},
+		{key.Int(50), 50},
+		{key.Int(70), 70},
+		{key.Int(80), 80},
 	}
 
 	var origM = m
@@ -695,12 +695,12 @@ func TestBasicDelTwoChildTree2(t *testing.T) {
 
 	//log.Printf("BEFORE DEL m = \n%s", m.treeString())
 
-	m = m.Del(sorted.IntKey(40))
+	m = m.Del(key.Int(40))
 
 	//log.Printf("AFTER DEL m = \n%s", m.treeString())
 
 	if err := m.valid(); err != nil {
-		t.Fatalf("INVALID TREE AFTER Del(sorted.IntKey(40)); err=%s\n", err)
+		t.Fatalf("INVALID TREE AFTER Del(key.Int(40)); err=%s\n", err)
 	}
 
 	if m.NumEntries() != 4 {
@@ -743,11 +743,11 @@ func TestBasicDelTwoChildTree3(t *testing.T) {
 
 	//shouldHave after Del(20)
 	var shouldHaveKvs = []KeyVal{
-		{sorted.IntKey(10), 10},
-		{sorted.IntKey(30), 30},
-		{sorted.IntKey(40), 40},
-		{sorted.IntKey(50), 50},
-		{sorted.IntKey(80), 80},
+		{key.Int(10), 10},
+		{key.Int(30), 30},
+		{key.Int(40), 40},
+		{key.Int(50), 50},
+		{key.Int(80), 80},
 	}
 
 	var origM = m
@@ -756,12 +756,12 @@ func TestBasicDelTwoChildTree3(t *testing.T) {
 
 	//log.Printf("BEFORE DEL m = \n%s", m.treeString())
 
-	m = m.Del(sorted.IntKey(20))
+	m = m.Del(key.Int(20))
 
 	//log.Printf("AFTER DEL m = \n%s", m.treeString())
 
 	if err := m.valid(); err != nil {
-		t.Fatalf("INVALID TREE AFTER Del(sorted.IntKey(20)); err=%s\n", err)
+		t.Fatalf("INVALID TREE AFTER Del(key.Int(20)); err=%s\n", err)
 	}
 
 	if m.NumEntries() != 5 {
@@ -810,15 +810,15 @@ func TestBasicDelTwoChildTree4(t *testing.T) {
 
 	//shouldHave after Del(80)
 	var shouldHaveKvs = []KeyVal{
-		{sorted.IntKey(10), 10},
-		{sorted.IntKey(20), 20},
-		{sorted.IntKey(30), 30},
-		{sorted.IntKey(40), 40},
-		{sorted.IntKey(50), 50},
-		{sorted.IntKey(60), 60},
-		{sorted.IntKey(70), 70},
-		//{sorted.IntKey(80), 80},
-		{sorted.IntKey(90), 90},
+		{key.Int(10), 10},
+		{key.Int(20), 20},
+		{key.Int(30), 30},
+		{key.Int(40), 40},
+		{key.Int(50), 50},
+		{key.Int(60), 60},
+		{key.Int(70), 70},
+		//{key.Int(80), 80},
+		{key.Int(90), 90},
 	}
 
 	var origM = m
@@ -827,12 +827,12 @@ func TestBasicDelTwoChildTree4(t *testing.T) {
 
 	//log.Printf("BEFORE DEL m = \n%s", m.treeString())
 
-	m = m.Del(sorted.IntKey(80))
+	m = m.Del(key.Int(80))
 
 	//log.Printf("AFTER DEL m = \n%s", m.treeString())
 
 	if err := m.valid(); err != nil {
-		t.Fatalf("INVALID TREE AFTER Del(sorted.IntKey(80)); err=%s\n", err)
+		t.Fatalf("INVALID TREE AFTER Del(key.Int(80)); err=%s\n", err)
 	}
 
 	if m.NumEntries() != 8 {
@@ -884,28 +884,28 @@ func TestBasicRange(t *testing.T) {
 	}
 
 	var shouldHaveKvs = []KeyVal{
-		{sorted.IntKey(10), 10},
-		{sorted.IntKey(20), 20},
-		{sorted.IntKey(30), 30},
-		{sorted.IntKey(40), 40},
-		{sorted.IntKey(50), 50},
-		{sorted.IntKey(60), 60},
-		{sorted.IntKey(70), 70},
-		{sorted.IntKey(80), 80},
-		{sorted.IntKey(90), 90},
-		{sorted.IntKey(100), 100},
-		{sorted.IntKey(110), 110},
-		{sorted.IntKey(120), 120},
-		{sorted.IntKey(130), 130},
+		{key.Int(10), 10},
+		{key.Int(20), 20},
+		{key.Int(30), 30},
+		{key.Int(40), 40},
+		{key.Int(50), 50},
+		{key.Int(60), 60},
+		{key.Int(70), 70},
+		{key.Int(80), 80},
+		{key.Int(90), 90},
+		{key.Int(100), 100},
+		{key.Int(110), 110},
+		{key.Int(120), 120},
+		{key.Int(130), 130},
 	}
 
 	var i int
-	var fn = func(k0 sorted.Key, v0 interface{}) bool {
+	var fn = func(k0 key.Sort, v0 interface{}) bool {
 		var k1 = shouldHaveKvs[i].Key
 		var v1 = shouldHaveKvs[i].Val
 		//log.Printf("k0=%s; v0=%v;", k0, v0)
 		//log.Printf("k1=%s; v0=%v;", k1, v1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		if v0 != v1 {
@@ -938,28 +938,28 @@ func TestBasicRangeForwBeg(t *testing.T) {
 	}
 
 	var shouldHaveKvs = []KeyVal{
-		{sorted.IntKey(10), 10},
-		{sorted.IntKey(20), 20},
-		{sorted.IntKey(30), 30},
-		{sorted.IntKey(40), 40},
-		{sorted.IntKey(50), 50},
-		{sorted.IntKey(60), 60},
-		{sorted.IntKey(70), 70},
-		{sorted.IntKey(80), 80},
-		{sorted.IntKey(90), 90},
-		{sorted.IntKey(100), 100},
-		{sorted.IntKey(110), 110},
-		{sorted.IntKey(120), 120},
-		{sorted.IntKey(130), 130},
+		{key.Int(10), 10},
+		{key.Int(20), 20},
+		{key.Int(30), 30},
+		{key.Int(40), 40},
+		{key.Int(50), 50},
+		{key.Int(60), 60},
+		{key.Int(70), 70},
+		{key.Int(80), 80},
+		{key.Int(90), 90},
+		{key.Int(100), 100},
+		{key.Int(110), 110},
+		{key.Int(120), 120},
+		{key.Int(130), 130},
 	}
 
 	//var numKeys = len(shouldHaveKvs)
 	var eltOffset = 3
-	var startKey = sorted.IntKey(eltOffset * 10)
-	var endKey = sorted.InfKey(1) //positive infinity
+	var startKey = key.Int(eltOffset * 10)
+	var endKey = key.Inf(1) //positive infinity
 	var keyRange = shouldHaveKvs[eltOffset-1:]
 	var i = 0
-	var fn = func(k0 sorted.Key, v0 interface{}) bool {
+	var fn = func(k0 key.Sort, v0 interface{}) bool {
 		if i >= len(keyRange) {
 			t.Fatalf("i,%d >= len(keyRange),%d", i, len(keyRange))
 		}
@@ -967,7 +967,7 @@ func TestBasicRangeForwBeg(t *testing.T) {
 		var v1 = keyRange[i].Val
 		//log.Printf("k0=%s; v0=%v;", k0, v0)
 		//log.Printf("k1=%s; v0=%v;", k1, v1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		if v0 != v1 {
@@ -1003,28 +1003,28 @@ func TestBasicRangeForwBegInexact(t *testing.T) {
 	}
 
 	var shouldHaveKvs = []KeyVal{
-		{sorted.IntKey(10), 10},
-		{sorted.IntKey(20), 20},
-		{sorted.IntKey(30), 30},
-		{sorted.IntKey(40), 40},
-		{sorted.IntKey(50), 50},
-		{sorted.IntKey(60), 60},
-		{sorted.IntKey(70), 70},
-		{sorted.IntKey(80), 80},
-		{sorted.IntKey(90), 90},
-		{sorted.IntKey(100), 100},
-		{sorted.IntKey(110), 110},
-		{sorted.IntKey(120), 120},
-		{sorted.IntKey(130), 130},
+		{key.Int(10), 10},
+		{key.Int(20), 20},
+		{key.Int(30), 30},
+		{key.Int(40), 40},
+		{key.Int(50), 50},
+		{key.Int(60), 60},
+		{key.Int(70), 70},
+		{key.Int(80), 80},
+		{key.Int(90), 90},
+		{key.Int(100), 100},
+		{key.Int(110), 110},
+		{key.Int(120), 120},
+		{key.Int(130), 130},
 	}
 
 	//var numKeys = len(shouldHaveKvs)
 	var eltOffset = 2
-	var startKey = sorted.IntKey((eltOffset * 10) - 5) //sorted.IntKey(15)
-	var endKey = sorted.InfKey(1)                      //positive infinity
+	var startKey = key.Int((eltOffset * 10) - 5) //key.Int(15)
+	var endKey = key.Inf(1)                      //positive infinity
 	var keyRange = shouldHaveKvs[eltOffset-1:]
 	var i = 0
-	var fn = func(k0 sorted.Key, v0 interface{}) bool {
+	var fn = func(k0 key.Sort, v0 interface{}) bool {
 		if i >= len(keyRange) {
 			t.Fatalf("i,%d >= len(keyRange),%d", i, len(keyRange))
 		}
@@ -1032,7 +1032,7 @@ func TestBasicRangeForwBegInexact(t *testing.T) {
 		var v1 = keyRange[i].Val
 		//log.Printf("k0=%s; v0=%v;", k0, v0)
 		//log.Printf("k1=%s; v0=%v;", k1, v1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		if v0 != v1 {
@@ -1068,28 +1068,28 @@ func TestBasicRangeForwEnd(t *testing.T) {
 	}
 
 	var shouldHaveKvs = []KeyVal{
-		{sorted.IntKey(10), 10},
-		{sorted.IntKey(20), 20},
-		{sorted.IntKey(30), 30},
-		{sorted.IntKey(40), 40},
-		{sorted.IntKey(50), 50},
-		{sorted.IntKey(60), 60},
-		{sorted.IntKey(70), 70},
-		{sorted.IntKey(80), 80},
-		{sorted.IntKey(90), 90},
-		{sorted.IntKey(100), 100},
-		{sorted.IntKey(110), 110},
-		{sorted.IntKey(120), 120},
-		{sorted.IntKey(130), 130},
+		{key.Int(10), 10},
+		{key.Int(20), 20},
+		{key.Int(30), 30},
+		{key.Int(40), 40},
+		{key.Int(50), 50},
+		{key.Int(60), 60},
+		{key.Int(70), 70},
+		{key.Int(80), 80},
+		{key.Int(90), 90},
+		{key.Int(100), 100},
+		{key.Int(110), 110},
+		{key.Int(120), 120},
+		{key.Int(130), 130},
 	}
 
 	var numKeys = len(shouldHaveKvs)
 	var eltOffset = 3
-	var startKey = sorted.InfKey(-1)                       //negative infinity
-	var endKey = sorted.IntKey((numKeys - eltOffset) * 10) //sorted.IntKey(100)
-	var keyRange = shouldHaveKvs[:len(shouldHaveKvs)-3]    //??
+	var startKey = key.Inf(-1)                          //negative infinity
+	var endKey = key.Int((numKeys - eltOffset) * 10)    //key.Int(100)
+	var keyRange = shouldHaveKvs[:len(shouldHaveKvs)-3] //??
 	var i = 0
-	var fn = func(k0 sorted.Key, v0 interface{}) bool {
+	var fn = func(k0 key.Sort, v0 interface{}) bool {
 		if i >= len(keyRange) {
 			t.Fatalf("i,%d >= len(keyRange),%d", i, len(keyRange))
 		}
@@ -1097,7 +1097,7 @@ func TestBasicRangeForwEnd(t *testing.T) {
 		var v1 = keyRange[i].Val
 		//log.Printf("k0=%s; v0=%v;", k0, v0)
 		//log.Printf("k1=%s; v0=%v;", k1, v1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		if v0 != v1 {
@@ -1133,28 +1133,28 @@ func TestBasicRangeForwEndInexact(t *testing.T) {
 	}
 
 	var shouldHaveKvs = []KeyVal{
-		{sorted.IntKey(10), 10},
-		{sorted.IntKey(20), 20},
-		{sorted.IntKey(30), 30},
-		{sorted.IntKey(40), 40},
-		{sorted.IntKey(50), 50},
-		{sorted.IntKey(60), 60},
-		{sorted.IntKey(70), 70},
-		{sorted.IntKey(80), 80},
-		{sorted.IntKey(90), 90},
-		{sorted.IntKey(100), 100},
-		{sorted.IntKey(110), 110},
-		{sorted.IntKey(120), 120},
-		{sorted.IntKey(130), 130},
+		{key.Int(10), 10},
+		{key.Int(20), 20},
+		{key.Int(30), 30},
+		{key.Int(40), 40},
+		{key.Int(50), 50},
+		{key.Int(60), 60},
+		{key.Int(70), 70},
+		{key.Int(80), 80},
+		{key.Int(90), 90},
+		{key.Int(100), 100},
+		{key.Int(110), 110},
+		{key.Int(120), 120},
+		{key.Int(130), 130},
 	}
 
 	var numKeys = len(shouldHaveKvs)
 	var eltOffset = 3
-	var startKey = sorted.InfKey(-1)                       //negative infinity
-	var endKey = sorted.IntKey((numKeys-eltOffset)*10 + 5) //sorted.IntKey(105)
-	var keyRange = shouldHaveKvs[:len(shouldHaveKvs)-3]    //??
+	var startKey = key.Inf(-1)                          //negative infinity
+	var endKey = key.Int((numKeys-eltOffset)*10 + 5)    //key.Int(105)
+	var keyRange = shouldHaveKvs[:len(shouldHaveKvs)-3] //??
 	var i = 0
-	var fn = func(k0 sorted.Key, v0 interface{}) bool {
+	var fn = func(k0 key.Sort, v0 interface{}) bool {
 		if i >= len(keyRange) {
 			t.Fatalf("i,%d >= len(keyRange),%d", i, len(keyRange))
 		}
@@ -1162,7 +1162,7 @@ func TestBasicRangeForwEndInexact(t *testing.T) {
 		var v1 = keyRange[i].Val
 		//log.Printf("k0=%s; v0=%v;", k0, v0)
 		//log.Printf("k1=%s; v0=%v;", k1, v1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		if v0 != v1 {
@@ -1198,28 +1198,28 @@ func TestBasicRangeRevBeg(t *testing.T) {
 	}
 
 	var shouldHaveKvs = []KeyVal{
-		{sorted.IntKey(10), 10},
-		{sorted.IntKey(20), 20},
-		{sorted.IntKey(30), 30},
-		{sorted.IntKey(40), 40},
-		{sorted.IntKey(50), 50},
-		{sorted.IntKey(60), 60},
-		{sorted.IntKey(70), 70},
-		{sorted.IntKey(80), 80},
-		{sorted.IntKey(90), 90},
-		{sorted.IntKey(100), 100},
-		{sorted.IntKey(110), 110},
-		{sorted.IntKey(120), 120},
-		{sorted.IntKey(130), 130},
+		{key.Int(10), 10},
+		{key.Int(20), 20},
+		{key.Int(30), 30},
+		{key.Int(40), 40},
+		{key.Int(50), 50},
+		{key.Int(60), 60},
+		{key.Int(70), 70},
+		{key.Int(80), 80},
+		{key.Int(90), 90},
+		{key.Int(100), 100},
+		{key.Int(110), 110},
+		{key.Int(120), 120},
+		{key.Int(130), 130},
 	}
 
 	var numKeys = len(shouldHaveKvs)
 	var eltOffset = 3
 	var keyRange = shouldHaveKvs[:numKeys-eltOffset]
-	var startKey = sorted.IntKey((numKeys - eltOffset) * 10)
-	var endKey = sorted.InfKey(-1) //negative infinity
+	var startKey = key.Int((numKeys - eltOffset) * 10)
+	var endKey = key.Inf(-1) //negative infinity
 	var i = len(keyRange) - 1
-	var fn = func(k0 sorted.Key, v0 interface{}) bool {
+	var fn = func(k0 key.Sort, v0 interface{}) bool {
 		if i < 0 {
 			t.Fatalf("i,%d < 0", i)
 		}
@@ -1227,7 +1227,7 @@ func TestBasicRangeRevBeg(t *testing.T) {
 		var v1 = keyRange[i].Val
 		//log.Printf("k0=%s; v0=%v;", k0, v0)
 		//log.Printf("k1=%s; v0=%v;", k1, v1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		if v0 != v1 {
@@ -1264,28 +1264,28 @@ func TestBasicRangeRevBegInexact(t *testing.T) {
 	}
 
 	var shouldHaveKvs = []KeyVal{
-		{sorted.IntKey(10), 10},
-		{sorted.IntKey(20), 20},
-		{sorted.IntKey(30), 30},
-		{sorted.IntKey(40), 40},
-		{sorted.IntKey(50), 50},
-		{sorted.IntKey(60), 60},
-		{sorted.IntKey(70), 70},
-		{sorted.IntKey(80), 80},
-		{sorted.IntKey(90), 90},
-		{sorted.IntKey(100), 100},
-		{sorted.IntKey(110), 110},
-		{sorted.IntKey(120), 120},
-		{sorted.IntKey(130), 130},
+		{key.Int(10), 10},
+		{key.Int(20), 20},
+		{key.Int(30), 30},
+		{key.Int(40), 40},
+		{key.Int(50), 50},
+		{key.Int(60), 60},
+		{key.Int(70), 70},
+		{key.Int(80), 80},
+		{key.Int(90), 90},
+		{key.Int(100), 100},
+		{key.Int(110), 110},
+		{key.Int(120), 120},
+		{key.Int(130), 130},
 	}
 
 	var numKeys = len(shouldHaveKvs)
 	var eltOffset = 3
 	var keyRange = shouldHaveKvs[:numKeys-eltOffset]
-	var startKey = sorted.IntKey((numKeys-eltOffset)*10 + 5)
-	var endKey = sorted.InfKey(-1) //negative infinity
+	var startKey = key.Int((numKeys-eltOffset)*10 + 5)
+	var endKey = key.Inf(-1) //negative infinity
 	var i = len(keyRange) - 1
-	var fn = func(k0 sorted.Key, v0 interface{}) bool {
+	var fn = func(k0 key.Sort, v0 interface{}) bool {
 		if i < 0 {
 			t.Fatalf("i,%d < 0", i)
 		}
@@ -1293,7 +1293,7 @@ func TestBasicRangeRevBegInexact(t *testing.T) {
 		var v1 = keyRange[i].Val
 		//log.Printf("k0=%s; v0=%v;", k0, v0)
 		//log.Printf("k1=%s; v0=%v;", k1, v1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		if v0 != v1 {
@@ -1330,28 +1330,28 @@ func TestBasicRangeRevEnd(t *testing.T) {
 	}
 
 	var shouldHaveKvs = []KeyVal{
-		{sorted.IntKey(10), 10},
-		{sorted.IntKey(20), 20},
-		{sorted.IntKey(30), 30},
-		{sorted.IntKey(40), 40},
-		{sorted.IntKey(50), 50},
-		{sorted.IntKey(60), 60},
-		{sorted.IntKey(70), 70},
-		{sorted.IntKey(80), 80},
-		{sorted.IntKey(90), 90},
-		{sorted.IntKey(100), 100},
-		{sorted.IntKey(110), 110},
-		{sorted.IntKey(120), 120},
-		{sorted.IntKey(130), 130},
+		{key.Int(10), 10},
+		{key.Int(20), 20},
+		{key.Int(30), 30},
+		{key.Int(40), 40},
+		{key.Int(50), 50},
+		{key.Int(60), 60},
+		{key.Int(70), 70},
+		{key.Int(80), 80},
+		{key.Int(90), 90},
+		{key.Int(100), 100},
+		{key.Int(110), 110},
+		{key.Int(120), 120},
+		{key.Int(130), 130},
 	}
 
 	//var numKeys = len(shouldHaveKvs)
 	var eltOffset = 3
-	var startKey = sorted.InfKey(1)            //positive infinity
-	var endKey = sorted.IntKey(eltOffset * 10) //sorted.IntKey(30)
+	var startKey = key.Inf(1)                  //positive infinity
+	var endKey = key.Int(eltOffset * 10)       //key.Int(30)
 	var keyRange = shouldHaveKvs[eltOffset-1:] //??
 	var i = len(keyRange) - 1
-	var fn = func(k0 sorted.Key, v0 interface{}) bool {
+	var fn = func(k0 key.Sort, v0 interface{}) bool {
 		if i < 0 {
 			t.Fatalf("i,%d < 0", i)
 		}
@@ -1359,7 +1359,7 @@ func TestBasicRangeRevEnd(t *testing.T) {
 		var v1 = keyRange[i].Val
 		//log.Printf("k0=%s; v0=%v;", k0, v0)
 		//log.Printf("k1=%s; v0=%v;", k1, v1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		if v0 != v1 {
@@ -1395,28 +1395,28 @@ func TestBasicRangeRevEndInexact(t *testing.T) {
 	}
 
 	var shouldHaveKvs = []KeyVal{
-		{sorted.IntKey(10), 10},
-		{sorted.IntKey(20), 20},
-		{sorted.IntKey(30), 30},
-		{sorted.IntKey(40), 40},
-		{sorted.IntKey(50), 50},
-		{sorted.IntKey(60), 60},
-		{sorted.IntKey(70), 70},
-		{sorted.IntKey(80), 80},
-		{sorted.IntKey(90), 90},
-		{sorted.IntKey(100), 100},
-		{sorted.IntKey(110), 110},
-		{sorted.IntKey(120), 120},
-		{sorted.IntKey(130), 130},
+		{key.Int(10), 10},
+		{key.Int(20), 20},
+		{key.Int(30), 30},
+		{key.Int(40), 40},
+		{key.Int(50), 50},
+		{key.Int(60), 60},
+		{key.Int(70), 70},
+		{key.Int(80), 80},
+		{key.Int(90), 90},
+		{key.Int(100), 100},
+		{key.Int(110), 110},
+		{key.Int(120), 120},
+		{key.Int(130), 130},
 	}
 
 	//var numKeys = len(shouldHaveKvs)
 	var eltOffset = 3
-	var startKey = sorted.InfKey(1)              //positive infinity
-	var endKey = sorted.IntKey(eltOffset*10 - 5) //sorted.IntKey(25)
-	var keyRange = shouldHaveKvs[eltOffset-1:]   //??
+	var startKey = key.Inf(1)                  //positive infinity
+	var endKey = key.Int(eltOffset*10 - 5)     //key.Int(25)
+	var keyRange = shouldHaveKvs[eltOffset-1:] //??
 	var i = len(keyRange) - 1
-	var fn = func(k0 sorted.Key, v0 interface{}) bool {
+	var fn = func(k0 key.Sort, v0 interface{}) bool {
 		if i < 0 {
 			t.Fatalf("i,%d < 0", i)
 		}
@@ -1424,7 +1424,7 @@ func TestBasicRangeRevEndInexact(t *testing.T) {
 		var v1 = keyRange[i].Val
 		//log.Printf("k0=%s; v0=%v;", k0, v0)
 		//log.Printf("k1=%s; v0=%v;", k1, v1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("i=%d; k0,%s != k1,%s", i, k0, k1)
 		}
 		if v0 != v1 {
@@ -1456,9 +1456,9 @@ func TestBasicRangeForwToSmall(t *testing.T) {
 					mknod(110, red, nil, nil),
 					mknod(130, red, nil, nil)))))
 
-	var startKey = sorted.IntKey(62)
-	var endKey = sorted.IntKey(68)
-	var fn = func(k sorted.Key, v interface{}) bool {
+	var startKey = key.Int(62)
+	var endKey = key.Int(68)
+	var fn = func(k key.Sort, v interface{}) bool {
 		t.Fatalf("node found where no node should be found.k=%s; v=%d", k, v)
 		return true
 	}
@@ -1482,9 +1482,9 @@ func TestBasicRangeRevToSmall(t *testing.T) {
 					mknod(110, red, nil, nil),
 					mknod(130, red, nil, nil)))))
 
-	var startKey = sorted.IntKey(58)
-	var endKey = sorted.IntKey(52)
-	var fn = func(k sorted.Key, v interface{}) bool {
+	var startKey = key.Int(58)
+	var endKey = key.Int(52)
+	var fn = func(k key.Sort, v interface{}) bool {
 		t.Fatalf("node found where no node should be found.k=%s; v=%d", k, v)
 		return true
 	}
@@ -1508,9 +1508,9 @@ func TestBasicRangeForwToFarAbove(t *testing.T) {
 					mknod(110, red, nil, nil),
 					mknod(130, red, nil, nil)))))
 
-	var startKey = sorted.IntKey(200)
-	var endKey = sorted.IntKey(300)
-	var fn = func(k sorted.Key, v interface{}) bool {
+	var startKey = key.Int(200)
+	var endKey = key.Int(300)
+	var fn = func(k key.Sort, v interface{}) bool {
 		t.Fatalf("node found where no node should be found.k=%s; v=%d", k, v)
 		return true
 	}
@@ -1534,9 +1534,9 @@ func TestBasicRangeRevToFarAbove(t *testing.T) {
 					mknod(110, red, nil, nil),
 					mknod(130, red, nil, nil)))))
 
-	var startKey = sorted.IntKey(300)
-	var endKey = sorted.IntKey(200)
-	var fn = func(k sorted.Key, v interface{}) bool {
+	var startKey = key.Int(300)
+	var endKey = key.Int(200)
+	var fn = func(k key.Sort, v interface{}) bool {
 		t.Fatalf("node found where no node should be found.k=%s; v=%d", k, v)
 		return true
 	}
@@ -1560,9 +1560,9 @@ func TestBasicRangeForwToFarBelow(t *testing.T) {
 					mknod(110, red, nil, nil),
 					mknod(130, red, nil, nil)))))
 
-	var startKey = sorted.IntKey(-100)
-	var endKey = sorted.IntKey(0)
-	var fn = func(k sorted.Key, v interface{}) bool {
+	var startKey = key.Int(-100)
+	var endKey = key.Int(0)
+	var fn = func(k key.Sort, v interface{}) bool {
 		t.Fatalf("node found where no node should be found.k=%s; v=%d", k, v)
 		return true
 	}
@@ -1586,9 +1586,9 @@ func TestBasicRangeRevToFarBelow(t *testing.T) {
 					mknod(110, red, nil, nil),
 					mknod(130, red, nil, nil)))))
 
-	var startKey = sorted.IntKey(0)
-	var endKey = sorted.IntKey(-100)
-	var fn = func(k sorted.Key, v interface{}) bool {
+	var startKey = key.Int(0)
+	var endKey = key.Int(-100)
+	var fn = func(k key.Sort, v interface{}) bool {
 		t.Fatalf("node found where no node should be found.k=%s; v=%d", k, v)
 		return true
 	}
@@ -1611,11 +1611,11 @@ func TestBasicRangeStop(t *testing.T) {
 					mknod(110, red, nil, nil),
 					mknod(130, red, nil, nil)))))
 
-	var fn = func(k sorted.Key, v interface{}) bool {
-		if sorted.Cmp(k, sorted.IntKey(60)) == 0 {
+	var fn = func(k key.Sort, v interface{}) bool {
+		if key.Cmp(k, key.Int(60)) == 0 {
 			return false
 		}
-		if sorted.Less(sorted.IntKey(60), k) {
+		if key.Less(key.Int(60), k) {
 			t.Fatal("encountered a key higher that the stop condition")
 		}
 		return true
@@ -1653,24 +1653,24 @@ func TestBasicMapString(t *testing.T) {
 //					mknod(130, red, nil, nil)))))
 //
 //	var shouldHaveKvs = []KeyVal{
-//		{sorted.IntKey(10), 10},
-//		{sorted.IntKey(20), 20},
-//		{sorted.IntKey(30), 30},
-//		{sorted.IntKey(40), 40},
-//		{sorted.IntKey(50), 50},
-//		{sorted.IntKey(60), 60},
-//		{sorted.IntKey(70), 70},
-//		{sorted.IntKey(80), 80},
-//		{sorted.IntKey(90), 90},
-//		{sorted.IntKey(100), 100},
-//		{sorted.IntKey(110), 110},
-//		{sorted.IntKey(120), 120},
-//		{sorted.IntKey(130), 130},
+//		{key.Int(10), 10},
+//		{key.Int(20), 20},
+//		{key.Int(30), 30},
+//		{key.Int(40), 40},
+//		{key.Int(50), 50},
+//		{key.Int(60), 60},
+//		{key.Int(70), 70},
+//		{key.Int(80), 80},
+//		{key.Int(90), 90},
+//		{key.Int(100), 100},
+//		{key.Int(110), 110},
+//		{key.Int(120), 120},
+//		{key.Int(130), 130},
 //	}
 //
 //	var foundKeys = m.Keys()
 //	for i, kv := range shouldHaveKvs {
-//		if sorted.Cmp(kv.Key, foundKeys[i]) != 0 {
+//		if key.Cmp(kv.Key, foundKeys[i]) != 0 {
 //			t.Fatalf("kv.Key,%s != foundKeys[%d],%s", kv.Key, i, foundKeys[i])
 //		}
 //	}

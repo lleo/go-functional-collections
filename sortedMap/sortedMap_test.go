@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"os"
 
-	"github.com/lleo/go-functional-collections/sorted"
+	"github.com/lleo/go-functional-collections/key"
 	"github.com/pkg/errors"
 )
 
@@ -29,11 +29,11 @@ func mkmap(r *node) *Map {
 }
 
 func mknod(i int, c colorType, ln, rn *node) *node {
-	return &node{sorted.IntKey(i), i, c, ln, rn}
+	return &node{key.Int(i), i, c, ln, rn}
 }
 
 type KeyVal struct {
-	Key sorted.Key
+	Key key.Sort
 	Val interface{}
 }
 
@@ -42,7 +42,7 @@ func genIntKeyVals(n int) []KeyVal {
 
 	for i := 0; i < n; i++ {
 		var x = (i + 1) * 10
-		var k = sorted.IntKey(x)
+		var k = key.Int(x)
 		var v = x
 		kvs[i] = KeyVal{k, v}
 	}
