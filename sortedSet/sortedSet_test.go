@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"os"
 
-	"github.com/lleo/go-functional-collections/sorted"
+	"github.com/lleo/go-functional-collections/key"
 	"github.com/pkg/errors"
 )
 
@@ -29,22 +29,22 @@ func mkset(r *node) *Set {
 }
 
 func mknod(i int, c colorType, ln, rn *node) *node {
-	return &node{sorted.IntKey(i), c, ln, rn}
+	return &node{key.Int(i), c, ln, rn}
 }
 
-func buildKeys(n int) []sorted.Key {
-	var keys = make([]sorted.Key, n)
+func buildKeys(n int) []key.Sort {
+	var keys = make([]key.Sort, n)
 
 	for i := 0; i < n; i++ {
 		var x = (i + 1) * 10
-		keys[i] = sorted.IntKey(x)
+		keys[i] = key.Int(x)
 	}
 
 	return keys
 }
 
-func randomizeKeys(keys []sorted.Key) []sorted.Key {
-	var randKeys = make([]sorted.Key, len(keys))
+func randomizeKeys(keys []key.Sort) []key.Sort {
+	var randKeys = make([]key.Sort, len(keys))
 	copy(randKeys, keys)
 	//var randKeys = keys
 
@@ -57,7 +57,7 @@ func randomizeKeys(keys []sorted.Key) []sorted.Key {
 	return randKeys
 }
 
-func buildSet(kvs []sorted.Key) *Set {
+func buildSet(kvs []key.Sort) *Set {
 	var s = New()
 	for _, key := range kvs {
 		s = s.Set(key)

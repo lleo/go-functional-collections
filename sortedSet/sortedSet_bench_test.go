@@ -4,15 +4,15 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/lleo/go-functional-collections/sorted"
+	"github.com/lleo/go-functional-collections/key"
 	"github.com/lleo/go-functional-collections/sortedSet"
 )
 
-func buildKeys(numKeys, numKeysXtra int) ([]sorted.Key, []sorted.Key) {
-	var keys = make([]sorted.Key, numKeys+numKeysXtra)
+func buildKeys(numKeys, numKeysXtra int) ([]key.Sort, []key.Sort) {
+	var keys = make([]key.Sort, numKeys+numKeysXtra)
 
 	for i := 0; i < numKeys+numKeysXtra; i++ {
-		keys[i] = sorted.IntKey(i)
+		keys[i] = key.Int(i)
 	}
 
 	//randomize keys
@@ -27,7 +27,7 @@ func buildKeys(numKeys, numKeysXtra int) ([]sorted.Key, []sorted.Key) {
 	return keys, xtra
 }
 
-func buildSet(keys []sorted.Key) *sortedSet.Set {
+func buildSet(keys []key.Sort) *sortedSet.Set {
 	var s = sortedSet.New()
 	for _, key := range keys {
 		s = s.Set(key)
@@ -59,17 +59,17 @@ var SSet100M *sortedSet.Set
 var SSet1MM *sortedSet.Set
 var SSet10MM *sortedSet.Set
 
-var XtraKeys10 []sorted.Key
-var XtraKeys100 []sorted.Key
-var XtraKeys1M []sorted.Key
-var XtraKeys10M []sorted.Key
-var XtraKeys100M []sorted.Key
-var XtraKeys1MM []sorted.Key
-var XtraKeys10MM []sorted.Key
+var XtraKeys10 []key.Sort
+var XtraKeys100 []key.Sort
+var XtraKeys1M []key.Sort
+var XtraKeys10M []key.Sort
+var XtraKeys100M []key.Sort
+var XtraKeys1MM []key.Sort
+var XtraKeys10MM []key.Sort
 
 func BenchmarkSetOne10(b *testing.B) {
 	//log.Printf("BenchmarkSetOne10: called b.N=%d\n", b.N)
-	var keys, XtraKeys10 []sorted.Key
+	var keys, XtraKeys10 []key.Sort
 	if SSet10 == nil || XtraKeys10 == nil {
 		//log.Println("Generating Sset10 & XtraKeys10")
 		keys, XtraKeys10 = buildKeys(NumKeys10, NumKeysExtra10)
@@ -87,7 +87,7 @@ func BenchmarkSetOne10(b *testing.B) {
 
 func BenchmarkSetOne100(b *testing.B) {
 	//log.Printf("BenchmarkSetOne100: called b.N=%d\n", b.N)
-	var keys, XtraKeys100 []sorted.Key
+	var keys, XtraKeys100 []key.Sort
 	if SSet100 == nil || XtraKeys100 == nil {
 		//log.Println("Generating Sset100 & XtraKeys100")
 		keys, XtraKeys100 = buildKeys(NumKeys100, NumKeysExtra100)
@@ -105,7 +105,7 @@ func BenchmarkSetOne100(b *testing.B) {
 
 func BenchmarkSetOne1M(b *testing.B) {
 	//log.Printf("BenchmarkSetOne1M: called b.N=%d\n", b.N)
-	var keys, XtraKeys1M []sorted.Key
+	var keys, XtraKeys1M []key.Sort
 	if SSet1M == nil || XtraKeys1M == nil {
 		//log.Println("Generating Sset1M & XtraKeys1M")
 		keys, XtraKeys1M = buildKeys(NumKeys1M, NumKeysExtra1M)
@@ -123,7 +123,7 @@ func BenchmarkSetOne1M(b *testing.B) {
 
 func BenchmarkSetOne10M(b *testing.B) {
 	//log.Printf("BenchmarkSetOne10M: called b.N=%d\n", b.N)
-	var keys, XtraKeys10M []sorted.Key
+	var keys, XtraKeys10M []key.Sort
 	if SSet10M == nil || XtraKeys10M == nil {
 		//log.Println("Generating Sset10M & XtraKeys10M")
 		keys, XtraKeys10M = buildKeys(NumKeys10M, NumKeysExtra10M)
@@ -141,7 +141,7 @@ func BenchmarkSetOne10M(b *testing.B) {
 
 func BenchmarkSetOne100M(b *testing.B) {
 	//log.Printf("BenchmarkSetOne100M: called b.N=%d\n", b.N)
-	var keys, XtraKeys100M []sorted.Key
+	var keys, XtraKeys100M []key.Sort
 	if SSet100M == nil || XtraKeys100M == nil {
 		//log.Println("Generating Sset100M & XtraKeys100M")
 		keys, XtraKeys100M = buildKeys(NumKeys100M, NumKeysExtra100M)
@@ -159,7 +159,7 @@ func BenchmarkSetOne100M(b *testing.B) {
 
 func BenchmarkSetOne1MM(b *testing.B) {
 	//log.Printf("BenchmarkSetOne1MM: called b.N=%d\n", b.N)
-	var keys, XtraKeys1MM []sorted.Key
+	var keys, XtraKeys1MM []key.Sort
 	if SSet1MM == nil || XtraKeys1MM == nil {
 		//log.Println("Generating Sset1MM & XtraKeys1MM")
 		keys, XtraKeys1MM = buildKeys(NumKeys1MM, NumKeysExtra1MM)
@@ -177,7 +177,7 @@ func BenchmarkSetOne1MM(b *testing.B) {
 
 func BenchmarkSetOne10MM(b *testing.B) {
 	//log.Printf("BenchmarkSetOne10MM: called b.N=%d\n", b.N)
-	var keys, XtraKeys10MM []sorted.Key
+	var keys, XtraKeys10MM []key.Sort
 	if SSet10MM == nil || XtraKeys10MM == nil {
 		//log.Println("Generating Sset10MM & XtraKeys10MM")
 		keys, XtraKeys10MM = buildKeys(NumKeys10MM, NumKeysExtra10MM)

@@ -3,15 +3,15 @@ package sortedSet_test
 import (
 	"fmt"
 
-	"github.com/lleo/go-functional-collections/sorted"
+	"github.com/lleo/go-functional-collections/key"
 	"github.com/lleo/go-functional-collections/sortedSet"
 )
 
 func ExampleSet_Iter() {
 	var s = sortedSet.New().
-		Set(sorted.StringKey("a")).
-		Set(sorted.StringKey("b")).
-		Set(sorted.StringKey("c"))
+		Set(key.Str("a")).
+		Set(key.Str("b")).
+		Set(key.Str("c"))
 
 	var it = s.Iter()
 	for k := it.Next(); k != nil; k = it.Next() {
@@ -26,12 +26,12 @@ func ExampleSet_Iter() {
 
 func ExampleRange() {
 	var s = sortedSet.New().
-		Set(sorted.StringKey("a")).
-		Set(sorted.StringKey("b")).
-		Set(sorted.StringKey("c"))
+		Set(key.Str("a")).
+		Set(key.Str("b")).
+		Set(key.Str("c"))
 
-	s.Range(func(k sorted.Key) bool {
-		// Provides sorted.Key entries in string order.
+	s.Range(func(k key.Sort) bool {
+		// Provides key.Sort entries in string order.
 		fmt.Println(k)
 		return true
 	})
@@ -44,15 +44,15 @@ func ExampleRange() {
 
 func ExampleRangeLimit() {
 	var s = sortedSet.New().
-		Set(sorted.StringKey("a")).
-		Set(sorted.StringKey("b")).
-		Set(sorted.StringKey("c")).
-		Set(sorted.StringKey("d")).
-		Set(sorted.StringKey("e"))
+		Set(key.Str("a")).
+		Set(key.Str("b")).
+		Set(key.Str("c")).
+		Set(key.Str("d")).
+		Set(key.Str("e"))
 
-	s.RangeLimit(sorted.StringKey("b"), sorted.StringKey("d"),
-		func(k sorted.Key) bool {
-			// Provides sorted.Key entries in string order.
+	s.RangeLimit(key.Str("b"), key.Str("d"),
+		func(k key.Sort) bool {
+			// Provides key.Sort entries in string order.
 			fmt.Println(k)
 			return true
 		})

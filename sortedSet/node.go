@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/lleo/go-functional-collections/sorted"
+	"github.com/lleo/go-functional-collections/key"
 )
 
 type colorType bool
@@ -31,13 +31,13 @@ func color(n *node) colorType {
 }
 
 type node struct {
-	key   sorted.Key
+	key   key.Sort
 	color colorType //default node is RED aka false
 	ln    *node
 	rn    *node
 }
 
-func newNode(k sorted.Key) *node {
+func newNode(k key.Sort) *node {
 	var n = new(node)
 	n.key = k
 	//n.color = red   //default
@@ -122,7 +122,7 @@ func (n *node) equiv(n0 *node) bool {
 	}
 	//n != nil && n0 != nil
 
-	if sorted.Cmp(n.key, n0.key) != 0 {
+	if key.Cmp(n.key, n0.key) != 0 {
 		return false
 	}
 	if n.color != n0.color {
@@ -177,7 +177,7 @@ func (n *node) sibling(parent *node) *node {
 	return parent.ln
 }
 
-func (n *node) findNode(k sorted.Key) *node {
+func (n *node) findNode(k key.Sort) *node {
 	if n == nil {
 		return nil
 	}
@@ -185,9 +185,9 @@ func (n *node) findNode(k sorted.Key) *node {
 	var cur = n
 	for cur != nil {
 		switch {
-		case sorted.Less(k, cur.key):
+		case key.Less(k, cur.key):
 			cur = cur.ln
-		case sorted.Less(cur.key, k):
+		case key.Less(cur.key, k):
 			cur = cur.rn
 		default:
 			return cur
@@ -196,15 +196,15 @@ func (n *node) findNode(k sorted.Key) *node {
 	return nil
 }
 
-func (n *node) findNodeWithPath(k sorted.Key) (*node, *nodeStack) {
+func (n *node) findNodeWithPath(k key.Sort) (*node, *nodeStack) {
 	var path = newNodeStack(0)
 	var cur = n
 	for cur != nil {
 		var ocur = cur
 		switch {
-		case sorted.Less(k, cur.key):
+		case key.Less(k, cur.key):
 			cur = cur.ln
-		case sorted.Less(cur.key, k):
+		case key.Less(cur.key, k):
 			cur = cur.rn
 		default:
 			return cur, path
@@ -214,7 +214,7 @@ func (n *node) findNodeWithPath(k sorted.Key) (*node, *nodeStack) {
 	return nil, path
 }
 
-func (n *node) findNodeDupPath(k sorted.Key) (*node, *nodeStack) {
+func (n *node) findNodeDupPath(k key.Sort) (*node, *nodeStack) {
 	var path = newNodeStack(0)
 	if n == nil {
 		return nil, path
@@ -224,9 +224,9 @@ func (n *node) findNodeDupPath(k sorted.Key) (*node, *nodeStack) {
 	var cur = n
 	var ocur = cur
 	switch {
-	case sorted.Less(k, cur.key):
+	case key.Less(k, cur.key):
 		cur = cur.ln
-	case sorted.Less(cur.key, k):
+	case key.Less(cur.key, k):
 		cur = cur.rn
 	default: //cur.key == k
 		return cur, path
@@ -237,9 +237,9 @@ func (n *node) findNodeDupPath(k sorted.Key) (*node, *nodeStack) {
 	for cur != nil {
 		ocur = cur
 		switch {
-		case sorted.Less(k, cur.key):
+		case key.Less(k, cur.key):
 			cur = cur.ln
-		case sorted.Less(cur.key, k):
+		case key.Less(cur.key, k):
 			cur = cur.rn
 		default: //cur.key == k
 			return cur, path
@@ -263,9 +263,9 @@ func (n *node) findNodeDupPath(k sorted.Key) (*node, *nodeStack) {
 //		//var ocur = cur
 //		ocur = cur
 //		switch {
-//		case sorted.Less(k, cur.key):
+//		case key.Less(k, cur.key):
 //			cur = cur.ln
-//		case sorted.Less(cur.key, k):
+//		case key.Less(cur.key, k):
 //			cur = cur.rn
 //		default: //cur.key == k
 //			return cur, path
@@ -274,7 +274,7 @@ func (n *node) findNodeDupPath(k sorted.Key) (*node, *nodeStack) {
 //		//var parent = path.peek()
 //		var ncur = ocur.copy()
 //		if parent != nil {
-//			//if sorted.Less(ncur.key, parent.key) {
+//			//if key.Less(ncur.key, parent.key) {
 //			if ocur.isLeftChildOf(parent) {
 //				parent.ln = ncur
 //			} else {
@@ -288,17 +288,17 @@ func (n *node) findNodeDupPath(k sorted.Key) (*node, *nodeStack) {
 //	return nil, path
 //}
 
-func (n *node) findNodeIterPath(k sorted.Key, dir bool) (*node, *nodeStack) {
+func (n *node) findNodeIterPath(k key.Sort, dir bool) (*node, *nodeStack) {
 	var path = newNodeStack(0)
 	var cur = n
 	for cur != nil {
 		switch {
-		case sorted.Less(k, cur.key):
+		case key.Less(k, cur.key):
 			if dir { //if dir==forw(true) then path.push(cur)
 				path.push(cur)
 			}
 			cur = cur.ln
-		case sorted.Less(cur.key, k):
+		case key.Less(cur.key, k):
 			if !dir { //if dir=back(false) then path.push(cur)
 				path.push(cur)
 			}

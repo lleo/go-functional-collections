@@ -4,7 +4,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/lleo/go-functional-collections/sorted"
+	"github.com/lleo/go-functional-collections/key"
 )
 
 func TestCompBuildSet(t *testing.T) {
@@ -29,9 +29,9 @@ func TestCompBuildSet(t *testing.T) {
 	//log.Printf("Set s =\n%s", s.String())
 
 	var i int
-	var fn = func(k0 sorted.Key) bool {
+	var fn = func(k0 key.Sort) bool {
 		var k1 = inOrderKeys[i]
-		if sorted.Cmp(k0, k1) != 0 { //k0 != k1
+		if key.Cmp(k0, k1) != 0 { //k0 != k1
 			t.Fatalf("InOrder keys: i=%d; found k0=%s not the expected k1=%s\n",
 				i, k0, k1)
 		}
@@ -57,7 +57,7 @@ func TestCompDestroySet(t *testing.T) {
 
 	//log.Printf("destroyKeys = %v\n", destroyKeys)
 
-	var shouldHaveKeys = make([]sorted.Key, len(destroyKeys))
+	var shouldHaveKeys = make([]key.Sort, len(destroyKeys))
 	copy(shouldHaveKeys, destroyKeys)
 
 	for i, key := range destroyKeys {
@@ -111,11 +111,11 @@ func TestCompRangeForwAll(t *testing.T) {
 	var s = buildSet(buildKeys)
 
 	var i int
-	var fn = func(k0 sorted.Key) bool {
+	var fn = func(k0 key.Sort) bool {
 		//log.Printf("i=%d; k0=%s;", i, k0)
 		var k1 = inOrderKeys[i]
 		//log.Printf("i=%d; k1=%s;", i, k1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("InOrder keys: i=%d; found k0=%s not the expected k1=%s",
 				i, k0, k1)
 		}
@@ -138,18 +138,18 @@ func TestCompRangeForwBeg(t *testing.T) {
 	var eltOffset = 13
 	var startElt = eltOffset
 	var i = startElt - 1 //index starts at zero
-	var fn = func(k0 sorted.Key) bool {
+	var fn = func(k0 key.Sort) bool {
 		//log.Printf("i=%d; k0=%s;", i, k0)
 		var k1 = inOrderKeys[i]
 		//log.Printf("i=%d; k1=%s;", i, k1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("InOrder keys: i=%d; found k0=%s not the expected k1=%s",
 				i, k0, k1)
 		}
 		i++
 		return true
 	}
-	s.RangeLimit(sorted.IntKey(eltOffset*10), sorted.InfKey(1), fn)
+	s.RangeLimit(key.Int(eltOffset*10), key.Inf(1), fn)
 }
 
 func TestCompRangeForwEnd(t *testing.T) {
@@ -165,18 +165,18 @@ func TestCompRangeForwEnd(t *testing.T) {
 	var eltOffset = 13
 	var startElt = 1
 	var i = startElt - 1 //index starts at zero
-	var fn = func(k0 sorted.Key) bool {
+	var fn = func(k0 key.Sort) bool {
 		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0)
 		var k1 = inOrderKeys[i]
 		//log.Printf("i=%d; k1=%s; v1=%d;", i, k1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("InOrder keys: i=%d; found k0=%s not the expected k1=%s",
 				i, k0, k1)
 		}
 		i++
 		return true
 	}
-	s.RangeLimit(sorted.InfKey(-1), sorted.IntKey((numKeys-eltOffset)*10), fn)
+	s.RangeLimit(key.Inf(-1), key.Int((numKeys-eltOffset)*10), fn)
 }
 
 func TestCompRangeForwBoth(t *testing.T) {
@@ -192,20 +192,20 @@ func TestCompRangeForwBoth(t *testing.T) {
 	var eltOffset = 13
 	var startElt = eltOffset
 	var i = startElt - 1 //index starts at zero
-	var fn = func(k0 sorted.Key) bool {
+	var fn = func(k0 key.Sort) bool {
 		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0)
 		var k1 = inOrderKeys[i]
 		//log.Printf("i=%d; k1=%s; v1=%d;", i, k1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("InOrder keys: i=%d; found k0=%s not the expected k1=%s",
 				i, k0, k1)
 		}
 		i++
 		return true
 	}
-	s.RangeLimit(sorted.IntKey(startElt*10),
-		sorted.IntKey((numKeys-eltOffset)*10), fn)
-	//s.RangeLimit(sorted.IntKey(130), sorted.IntKey(10110), fn)
+	s.RangeLimit(key.Int(startElt*10),
+		key.Int((numKeys-eltOffset)*10), fn)
+	//s.RangeLimit(key.Int(130), key.Int(10110), fn)
 }
 
 func TestCompRangeRevAll(t *testing.T) {
@@ -219,18 +219,18 @@ func TestCompRangeRevAll(t *testing.T) {
 	var s = buildSet(buildKeys)
 
 	var i = numKeys - 1 //index starts at zero
-	var fn = func(k0 sorted.Key) bool {
+	var fn = func(k0 key.Sort) bool {
 		var k1 = inOrderKeys[i]
 		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0)
 		//log.Printf("i=%d; k1=%s; v1=%d;", i, k1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("InOrder keys: i=%d; found k0=%s not the expected k1=%s",
 				i, k0, k1)
 		}
 		i--
 		return true
 	}
-	s.RangeLimit(sorted.InfKey(1), sorted.InfKey(-1), fn)
+	s.RangeLimit(key.Inf(1), key.Inf(-1), fn)
 }
 
 func TestCompRangeRevBeg(t *testing.T) {
@@ -246,18 +246,18 @@ func TestCompRangeRevBeg(t *testing.T) {
 	var eltOffset = 13
 	var startElt = numKeys - eltOffset
 	var i = startElt - 1 //index starts at zero
-	var fn = func(k0 sorted.Key) bool {
+	var fn = func(k0 key.Sort) bool {
 		var k1 = inOrderKeys[i]
 		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0)
 		//log.Printf("i=%d; k1=%s; v1=%d;", i, k1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("InOrder keys: i=%d; found k0=%s not the expected k1=%s",
 				i, k0, k1)
 		}
 		i--
 		return true
 	}
-	s.RangeLimit(sorted.IntKey((numKeys-eltOffset)*10), sorted.InfKey(-1), fn)
+	s.RangeLimit(key.Int((numKeys-eltOffset)*10), key.Inf(-1), fn)
 }
 
 func TestCompRangeRevEnd(t *testing.T) {
@@ -273,18 +273,18 @@ func TestCompRangeRevEnd(t *testing.T) {
 	var eltOffset = 13
 	var startElt = numKeys //- eltOffset
 	var i = startElt - 1   //index starts at zero
-	var fn = func(k0 sorted.Key) bool {
+	var fn = func(k0 key.Sort) bool {
 		var k1 = inOrderKeys[i]
 		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0)
 		//log.Printf("i=%d; k1=%s; v1=%d;", i, k1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("InOrder keys: i=%d; found k0=%s not the expected k1=%s",
 				i, k0, k1)
 		}
 		i--
 		return true
 	}
-	s.RangeLimit(sorted.InfKey(1), sorted.IntKey(eltOffset*10), fn)
+	s.RangeLimit(key.Inf(1), key.Int(eltOffset*10), fn)
 }
 
 func TestCompRangeRevBoth(t *testing.T) {
@@ -300,17 +300,17 @@ func TestCompRangeRevBoth(t *testing.T) {
 	var eltOffset = 13
 	var startElt = numKeys - eltOffset
 	var i = startElt - 1 //index starts at zero
-	var fn = func(k0 sorted.Key) bool {
+	var fn = func(k0 key.Sort) bool {
 		var k1 = inOrderKeys[i]
 		//log.Printf("i=%d; k0=%s; v0=%d;", i, k0)
 		//log.Printf("i=%d; k1=%s; v1=%d;", i, k1)
-		if sorted.Cmp(k0, k1) != 0 {
+		if key.Cmp(k0, k1) != 0 {
 			t.Fatalf("InOrder keys: i=%d; found k0=%s not the expected k1=%s",
 				i, k0, k1)
 		}
 		i--
 		return true
 	}
-	s.RangeLimit(sorted.IntKey(startElt*10),
-		sorted.IntKey((numKeys-eltOffset)*10), fn)
+	s.RangeLimit(key.Int(startElt*10),
+		key.Int((numKeys-eltOffset)*10), fn)
 }

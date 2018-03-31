@@ -1,13 +1,13 @@
 package sortedSet
 
 import (
-	"github.com/lleo/go-functional-collections/sorted"
+	"github.com/lleo/go-functional-collections/key"
 )
 
 // Iter struct mmaintins the current state for walking the *Map data structure.
 type Iter struct {
 	dir    bool // true == lower-to-higher; false == higher-to-lower
-	endKey sorted.Key
+	endKey key.Sort
 	cur    *node
 	path   *nodeStack
 }
@@ -15,7 +15,7 @@ type Iter struct {
 func newNodeIter(
 	dir bool,
 	start *node,
-	endKey sorted.Key,
+	endKey key.Sort,
 	path *nodeStack,
 ) *Iter {
 	var iter = new(Iter)
@@ -27,8 +27,8 @@ func newNodeIter(
 }
 
 // Next returns each sucessive key/value mapping in the *Map. When all entries
-// have been returned it will return a nil sorted.Key.
-func (it *Iter) Next() sorted.Key {
+// have been returned it will return a nil key.Sort.
+func (it *Iter) Next() key.Sort {
 	if it.dir {
 		return it.forw()
 	} else {
@@ -36,7 +36,7 @@ func (it *Iter) Next() sorted.Key {
 	}
 }
 
-func (it *Iter) forw() sorted.Key {
+func (it *Iter) forw() key.Sort {
 	if it.cur == nil {
 		//the iterator is over
 		return nil
@@ -63,7 +63,7 @@ func (it *Iter) forw() sorted.Key {
 	return ret
 }
 
-func (it *Iter) back() sorted.Key {
+func (it *Iter) back() key.Sort {
 	if it.cur == nil {
 		//the iterator is over
 		return nil
@@ -92,9 +92,9 @@ func (it *Iter) back() sorted.Key {
 func (it *Iter) toFar() bool {
 	if it.dir {
 		// lower to higher
-		return sorted.Less(it.endKey, it.cur.key) // cur <= end
+		return key.Less(it.endKey, it.cur.key) // cur <= end
 	} else {
 		// higher to lower
-		return sorted.Less(it.cur.key, it.endKey) // end <= cur
+		return key.Less(it.cur.key, it.endKey) // end <= cur
 	}
 }

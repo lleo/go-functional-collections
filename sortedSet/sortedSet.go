@@ -21,7 +21,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/lleo/go-functional-collections/sorted"
+	"github.com/lleo/go-functional-collections/key"
 )
 
 type Set struct {
@@ -46,7 +46,7 @@ func (s *Set) valid() error {
 	return nil
 }
 
-// NumEntries returns the number of sorted.Keys in the *Set. This operation is
+// NumEntries returns the number of sortable keys in the *Set. This operation is
 // O(1) because the count is maintained at the top level for the *Set and does
 // not require a walk of the *Set data structure to return the count.
 func (s *Set) NumEntries() int {
@@ -60,11 +60,11 @@ func (s *Set) copy() *Set {
 }
 
 func (s *Set) Iter() *Iter {
-	return s.IterLimit(sorted.InfKey(-1), sorted.InfKey(1))
+	return s.IterLimit(key.Inf(-1), key.Inf(1))
 }
 
-func (s *Set) IterLimit(startKey, endKey sorted.Key) *Iter {
-	var dir = sorted.Less(startKey, endKey)
+func (s *Set) IterLimit(startKey, endKey key.Sort) *Iter {
+	var dir = key.Less(startKey, endKey)
 	var cur, path = s.root.findNodeIterPath(startKey, dir)
 	if cur == nil {
 		cur = path.pop()
@@ -72,19 +72,19 @@ func (s *Set) IterLimit(startKey, endKey sorted.Key) *Iter {
 	return newNodeIter(dir, cur, endKey, path)
 }
 
-func (s *Set) IsSet(k sorted.Key) bool {
+func (s *Set) IsSet(k key.Sort) bool {
 	var n = s.root.findNode(k)
 	return n != nil
 }
 
-func (s *Set) Set(k sorted.Key) *Set {
+func (s *Set) Set(k key.Sort) *Set {
 	var nm, _ = s.Add(k)
 	return nm
 }
 
 // Add() inserts a new key and returns a new Set and a boolean
 // indicatiing if the key was added(true) or merely replaced(false).
-func (s *Set) Add(k sorted.Key) (*Set, bool) {
+func (s *Set) Add(k key.Sort) (*Set, bool) {
 	//var on, path = s.root.findNodeDupPath(k)
 	// path is duped and stiched, but not anchored to s.root
 
@@ -105,7 +105,7 @@ func (s *Set) Add(k sorted.Key) (*Set, bool) {
 	return ns, true
 }
 
-func (s *Set) addInplace(k sorted.Key) bool {
+func (s *Set) addInplace(k key.Sort) bool {
 	var on, path = s.root.findNodeWithPath(k)
 
 	if on != nil {
@@ -125,7 +125,7 @@ func (s *Set) addInplace(k sorted.Key) bool {
 //path MUST be non-zero length.
 //
 //insert() MUST be called on a new *Set.
-func (s *Set) insert(k sorted.Key, path *nodeStack) (*node, *node, *nodeStack) {
+func (s *Set) insert(k key.Sort, path *nodeStack) (*node, *node, *nodeStack) {
 	var on *node        // = nil
 	var nn = newNode(k) //nn.isRed ALWAYS!
 
@@ -147,7 +147,7 @@ func (s *Set) persist(on, nn *node, path *nodeStack) {
 
 	var parent = path.peek()
 	if on == nil {
-		if sorted.Less(nn.key, parent.key) {
+		if key.Less(nn.key, parent.key) {
 			parent.ln = nn
 		} else {
 			parent.rn = nn
@@ -171,7 +171,7 @@ func (s *Set) establishRoot(on, nn *node, path *nodeStack) {
 
 	var parent = path.peek()
 	if on == nil {
-		if sorted.Less(nn.key, parent.key) {
+		if key.Less(nn.key, parent.key) {
 			parent.ln = nn
 		} else {
 			parent.rn = nn
@@ -324,7 +324,7 @@ func (s *Set) insertCase3(on, nn *node, path *nodeStack) (
 	var ogp = path.pop() //gp means grandparent
 
 	var ouncle *node
-	if sorted.Less(oparent.key, ogp.key) {
+	if key.Less(oparent.key, ogp.key) {
 		ouncle = ogp.rn
 	} else {
 		ouncle = ogp.ln
@@ -333,7 +333,7 @@ func (s *Set) insertCase3(on, nn *node, path *nodeStack) (
 	var nparent = oparent.copy() //new parent, cuz I am mutating it.
 	nparent.setBlack()
 
-	if sorted.Less(nn.key, oparent.key) {
+	if key.Less(nn.key, oparent.key) {
 		nparent.ln = nn
 	} else {
 		nparent.rn = nn
@@ -346,7 +346,7 @@ func (s *Set) insertCase3(on, nn *node, path *nodeStack) (
 	ngp.setRed()
 
 	//if oparent.isLeftChildOf(ogp) {
-	if sorted.Less(oparent.key, ogp.key) {
+	if key.Less(oparent.key, ogp.key) {
 		ngp.ln = nparent
 		ngp.rn = nuncle
 	} else {
@@ -367,8 +367,8 @@ func (s *Set) insertCase4(on, nn *node, path *nodeStack) (
 	// insertCase4.1: conditional prep-rotate
 	// We pre-rotate when nn is the inner child of the grandparent.
 	//if nn.isLeftChildOf(nparent) && oparent.isRightChildOf(ogp) {
-	//if sorted.Less(nn.key, oparent.key) && sorted.Less(ogp.key, oparent.key) {
-	if sorted.Less(nn.key, parent.key) && parent.isRightChildOf(gp) {
+	//if key.Less(nn.key, oparent.key) && key.Less(ogp.key, oparent.key) {
+	if key.Less(nn.key, parent.key) && parent.isRightChildOf(gp) {
 		parent.ln = nn
 
 		parent, nn = s.rotateRight(parent, gp)
@@ -376,7 +376,7 @@ func (s *Set) insertCase4(on, nn *node, path *nodeStack) (
 		path.push(nn)
 
 		nn = nn.rn //nn.rn == parent
-	} else if sorted.Less(parent.key, nn.key) && parent.isLeftChildOf(gp) {
+	} else if key.Less(parent.key, nn.key) && parent.isLeftChildOf(gp) {
 		parent.rn = nn
 
 		parent, nn = s.rotateLeft(parent, gp)
@@ -395,7 +395,7 @@ func (s *Set) insertCase4pt2(on, nn *node, path *nodeStack) (
 	var parent = path.pop()
 	var gp = path.pop()
 
-	if sorted.Less(nn.key, parent.key) {
+	if key.Less(nn.key, parent.key) {
 		parent.ln = nn
 	} else {
 		parent.rn = nn
@@ -439,14 +439,14 @@ func (s *Set) insertCase4pt2(on, nn *node, path *nodeStack) (
 // Del() calls Remove() but only returns the modified *Set.
 //
 // I wonder if this is inlined as Delete() may have.
-func (s *Set) Unset(k sorted.Key) *Set {
+func (s *Set) Unset(k key.Sort) *Set {
 	var nm, _ = s.Remove(k)
 	return nm
 }
 
-// Remove() eliminates the node pointed to by the sorted.Key argument (and
+// Remove() eliminates the node pointed to by the key.Sort argument (and
 // rebalances) a persistent version of the given *Set.
-func (s *Set) Remove(k sorted.Key) (*Set, bool) {
+func (s *Set) Remove(k key.Sort) (*Set, bool) {
 	var on, path = s.root.findNodeDupPath(k)
 
 	if on == nil {
@@ -578,7 +578,7 @@ func (s *Set) deleteCase2(on, nn *node, path *nodeStack) {
 
 	if osibling.isRed() {
 		nsibling = osibling.copy()
-		if sorted.Less(nsibling.key, parent.key) {
+		if key.Less(nsibling.key, parent.key) {
 			//parent.rn = nn
 			parent.ln = nsibling
 		} else {
@@ -647,7 +647,7 @@ func (s *Set) deleteCase4(on, nn *node, path *nodeStack) {
 		osibling.rn.isBlack() {
 
 		var nsibling = osibling.copy()
-		//if sorted.Less(on.key, parent.key) {
+		//if key.Less(on.key, parent.key) {
 		if on.isLeftChildOf(parent) {
 			parent.rn = nsibling
 		} else {
@@ -768,18 +768,18 @@ func (s *Set) deleteCase6(on, nn *node, path *nodeStack) {
 //
 //If you want to indicate a "key greater than any key" or a "key less than any
 //other key", you can use the infinitely positive or negetive key, by calling
-//sorted.InfKey(sign int). A call to sorted.InfKey(1) returns a key
-//greater than any other key. A call to sorted.InfKey(-1) returns a key less
+//key.Inf(sign int). A call to key.Inf(1) returns a key
+//greater than any other key. A call to key.Inf(-1) returns a key less
 //than any other key.
 //
 // Example:
 //
 //     var s = sortedSet.New()
-//     s.Add(sorted.StringKey("a"))
-//     s.Add(sorted.StringKey("b"))
-//     s.Add(sorted.StringKey("c"))
+//     s.Add(key.Str("a"))
+//     s.Add(key.Str("b"))
+//     s.Add(key.Str("c"))
 //
-func (s *Set) RangeLimit(start, end sorted.Key, fn func(sorted.Key) bool) {
+func (s *Set) RangeLimit(start, end key.Sort, fn func(key.Sort) bool) {
 	var it = s.IterLimit(start, end)
 
 	//walk it
@@ -790,16 +790,16 @@ func (s *Set) RangeLimit(start, end sorted.Key, fn func(sorted.Key) bool) {
 	}
 }
 
-// Range applies the given function on every sorted.Key in the *Set in sorted
+// Range applies the given function on every key.Sort in the *Set in sorted
 // order. If the function returns false the Range operation stops.
-func (s *Set) Range(fn func(sorted.Key) bool) {
-	s.RangeLimit(sorted.InfKey(-1), sorted.InfKey(1), fn)
+func (s *Set) Range(fn func(key.Sort) bool) {
+	s.RangeLimit(key.Inf(-1), key.Inf(1), fn)
 }
 
-func (s *Set) Keys() []sorted.Key {
-	var keys = make([]sorted.Key, s.NumEntries())
+func (s *Set) Keys() []key.Sort {
+	var keys = make([]key.Sort, s.NumEntries())
 	var i int
-	s.Range(func(k sorted.Key) bool {
+	s.Range(func(k key.Sort) bool {
 		keys[i] = k
 		i++
 		return true
@@ -896,7 +896,7 @@ func (s *Set) Count() int {
 // of the given hash.Key slice.
 //
 // NewFromList is implemented more efficiently than repeated calls to Add.
-func NewFromList(keys []sorted.Key) *Set {
+func NewFromList(keys []key.Sort) *Set {
 	var s = New()
 	for _, k := range keys {
 		s.addInplace(k) //ingnoring return bool value
@@ -911,7 +911,7 @@ func NewFromList(keys []sorted.Key) *Set {
 // receiver Set.
 //
 // BulkInsert is implemented more efficiently than repeated calls to Add.
-func BulkInsert(keys []sorted.Key) *Set {
+func BulkInsert(keys []key.Sort) *Set {
 	log.Println("not implemented")
 	return nil
 }
@@ -927,7 +927,7 @@ func Merge(other *Set) *Set {
 // persistent Set and a slice of the keys not found in the in the original Set.
 //
 // BulkDelete is implemented more efficiently than repeated calls to Remove.
-func BulkDelete(keys []sorted.Key) (*Set, []sorted.Key) {
+func BulkDelete(keys []key.Sort) (*Set, []key.Sort) {
 	log.Println("not implemented")
 	return nil, nil
 }
@@ -936,7 +936,7 @@ func BulkDelete(keys []sorted.Key) (*Set, []sorted.Key) {
 // new persistent Set.
 //
 // BulkDelete2 is implemented more efficiently than repeated calls to Remove.
-func BulkDelete2(key []sorted.Key) *Set {
+func BulkDelete2(key []key.Sort) *Set {
 	log.Println("not implemented")
 	return nil
 }
