@@ -6,17 +6,10 @@ import (
 	"testing"
 
 	"github.com/lleo/go-functional-collections/fmap"
-	"github.com/lleo/go-functional-collections/key"
 )
 
 func buildKvs2(numMapKvs, numKvsXtra int) ([]KeyVal, []KeyVal) {
-	var kvs = make([]KeyVal, numMapKvs+numKvsXtra)
-
-	var s = "a"
-	for i := 0; i < numMapKvs+numKvsXtra; i++ {
-		kvs[i] = KeyVal{key.Str(s), i}
-		s = Inc(s)
-	}
+	var kvs = buildKvs(numMapKvs + numKvsXtra)
 
 	// randomize kvs
 	// https://en.wikipedia.org/wiki/Fisher–Yates_shuffle#The_modern_algorithm
