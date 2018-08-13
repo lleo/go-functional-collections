@@ -398,9 +398,9 @@ func (m *Map) walkPreOrder(fn visitFunc) bool {
 // mappings in the Map data structure. This is safe under any usage of the *Map
 // because the Map is immutable.
 func (m *Map) Iter() *Iter {
-	if m.NumEntries() == 0 {
-		return nil
-	}
+	//if m.NumEntries() == 0 {
+	//	return nil
+	//}
 
 	var it = newIter(m.root)
 
@@ -410,7 +410,10 @@ LOOP:
 		var curNode = it.tblNextNode()
 		switch x := curNode.(type) {
 		case nil:
-			panic("finding first leaf; it.tblNextNode() returned nil")
+			//panic("finding first leaf; it.tblNextNode() returned nil")
+			// EMPTY FMAP
+			// current 'it' is in end state, so just return.
+			break LOOP
 		case tableI:
 			it.stack.push(it.tblNextNode)
 			it.tblNextNode = x.iter()
