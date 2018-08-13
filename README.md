@@ -7,9 +7,9 @@ example, LoadOrStore & Range. Other choices were to allow chained calls.
 Example of chained calls:
 
     var m = fmap.New().
-      Put(hash.StringKey("a"), 1).
-      Put(hash.StringKey("b"), 2).
-      Put(hash.StringKey("c"), 3)
+      Put(key.Str("a"), 1).
+      Put(key.Str("b"), 2).
+      Put(key.Str("c"), 3)
 
 0. Anything you would like to comment on.
 1. Should the ``NumEntries()`` method on the collections be renamed? Possibly
@@ -41,9 +41,9 @@ The following are currently implemented:
 * A functional Map, called _fmap_, which uses a [HAMT][1] internally.
 * A functional Set, called _set_, which uses a [HAMT][1] internally.
 * A functional sorted Map, called _sorted_map_, which uses a
-  [standard Red-Black Tree][2] internally.
+  [standard Red-Black Tree][2] internally (as opposed to a [LLRBT][3]).
 * A functional sorted Set, called _sorted_set_, which uses a
-  [standard Red-Black Tree][2] internally.
+  [standard Red-Black Tree][2] internally (as opposed to a [LLRBT][3]).
 
 I am planning on implementing:
 
@@ -52,3 +52,4 @@ I am planning on implementing:
 
 [1]:https://en.wikipedia.org/wiki/Hash_array_mapped_trie
 [2]:https://en.wikipedia.org/wiki/Red%E2%80%93black_tree
+[3]:https://en.wikipedia.org/wiki/Left-leaning_red%E2%80%93black_tree
