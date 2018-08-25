@@ -37,8 +37,8 @@ LOOP:
 			key = nil // the end
 			break LOOP
 		case *flatLeaf:
-			key = x.key
-			val = x.val
+			key = x.Key
+			val = x.Val
 			it.kvIdx = 0
 			it.setNextNode() // ignore return false == the end
 			//if !it.setNextNode() {
@@ -46,15 +46,15 @@ LOOP:
 			//}
 			break LOOP
 		case *collisionLeaf:
-			if it.kvIdx >= len(x.kvs) {
+			if it.kvIdx >= len(*x) {
 				it.setNextNode() // ignore return false == the end
 				//if !it.setNextNode() {
 				//	log.Printf("it.Next: case *collisionLeaf: it.setNextNode()==false")
 				//}
 				continue LOOP
 			}
-			key = x.kvs[it.kvIdx].Key
-			val = x.kvs[it.kvIdx].Val
+			key = (*x)[it.kvIdx].Key
+			val = (*x)[it.kvIdx].Val
 			it.kvIdx++
 			break LOOP
 		default:

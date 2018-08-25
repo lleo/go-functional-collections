@@ -7,36 +7,27 @@ import (
 	"github.com/lleo/go-functional-collections/key/hash"
 )
 
-type flatLeaf struct {
-	key key.Hash
-	val interface{}
-}
+type flatLeaf KeyVal
 
 func newFlatLeaf(key key.Hash, val interface{}) *flatLeaf {
-	var fl = new(flatLeaf)
-	fl.key = key
-	fl.val = val
-	return fl
+	return &flatLeaf{Key: key, Val: val}
 }
 
 func (l *flatLeaf) copy() leafI {
-	var nl = new(flatLeaf)
-	nl.key = l.key
-	nl.val = l.val
-	return nl
+	return &flatLeaf{Key: l.Key, Val: l.Val}
 }
 
 func (l *flatLeaf) hash() hash.Val {
-	return l.key.Hash()
+	return l.Key.Hash()
 }
 
 func (l *flatLeaf) String() string {
-	return fmt.Sprintf("flatLeaf{key: %s, val: %v}", l.key, l.val)
+	return fmt.Sprintf("flatLeaf{key: %s, val: %v}", l.Key, l.Val)
 }
 
 func (l *flatLeaf) get(key key.Hash) (interface{}, bool) {
-	if l.key.Equals(key) {
-		return l.val, true
+	if l.Key.Equals(key) {
+		return l.Val, true
 	}
 	return nil, false
 }
@@ -57,14 +48,14 @@ func (l *flatLeaf) putResolve(
 ) (leafI, bool) {
 	var nl leafI
 
-	if l.key.Equals(key) {
+	if l.Key.Equals(key) {
 		// maintain functional behavior of flatLeaf
-		var newVal = resolve(l.key, l.val, val)
-		nl = newFlatLeaf(l.key, newVal)
+		var newVal = resolve(l.Key, l.Val, val)
+		nl = newFlatLeaf(l.Key, newVal)
 		return nl, false // replaced
 	}
 
-	nl = newCollisionLeaf([]KeyVal{{l.key, l.val}, {key, val}})
+	nl = newCollisionLeaf([]KeyVal{{l.Key, l.Val}, {key, val}})
 	return nl, true // key,val was added
 }
 
@@ -80,25 +71,25 @@ func (l *flatLeaf) putResolve(
 func (l *flatLeaf) put(key key.Hash, val interface{}) (leafI, bool) {
 	var nl leafI
 
-	if l.key.Equals(key) {
+	if l.Key.Equals(key) {
 		// maintain functional behavior of flatLeaf
-		nl = newFlatLeaf(l.key, val)
+		nl = newFlatLeaf(l.Key, val)
 		return nl, false // replaced
 	}
 
-	nl = newCollisionLeaf([]KeyVal{{l.key, l.val}, {key, val}})
+	nl = newCollisionLeaf([]KeyVal{{l.Key, l.Val}, {key, val}})
 	return nl, true // key,val was added
 }
 
 func (l *flatLeaf) del(key key.Hash) (leafI, interface{}, bool) {
-	if l.key.Equals(key) {
-		return nil, l.val, true // found
+	if l.Key.Equals(key) {
+		return nil, l.Val, true // found
 	}
 	return l, nil, false // not found
 }
 
 func (l *flatLeaf) keyVals() []KeyVal {
-	return []KeyVal{{l.key, l.val}}
+	return []KeyVal{{Key: l.Key, Val: l.Val}}
 }
 
 func (l *flatLeaf) walkPreOrder(fn visitFunc, depth uint) bool {
@@ -111,10 +102,10 @@ func (l *flatLeaf) equiv(other nodeI) bool {
 	if !ok {
 		return false
 	}
-	if !l.key.Equals(ol.key) {
+	if !l.Key.Equals(ol.Key) {
 		return false
 	}
-	if l.val != ol.val {
+	if l.Val != ol.Val {
 		return false
 	}
 	return true
