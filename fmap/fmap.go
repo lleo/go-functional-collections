@@ -19,7 +19,7 @@
 // Every key in the key/value mapping must implement the key.Hash interface.
 //
 // Any value can be stored in the key/value mapping, because values are treated
-// and returned at interface{} values. That means the values returned from
+// and returned as interface{} values. That means the values returned from
 // methods Get, Load, and LoadOrStore, must be type asserted back to their
 // original type by the user of this library.
 package fmap
@@ -188,7 +188,7 @@ DepthIter:
 // persist() is ONLY called on a fresh copy of the current Hamt.
 // Hence, modifying it is allowed.
 func (m *Map) persist(oldTable, newTable tableI, path *tableStack) {
-	assert(m.root != nil, "m.root == nil")
+	_ = assertOn && assert(m.root != nil, "m.root == nil")
 
 	// downgrade() & upgrade() can return an unmodified table in NewFromList(),
 	// BulkInsert(), BulkDelete(), and Merge(). Hence persist() is unnecessary.
@@ -410,14 +410,13 @@ LOOP:
 		var curNode = it.tblNextNode()
 		switch x := curNode.(type) {
 		case nil:
-			//panic("finding first leaf; it.tblNextNode() returned nil")
 			// EMPTY FMAP
 			// current 'it' is in end state, so just return.
 			break LOOP
 		case tableI:
 			it.stack.push(it.tblNextNode)
 			it.tblNextNode = x.iter()
-			assert(it.tblNextNode != nil, "it.tblNextNode==nil")
+			_ = assertOn && assert(it.tblNextNode != nil, "it.tblNextNode==nil")
 			break // switch
 		case leafI:
 			it.curLeaf = x
