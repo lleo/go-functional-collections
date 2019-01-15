@@ -432,21 +432,10 @@ LOOP:
 // Range applies the given function for every key/value mapping in the *Map
 // data structure. Given that the *Map is immutable there is no danger with
 // concurrent use of the *Map while the Range method is executing.
-func (m *Map) Range(fn func(key.Hash, interface{}) bool) {
-	//var visitLeafs = func(n nodeI, depth uint) bool {
-	//	if leaf, ok := n.(leafI); ok {
-	//		for _, kv := range leaf.keyVals() {
-	//			if !fn(kv.Key, kv.Val) {
-	//				return false
-	//			}
-	//		}
-	//	}
-	//	return true
-	//} // end: visitLeafs = func(nodeI)
-	//m.walkPreOrder(visitLeafs)
+func (m *Map) Range(fn func(KeyVal) bool) {
 	var it = m.Iter()
-	for k, v := it.Next(); k != nil; k, v = it.Next() {
-		if !fn(k, v) {
+	for kv := it.Next(); kv.Key != nil; kv = it.Next() {
+		if !fn(kv) {
 			break
 		}
 	}
@@ -467,13 +456,13 @@ func (m *Map) String() string {
 	var i int
 
 	var it = m.Iter()
-	for k, v := it.Next(); k != nil; k, v = it.Next() {
-		ents[i] = fmt.Sprintf("%#v:%#v", k, v)
+	for kv := it.Next(); kv.Key != nil; kv = it.Next() {
+		ents[i] = fmt.Sprintf("%#v:%#v", kv.Key, kv.Val)
 		i++
 	}
 
-	//m.Range(func(k key.Hash, v interface{}) bool {
-	//	ents[i] = fmt.Sprintf("%#v:%#v", k, v)
+	//m.Range(func(kv KeyVal) bool {
+	//	ents[i] = fmt.Sprintf("%#v:%#v", kv.Key, kv.Val)
 	//	i++
 	//	return true
 	//})
@@ -657,8 +646,8 @@ func (m *Map) Merge(om *Map, resolve ResolveConflictFunc) *Map {
 
 	var nm = m.copy()
 	var it = om.Iter()
-	for k, v := it.Next(); k != nil; k, v = it.Next() {
-		insertPersist(nm, isOrigTable, resolve, k, v)
+	for kv := it.Next(); kv.Key != nil; kv = it.Next() {
+		insertPersist(nm, isOrigTable, resolve, kv.Key, kv.Val)
 	}
 	return nm
 }

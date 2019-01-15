@@ -243,10 +243,10 @@ func BenchmarkIterNext10(b *testing.B) {
 
 	var it = m.Iter()
 	for i := 0; i < b.N; i++ {
-		var k, _ = it.Next()
-		if k == nil {
+		var kv = it.Next()
+		if kv.Key == nil {
 			it = m.Iter()
-			k, _ = it.Next()
+			kv = it.Next()
 		}
 	}
 }
@@ -267,10 +267,10 @@ func BenchmarkIterNext100(b *testing.B) {
 
 	var it = m.Iter()
 	for i := 0; i < b.N; i++ {
-		var k, _ = it.Next()
-		if k == nil {
+		var kv = it.Next()
+		if kv.Key == nil {
 			it = m.Iter()
-			k, _ = it.Next()
+			kv = it.Next()
 		}
 	}
 }
@@ -291,10 +291,10 @@ func BenchmarkIterNext1M(b *testing.B) {
 
 	var it = m.Iter()
 	for i := 0; i < b.N; i++ {
-		var k, _ = it.Next()
-		if k == nil {
+		var kv = it.Next()
+		if kv.Key == nil {
 			it = m.Iter()
-			k, _ = it.Next()
+			kv = it.Next()
 		}
 	}
 }
@@ -315,10 +315,10 @@ func BenchmarkIterNext10M(b *testing.B) {
 
 	var it = m.Iter()
 	for i := 0; i < b.N; i++ {
-		var k, _ = it.Next()
-		if k == nil {
+		var kv = it.Next()
+		if kv.Key == nil {
 			it = m.Iter()
-			k, _ = it.Next()
+			kv = it.Next()
 		}
 	}
 }
@@ -339,10 +339,10 @@ func BenchmarkIterNext100M(b *testing.B) {
 
 	var it = m.Iter()
 	for i := 0; i < b.N; i++ {
-		var k, _ = it.Next()
-		if k == nil {
+		var kv = it.Next()
+		if kv.Key == nil {
 			it = m.Iter()
-			k, _ = it.Next()
+			kv = it.Next()
 		}
 	}
 }
@@ -363,10 +363,10 @@ func BenchmarkIterNext1MM(b *testing.B) {
 
 	var it = m.Iter()
 	for i := 0; i < b.N; i++ {
-		var k, _ = it.Next()
-		if k == nil {
+		var kv = it.Next()
+		if kv.Key == nil {
 			it = m.Iter()
-			k, _ = it.Next()
+			kv = it.Next()
 		}
 	}
 }
@@ -387,10 +387,10 @@ func BenchmarkIterNext10MM(b *testing.B) {
 
 	var it = m.Iter()
 	for i := 0; i < b.N; i++ {
-		var k, _ = it.Next()
-		if k == nil {
+		var kv = it.Next()
+		if kv.Key == nil {
 			it = m.Iter()
-			k, _ = it.Next()
+			kv = it.Next()
 		}
 	}
 }
@@ -411,10 +411,10 @@ func xBenchmarkIterNext100MM(b *testing.B) {
 
 	var it = m.Iter()
 	for i := 0; i < b.N; i++ {
-		var k, _ = it.Next()
-		if k == nil {
+		var kv = it.Next()
+		if kv.Key == nil {
 			it = m.Iter()
-			k, _ = it.Next()
+			kv = it.Next()
 		}
 	}
 }

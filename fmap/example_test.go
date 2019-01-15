@@ -13,9 +13,8 @@ func ExampleMap_Range() {
 		Put(key.Str("b"), 2).
 		Put(key.Str("c"), 3)
 
-	m.Range(func(k key.Hash, v interface{}) bool {
-		// Does not provide key.Hash entries in string order.
-		fmt.Println(k, v)
+	m.Range(func(kv KeyVal) bool {
+		fmt.Println(kv.Key, kv.Val)
 		return true
 	})
 

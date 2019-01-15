@@ -2,8 +2,6 @@ package fmap
 
 import (
 	"fmt"
-
-	"github.com/lleo/go-functional-collections/key"
 )
 
 // Iter struct maintains the current state for walking the *Map data structure.
@@ -24,37 +22,30 @@ func newIter(root tableI) *Iter {
 }
 
 // Next returns each sucessive key/value mapping in the *Map. When all enrties
-// have been returned it will return a nil key.Hash.
-func (it *Iter) Next() (key.Hash, interface{}) {
+// have been returned it will return KeyVal{Key: nil, Val: ...}
+//func (it *Iter) Next() (key.Hash, interface{}) {
+func (it *Iter) Next() KeyVal {
 	//log.Printf("it.Next: called. it=%s", it)
-	var key key.Hash
-	var val interface{}
+	var kv KeyVal
 
 LOOP:
 	for {
 		switch x := it.curLeaf.(type) {
 		case nil:
-			key = nil // the end
+			kv.Key = nil // the end
+			kv.Val = nil
 			break LOOP
 		case *flatLeaf:
-			key = x.Key
-			val = x.Val
+			kv = KeyVal(*x)
 			it.kvIdx = 0
-			it.setNextNode() // ignore return false == the end
-			//if !it.setNextNode() {
-			//	log.Printf("it.Next: case *flatLeaf: it.setNextNode()==false")
-			//}
+			it.setNextNode()
 			break LOOP
 		case *collisionLeaf:
 			if it.kvIdx >= len(*x) {
-				it.setNextNode() // ignore return false == the end
-				//if !it.setNextNode() {
-				//	log.Printf("it.Next: case *collisionLeaf: it.setNextNode()==false")
-				//}
+				it.setNextNode()
 				continue LOOP
 			}
-			key = (*x)[it.kvIdx].Key
-			val = (*x)[it.kvIdx].Val
+			kv = (*x)[it.kvIdx]
 			it.kvIdx++
 			break LOOP
 		default:
@@ -62,7 +53,8 @@ LOOP:
 		}
 	}
 	//log.Printf("it.Next: key=%s; val=%v;", key, val)
-	return key, val
+	return kv
+	//return key, val
 }
 
 // setNextNode() sets the iter struct pointing to the next node. If there is no

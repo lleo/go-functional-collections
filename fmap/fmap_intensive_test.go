@@ -80,28 +80,14 @@ func TestIntensiveIterBig(t *testing.T) {
 	//var sizeBig = 100000 //20secs for linear remove; over 1/100 for persistent HAMT
 	var kvs = buildKvs(sizeBig)
 
-	var s = buildMap(kvs)
-	//var start = time.Now()
-	//var numRemoved int
-	var it = s.Iter()
-	for k, _ := it.Next(); k != nil; k, _ = it.Next() {
+	var m = buildMap(kvs)
+	var it = m.Iter()
+	for kv := it.Next(); kv.Key != nil; kv = it.Next() {
 		var found bool
-		s, _, found = s.Remove(k)
+		m, _, found = m.Remove(kv.Key)
 		if !found {
-			t.Fatalf("Failed to find k=%s", k)
+			t.Fatalf("Failed to Remove kv.Key=%s", kv.Key)
 		}
-		//numRemoved++
-		//if numRemoved%10000 == 0 {
-		//	var timediff = time.Since(start)
-		//	//var rate = 10000 * 1000000 / float64(timediff) // millisec
-		//	var rate = float64(timediff) / 10000 // nanosecond per removed entry
-		//	var numLeft = s.NumEntries()
-		//	//var numLeft = len(kvs)
-		//	//log.Printf("found numRemoved=%d; numLeft=%d; rate=%.3g rm/ms",
-		//	log.Printf("found numRemoved=%d; numLeft=%d; rate=%.0f ns/rm\n",
-		//		numRemoved, numLeft, rate)
-		//	start = time.Now()
-		//}
 	}
 
 	////takes ~10^3 times longer
